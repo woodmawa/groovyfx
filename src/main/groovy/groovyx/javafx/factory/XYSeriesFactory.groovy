@@ -34,10 +34,11 @@ import javafx.scene.chart.XYChart
  */
 class XYSeriesFactory extends AbstractFXBeanFactory {
     public static final String SERIES_LIST_PROPERTY = "__seriesList"
-    
+
     public XYSeriesFactory() {
         super(XYChart.Series)
     }
+
     public XYSeriesFactory(Class<XYChart.Series> beanClass) {
         super(beanClass)
     }
@@ -56,7 +57,7 @@ class XYSeriesFactory extends AbstractFXBeanFactory {
                 list.each { result << (it as XYChart.Data) }
             } else {
                 for (int i = 0; i < list.size() - 1; i += 2) {
-                    result << new XYChart.Data(list[i], list[i + 1] )
+                    result << new XYChart.Data(list[i], list[i + 1])
                 }
 
                 if (list.size() % 2) {
@@ -92,8 +93,8 @@ class XYSeriesFactory extends AbstractFXBeanFactory {
     }
 
     private XYChart.Series createSeriesForData(data) {
-        if (data instanceof ObservableList<XYChart.Data>) {
-            return new XYChart.Series(data)
+        if (data instanceof ObservableList) {
+            return new XYChart.Series((ObservableList<XYChart.Data>) data)
         } else if (data instanceof List) {
             return new XYChart.Series(createXYDataFromList(data))
         }

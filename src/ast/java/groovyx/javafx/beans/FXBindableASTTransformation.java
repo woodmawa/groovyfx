@@ -69,9 +69,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import org.apache.groovy.util.BeanUtils;
+
 
 import static org.codehaus.groovy.ast.ClassHelper.LIST_TYPE;
 import static org.codehaus.groovy.ast.ClassHelper.MAP_TYPE;
+
 
 
 /**
@@ -84,6 +87,7 @@ import static org.codehaus.groovy.ast.ClassHelper.MAP_TYPE;
  *
  * @author Andres Almiray
  */
+@SuppressWarnings({"unchecked", "rawtypes"})
 @GroovyASTTransformation(phase = CompilePhase.CANONICALIZATION)
 public class FXBindableASTTransformation implements ASTTransformation {
     private static final ClassNode FXBINDABLE_CNODE = makeClassSafe(FXBindable.class);
@@ -152,6 +156,7 @@ public class FXBindableASTTransformation implements ASTTransformation {
         PROPERTY_IMPL_MAP.put(SET_PROPERTY_CNODE, SIMPLE_SET_PROPERTY_CNODE);
         //PROPERTY_IMPL_MAP.put(OBJECT_PROPERTY_CNODE, SIMPLE_OBJECT_PROPERTY_CNODE);
     }
+
 
     /**
      * Convenience method to see if an annotated node is {@code @FXBindable}.
@@ -281,7 +286,7 @@ public class FXBindableASTTransformation implements ASTTransformation {
             }
         }
 
-        String getterName = "get" + MetaClassHelper.capitalize(originalProp.getName());
+        String getterName = "get" + BeanUtils.capitalize(originalProp.getName());
         if (classNode.getMethods(getterName).isEmpty()) {
             Statement getterBlock = createGetterStatement(createFXProperty(originalProp));
             createGetterMethod(classNode, originalProp, getterName, getterBlock, methodAnnotations);
@@ -291,7 +296,7 @@ public class FXBindableASTTransformation implements ASTTransformation {
             methodAnnotations = null;
         }
 
-        String setterName = "set" + MetaClassHelper.capitalize(originalProp.getName());
+        String setterName = "set" + BeanUtils.capitalize(originalProp.getName());
         if (classNode.getMethods(setterName).isEmpty()) {
             Statement setterBlock = createSetterStatement(createFXProperty(originalProp));
             createSetterMethod(classNode, originalProp, setterName, setterBlock, methodAnnotations);

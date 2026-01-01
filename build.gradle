@@ -15,6 +15,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ */
 plugins {
     id 'groovy'
     id 'java-library'
@@ -60,17 +63,46 @@ javafx {
     ]
 }
 
+/**
+ * AST bootstrap:
+ * - compileAstGroovy must produce FXBindable + FXBindableASTTransformation before main sources compile
+ * - Avoid compileAstJava/compileAstGroovy cycles by doing JOINT compilation in compileAstGroovy:
+ *   * ast Groovy srcDirs include src/ast/groovy AND src/ast/java (so Java AST transform compiles there)
+ *   * ast Java srcDirs is EMPTY (so compileAstJava is NO-SOURCE)
+ */
+sourceSets {
+    ast {
+        groovy.srcDirs = ['src/ast/groovy', 'src/ast/java']
+        java.srcDirs   = [] // critical: prevents compileAstJava sources & avoids task cycles
+        resources.srcDirs = ['src/ast/resources']
+
+        // allow AST compilation to reuse normal dependencies if needed
+        compileClasspath += sourceSets.main.compileClasspath
+        runtimeClasspath += output + compileClasspath
+    }
+}
+
+configurations {
+    astImplementation.extendsFrom implementation
+    astCompileOnly.extendsFrom compileOnly
+    astRuntimeOnly.extendsFrom runtimeOnly
+}
+
 dependencies {
+    // AST source set needs Groovy too (separate source set = separate classpath)
+    astImplementation platform("org.apache.groovy:groovy-bom:${groovyVersion}")
+    astImplementation "org.apache.groovy:groovy"
+
     // Use Groovy 5 BOM to keep Groovy modules aligned
     api platform("org.apache.groovy:groovy-bom:${groovyVersion}")
     api "org.apache.groovy:groovy"
 
-    // If GroovyFX uses additional Groovy modules, uncomment as needed:
-    // implementation "org.apache.groovy:groovy-xml"
-    // implementation "org.apache.groovy:groovy-json"
-    // implementation "org.apache.groovy:groovy-swing"
+    // TEMP: SceneGraphBuilder imports groovy.swing.*; keep until we refactor it out
+    implementation "org.apache.groovy:groovy-swing"
 
-    // Jansi (your old build had a dedicated configuration; keep it simple first)
+    // JavaFX dependencies are supplied by org.openjfx plugin via the 'javafx { }' block
+
+    // Jansi (legacy console support)
     implementation "org.fusesource.jansi:jansi:${jansiVersion}"
 
     // Testing (Spock runs on JUnit Platform)
@@ -79,49 +111,43 @@ dependencies {
     testRuntimeOnly "org.junit.platform:junit-platform-launcher"
 }
 
+// Ensure main compilation sees the compiled AST output (annotation + transform)
+tasks.named('compileGroovy', GroovyCompile).configure {
+    dependsOn(tasks.named('compileAstGroovy'))
+    classpath += sourceSets.ast.output
+}
+tasks.named('compileJava', JavaCompile).configure {
+    dependsOn(tasks.named('compileAstGroovy'))
+    classpath += sourceSets.ast.output
+}
+
 tasks.withType(GroovyCompile).configureEach {
     groovyOptions.encoding = 'UTF-8'
 }
 
 tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8'
-    // You said “compile and run with Java 25” — keep release=25.
     options.release = 25
 }
 
 test {
     useJUnitPlatform()
-    // JavaFX tests sometimes need extra flags; leave empty until we see failures.
-    // jvmArgs += ['-Dprism.order=sw', '-Djavafx.animation.pulse=10']
 }
 
 jacoco {
     toolVersion = '0.8.12'
 }
 
+// Publishing: keep minimal/standard to avoid Gradle 9 DSL issues
 publishing {
     publications {
         mavenJava(MavenPublication) {
             from components.java
-            pom {
-                name = 'GroovyFX'
-                description = 'A library for writing JavaFX applications in the Groovy language'
-                url = 'https://github.com/groovyfx-project/groovyfx'
-                licenses {
-                    license {
-                        name = 'Apache License, Version 2.0'
-                        url = 'https://www.apache.org/licenses/LICENSE-2.0.txt'
-                    }
-                }
-                scm {
-                    url = 'https://github.com/groovyfx-project/groovyfx'
-                }
-            }
         }
     }
 }
 
-//added to help gradle 9.1 resolve build
+// IntelliJ/Gradle sometimes calls 'version' task; keep it around
 tasks.register("version") {
     group = "Help"
     description = "Prints the project version."

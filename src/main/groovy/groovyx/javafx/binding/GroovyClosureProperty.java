@@ -36,6 +36,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.apache.groovy.util.BeanUtils;
+
 
 
 /**
@@ -149,36 +151,37 @@ public class GroovyClosureProperty implements ReadOnlyProperty,  ChangeListener,
         try {
             final Class closureClass = closure.getClass();
             // do in privileged block since we may be looking at private stuff
-            Closure closureLocalCopy = java.security.AccessController.doPrivileged(new PrivilegedAction<Closure>() {
-                @Override
-                public Closure run() {
-                    Constructor constructor = closureClass.getConstructors()[0];
-                    int paramCount = constructor.getParameterTypes().length;
-                    Object[] args = new Object[paramCount];
-                    args[0] = delegate;
-                    for (int i = 1; i < paramCount; i++) {
-                        args[i] = new Reference(new Snooper());
-                    }
-                    try {
-                        boolean acc = constructor.isAccessible();
-                        constructor.setAccessible(true);
-                        Closure localCopy = (Closure) constructor.newInstance(args);
-                        if (!acc) { constructor.setAccessible(false); }
-                        localCopy.setResolveStrategy(Closure.DELEGATE_ONLY);
-                        for (Field f:closureClass.getDeclaredFields()) {
-                            acc = f.isAccessible();
-                            f.setAccessible(true);
-                            if (f.getType() == Reference.class) {
-                                delegate.getFields().put(f.getName(), (Snooper)((Reference) f.get(localCopy)).get());
-                            }
-                            if (!acc) { f.setAccessible(false); }
-                        }
-                        return localCopy;
-                    } catch (Exception e) {
-                        throw new RuntimeException("Error snooping closure", e);
-                    }
+            Closure closureLocalCopy;
+            try {
+                Constructor constructor = closureClass.getConstructors()[0];
+                int paramCount = constructor.getParameterTypes().length;
+                Object[] args = new Object[paramCount];
+                args[0] = delegate;
+                for (int i = 1; i < paramCount; i++) {
+                    args[i] = new Reference(new Snooper());
                 }
-            });
+
+                boolean acc = constructor.canAccess(null);
+                constructor.setAccessible(true);
+                closureLocalCopy = (Closure) constructor.newInstance(args);
+                constructor.setAccessible(acc);
+
+                closureLocalCopy.setResolveStrategy(Closure.DELEGATE_ONLY);
+
+                for (Field f : closureClass.getDeclaredFields()) {
+                    boolean facc = f.canAccess(null);
+                    f.setAccessible(true);
+                    if (f.getType() == Reference.class) {
+                        delegate.getFields().put(
+                                f.getName(),
+                                (Snooper) ((Reference) f.get(closureLocalCopy)).get()
+                        );
+                    }
+                    f.setAccessible(facc);
+                }
+            } catch (Exception e) {
+                throw new RuntimeException("Error snooping closure", e);
+            }
             try {
                 closureLocalCopy.call();
             } catch (DeadEndException e) {
