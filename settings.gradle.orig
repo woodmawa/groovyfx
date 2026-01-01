@@ -15,21 +15,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*
- * Minimal Gradle 9+ settings for GroovyFX modernization
- * - Removes jcenter()
- * - Keeps only repositories needed to resolve plugins and dependencies
- */
+
 pluginManagement {
     repositories {
+        jcenter()
         gradlePluginPortal()
-        mavenCentral()
     }
-}
-
-dependencyResolutionManagement {
-    repositoriesMode.set(RepositoriesMode.PREFER_SETTINGS)
-    repositories {
-        mavenCentral()
+    plugins {
+        id 'org.kordamp.gradle.groovy-project' version kordampPluginVersion
+        id 'org.kordamp.gradle.bintray'        version kordampPluginVersion
+        id 'org.kordamp.gradle.coveralls'      version kordampPluginVersion
+        id 'org.openjfx.javafxplugin'          version '0.0.9'
+        id 'org.asciidoctor.jvm.convert'       version '3.3.2'
+        id 'org.jonnyzzz.java9c'               version '0.2.3'
+        id 'org.javamodularity.moduleplugin'   version '1.7.0'
+        id 'com.google.osdetector'             version '1.6.2'
     }
 }
