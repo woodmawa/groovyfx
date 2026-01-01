@@ -108,6 +108,7 @@ dependencies {
     // Testing (Spock runs on JUnit Platform)
     testImplementation platform("org.apache.groovy:groovy-bom:${groovyVersion}")
     testImplementation "org.spockframework:spock-core:${spockVersion}"
+    testImplementation("org.apache.groovy:groovy-test:${spockVersion}")
     testRuntimeOnly "org.junit.platform:junit-platform-launcher"
 }
 
@@ -154,4 +155,15 @@ tasks.register("version") {
     doLast {
         println(project.version)
     }
+}
+
+// Make AST (FXBindable + transform) visible to tests too
+tasks.named('compileTestGroovy', GroovyCompile).configure {
+    dependsOn(tasks.named('compileAstGroovy'))
+    classpath += sourceSets.ast.output
+}
+
+tasks.named('compileTestJava', JavaCompile).configure {
+    dependsOn(tasks.named('compileAstGroovy'))
+    classpath += sourceSets.ast.output
 }

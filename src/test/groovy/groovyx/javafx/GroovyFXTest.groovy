@@ -17,6 +17,7 @@
  */
 package groovyx.javafx
 
+import groovy.test.GroovyTestCase
 import javafx.stage.Stage
 import java.util.concurrent.CountDownLatch
 

@@ -17,6 +17,8 @@
  */
 package groovyx.javafx
 
+import groovy.test.GroovyTestCase
+
 class SceneGraphBuilderTest extends GroovyTestCase {
 
     void testId() {
