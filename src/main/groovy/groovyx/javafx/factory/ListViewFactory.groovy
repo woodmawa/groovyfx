@@ -44,7 +44,9 @@ class ListViewFactory extends AbstractNodeFactory {
                 listView.setItems(FXCollections.observableArrayList());
             listView.getItems().addAll(items);
         }
-        final def onSelect = attritues.remove("onSelect");
+
+        final def onSelect = attributes.remove("onSelect")
+
         if(onSelect != null) {
              listView.selectionModel.selectedItemProperty().addChangeListener(new ChangeListener() {
                 public void changed(final ObservableValue observable, final Object oldValue, final Object newValue) {
