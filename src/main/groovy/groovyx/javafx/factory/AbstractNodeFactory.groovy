@@ -25,8 +25,10 @@ import javafx.geometry.HPos
 import javafx.geometry.Insets
 import javafx.geometry.Pos
 import javafx.geometry.VPos
+import javafx.scene.Node
 import javafx.scene.image.Image
 import javafx.scene.image.ImageView
+import javafx.scene.layout.GridPane
 import javafx.scene.layout.HBox
 import javafx.scene.layout.Pane
 import javafx.scene.layout.Priority
@@ -38,108 +40,122 @@ import javafx.scene.transform.Transform
  * @author jimclarke
  */
 public abstract class AbstractNodeFactory extends AbstractFXBeanFactory {
-    
+
     public static def nodeEvents = [
-        'onContextMenuRequested',
-        'onDragDetected',
-        'onDragDone',
-        'onDragDropped',
-        'onDragEntered',
-        'onDragExited',
-        'onDragOver',
-        'onInputMethodTextChanged',
-        'onKeyPressed',
-        'onKeyReleased',
-        'onKeyTyped',
-        'onMouseClicked',
-        'onMouseDragEntered',
-        'onMouseDragExited',
-        'onMouseDragged',
-        'onMouseDragOver',
-        'onMouseDragReleased',
-        'onMouseEntered',
-        'onMouseExited',
-        'onMouseMoved',
-        'onMousePressed',
-        'onMouseReleased',
-        'onScroll'
-        
+            'onContextMenuRequested',
+            'onDragDetected',
+            'onDragDone',
+            'onDragDropped',
+            'onDragEntered',
+            'onDragExited',
+            'onDragOver',
+            'onInputMethodTextChanged',
+            'onKeyPressed',
+            'onKeyReleased',
+            'onKeyTyped',
+            'onMouseClicked',
+            'onMouseDragEntered',
+            'onMouseDragExited',
+            'onMouseDragged',
+            'onMouseDragOver',
+            'onMouseDragReleased',
+            'onMouseEntered',
+            'onMouseExited',
+            'onMouseMoved',
+            'onMousePressed',
+            'onMouseReleased',
+            'onRotate',
+            'onRotationFinished',
+            'onRotationStarted',
+            'onScroll',
+            'onScrollFinished',
+            'onScrollStarted',
+            'onSwipeDown',
+            'onSwipeLeft',
+            'onSwipeRight',
+            'onSwipeUp',
+            'onTouchMoved',
+            'onTouchPressed',
+            'onTouchReleased',
+            'onTouchStationary',
+            'onZoom',
+            'onZoomFinished',
+            'onZoomStarted'
     ]
-    
+
     public AbstractNodeFactory(Class beanClass) {
         super(beanClass)
     }
+
     public AbstractNodeFactory(Class beanClass, boolean leaf) {
         super(beanClass, leaf)
     }
-    
-    
 
-
-     public boolean onHandleNodeAttributes( FactoryBuilderSupport builder, Object node, Map attributes ) {
-        for(v in nodeEvents) {
-            if(attributes.containsKey(v)) {
-                def val = attributes.remove(v);
-                if(val instanceof Closure) {
-                    FXHelper.setPropertyOrMethod(node, v, val as EventHandler)
-/*****
-                    def handler = new GroovyMouseHandler(v);
-                    handler.setClosure((Closure)val);
-****/
-                }else if(val instanceof EventHandler) {
+    public boolean onHandleNodeAttributes(FactoryBuilderSupport builder, Object node, Map attributes) {
+        for (v in nodeEvents) {
+            if (attributes.containsKey(v)) {
+                def val = attributes.remove(v)
+                if (val instanceof Closure) {
+                    FXHelper.setPropertyOrMethod(node, v, new GroovyEventHandler((Closure) val))
+                } else if (val instanceof EventHandler) {
                     FXHelper.setPropertyOrMethod(node, v, val)
                 }
             }
         }
-        def parent = builder.context.get(FactoryBuilderSupport.CURRENT_NODE);
-        handleLayoutConstraints(parent, node, attributes);
-        return super.onHandleNodeAttributes(builder, node, attributes);
+        def parent = builder.context.get(FactoryBuilderSupport.CURRENT_NODE)
+        handleLayoutConstraints(parent, node, attributes)
+        return super.onHandleNodeAttributes(builder, node, attributes)
     }
 
-    
-    public void setChild( FactoryBuilderSupport builder, Object parent, Object child ) {
-        switch(child) {
+    public void setChild(FactoryBuilderSupport builder, Object parent, Object child) {
+        switch (child) {
             case GroovyEventHandler:
                 FXHelper.setPropertyOrMethod(parent, child.property, child)
-                break;
-            case Transform:
-                parent.transforms.add(child);
-                break;
-            case Image:
-                if(parent instanceof ImageView) {
-                    parent.image = child;     
-                }
-                break;
+                break
             case GroovyChangeListener:
+                FXHelper.setPropertyOrMethod(parent, child.property, child)
+                break
             case GroovyInvalidationListener:
-                if(parent.metaClass.respondsTo(parent, child.property + "Property"))
-                    parent."${child.property}Property"().addListener(child);
-                break;
+                FXHelper.setPropertyOrMethod(parent, child.property, child)
+                break
+            case Image:
+                // for imageviews
+                if (parent instanceof ImageView) {
+                    parent.setImage(child)
+                }
+                break
+            case Transform:
+                // for nodes
+                if (parent instanceof Node) {
+                    parent.getTransforms().add(child)
+                }
+                break
+            default:
+                super.setChild(builder, parent, child)
         }
     }
-    
-    public static def attributeDelegate = { FactoryBuilderSupport builder, def node, def attributes ->
-        //FXHelper.fxAttributes(node, attributes);
-    }
 
-    private static def doEnum  = { Class cls, value ->
-        value = FXHelper.getValue(value);
-        if(!value.getClass().isEnum()) {
-            value = Enum.valueOf(cls,value.toString().trim().toUpperCase())
+    private static def doEnum = { Class cls, value ->
+        value = FXHelper.getValue(value)
+        if (value == null) return null
+        if (cls.isInstance(value)) return value
+        if (value instanceof Boolean && cls == Priority) {
+            return value ? Priority.ALWAYS : Priority.NEVER
         }
-        return value;
+        return Enum.valueOf(cls, value.toString().trim().toUpperCase())
     }
 
-    private static def doInsets = {  value ->
+    private static def doInsets = { value ->
+        if (value == null) return null
         if (Number.class.isAssignableFrom(value.getClass())) {
             value = new Insets(value, value, value, value)
-        } else if(List.class.isAssignableFrom(value.getClass())) {
+        } else if (List.class.isAssignableFrom(value.getClass())) {
             switch (value.size()) {
                 case 0:
                     value = Insets.EMPTY
                     break
                 case 1:
-                    //top, right,bottom, left
+                    // top, right, bottom, left
                     value = new Insets(value[0], value[0], value[0], value[0])
                     break
                 case 2:
@@ -152,71 +168,164 @@ public abstract class AbstractNodeFactory extends AbstractFXBeanFactory {
                     value = new Insets(value[0], value[1], value[2], value[3])
                     break
             }
-        } else if(value.toString().toUpperCase() == 'EMPTY') {
-            value = Insets.EMPTY;
+        } else if (value.toString().toUpperCase() == 'EMPTY') {
+            value = Insets.EMPTY
         }
-        return value;    
+        return value
+    }
+
+    private static Integer toInt(Object v) {
+        if (v == null) return null
+        if (v instanceof Integer) return (Integer) v
+        if (v instanceof Number) return ((Number) v).intValue()
+        try {
+            return Integer.valueOf(v.toString())
+        } catch (ignored) {
+            return null
+        }
     }
 
     private handleLayoutConstraints(Object parent, Object node, Map attributes) {
-        if (parent != null) {
-            // Halignment
-            def val = attributes.remove("halignment");
-            if(val && parent.metaClass.respondsTo(parent, "setHalignment"))
-                parent.setHalignment(node, doEnum(HPos, val));
-            
-            // Valignment
-            val = attributes.remove("valignment");
-            if(val && parent.metaClass.respondsTo(parent, "setValignment"))
-                parent.setValignment(node, doEnum(VPos, val));
-                
-            // column or columnIndex
-            val = attributes.remove("column") ?: attributes.remove("columnIndex");
-            if(val && parent.metaClass.respondsTo(parent, "setColumnIndex"))
-                parent.setColumnIndex(node, val);
+        if (parent == null) return
+        if (!(node instanceof Node)) return
 
-            // row or rowIndex
-            val = attributes.remove("row") ?: attributes.remove("rowIndex");
-            if(val && parent.metaClass.respondsTo(parent, "setRowIndex"))
-                parent.setRowIndex(node, val);
-            
-            // rowSpan
-            val = attributes.remove("rowSpan")
-            if(val && parent.metaClass.respondsTo(parent, "setRowSpan"))
-                parent.setRowSpan(node, val);
+        Node n = (Node) node
+        boolean isGrid = parent instanceof GridPane
 
-            // columnSpan
-            val = attributes.remove("columnSpan")
-            if(val && parent.metaClass.respondsTo(parent, "setColumnSpan"))
-                parent.setColumnSpan(node, val);
+        def val
 
-            // Hgrow
-            val = attributes.remove("hgrow");
-            if(val && parent.metaClass.respondsTo(parent, "setHgrow")) {
-                parent.setHgrow(node, doEnum(Priority, val));
-            } else if(val) {
-                HBox.setHgrow(node, doEnum(Priority, val))
+        // Halignment
+        val = attributes.remove("halignment")
+        if (val != null) {
+            tryCall(parent, "setHalignment", n, doEnum.call(HPos, val))
+        }
+
+        // Valignment
+        val = attributes.remove("valignment")
+        if (val != null) {
+            tryCall(parent, "setValignment", n, doEnum.call(VPos, val))
+        }
+
+        // column / columnIndex / col
+        val = attributes.remove("column") ?: attributes.remove("columnIndex") ?: attributes.remove("col")
+        if (val != null) {
+            Integer iv = toInt(val)
+            if (isGrid) {
+                GridPane.setColumnIndex(n, iv)
+            } else {
+                tryCall(parent, "setColumnIndex", n, iv != null ? iv : val)
+            }
+        }
+
+        // row / rowIndex
+        val = attributes.remove("row") ?: attributes.remove("rowIndex")
+        if (val != null) {
+            Integer iv = toInt(val)
+            if (isGrid) {
+                GridPane.setRowIndex(n, iv)
+            } else {
+                tryCall(parent, "setRowIndex", n, iv != null ? iv : val)
+            }
+        }
+
+        // columnSpan aliases: columnSpan, colSpan, colspan, cols
+        val = attributes.remove("columnSpan") ?: attributes.remove("colSpan") ?: attributes.remove("colspan") ?: attributes.remove("cols")
+        if (val != null) {
+            Integer iv = toInt(val)
+            if (isGrid) {
+                GridPane.setColumnSpan(n, iv)
+            } else {
+                tryCall(parent, "setColumnSpan", n, iv != null ? iv : val)
+            }
+        }
+
+        // rowSpan aliases: rowSpan, rowspan, rows
+        val = attributes.remove("rowSpan") ?: attributes.remove("rowspan") ?: attributes.remove("rows")
+        if (val != null) {
+            Integer iv = toInt(val)
+            if (isGrid) {
+                GridPane.setRowSpan(n, iv)
+            } else {
+                tryCall(parent, "setRowSpan", n, iv != null ? iv : val)
+            }
+        }
+
+        // span shorthand: span: [colSpan, rowSpan] or span: colSpan
+        val = attributes.remove("span")
+        if (val != null) {
+            def cspan = null
+            def rspan = null
+            if (val instanceof List && val.size() >= 2) {
+                cspan = val[0]
+                rspan = val[1]
+            } else {
+                cspan = val
             }
 
-            // Vgrow
-            val = attributes.remove("vgrow");
-            if(val && parent.metaClass.respondsTo(parent, "setVgrow")) {
-                parent.setVgrow(node, doEnum(Priority, val));
-            } else if(val) {
-                VBox.setVgrow(node, doEnum(Priority, val))
+            Integer csi = toInt(cspan)
+            Integer rsi = toInt(rspan)
+
+            if (cspan != null) {
+                if (isGrid) GridPane.setColumnSpan(n, csi)
+                else tryCall(parent, "setColumnSpan", n, csi != null ? csi : cspan)
             }
+            if (rspan != null) {
+                if (isGrid) GridPane.setRowSpan(n, rsi)
+                else tryCall(parent, "setRowSpan", n, rsi != null ? rsi : rspan)
+            }
+        }
 
-            
-            // Margin
-            val = attributes.remove("margin");
-            if(val && parent.metaClass.respondsTo(parent, "setMargin"))
-                parent.setMargin(node, doInsets(val));
+        // Hgrow
+        val = attributes.remove("hgrow")
+        if (val != null) {
+            def p = (val instanceof Boolean) ? (val ? Priority.ALWAYS : Priority.NEVER) : doEnum.call(Priority, val)
+            if (isGrid) {
+                GridPane.setHgrow(n, p)
+            } else {
+                tryCall(parent, "setHgrow", n, p)
+            }
+            try {
+                HBox.setHgrow(n, p)
+            } catch (ignored) { }
+        }
 
-            // Alignment
-            val = attributes.remove("alignment");
-            if(val && parent.metaClass.respondsTo(parent, "setAlignment"))
-                parent.setAlignment(node, doEnum(Pos, val));
+        // Vgrow
+        val = attributes.remove("vgrow")
+        if (val != null) {
+            def p = (val instanceof Boolean) ? (val ? Priority.ALWAYS : Priority.NEVER) : doEnum.call(Priority, val)
+            if (isGrid) {
+                GridPane.setVgrow(n, p)
+            } else {
+                tryCall(parent, "setVgrow", n, p)
+            }
+            try {
+                VBox.setVgrow(n, p)
+            } catch (ignored) { }
+        }
+
+        // Margin
+        val = attributes.remove("margin")
+        if (val != null) {
+            def ins = doInsets.call(val)
+            if (isGrid) {
+                GridPane.setMargin(n, ins)
+            } else {
+                tryCall(parent, "setMargin", n, ins)
+            }
+        }
+
+        // Alignment
+        val = attributes.remove("alignment")
+        if (val != null) {
+            tryCall(parent, "setAlignment", n, doEnum.call(Pos, val))
+        }
+    }
+
+    private static void tryCall(def target, String method, Object... args) {
+        try {
+            target.invokeMethod(method, args)
+        } catch (MissingMethodException ignored) {
+            // parent doesn't support that constraint, ignore
         }
     }
 }
-

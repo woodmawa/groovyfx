@@ -172,11 +172,11 @@ class SceneGraphBuilder extends FactoryBuilderSupport {
         Platform.runLater(c);
         return this;
     }
-    
+
     boolean isFxApplicationThread() {
         Platform.isFxApplicationThread();
     }
-    
+
     protected Factory resolveFactory(Object name, Map attributes, Object value) {
         // First, see if parent factory has a factory,
         // if not, go to the builder.
@@ -192,7 +192,7 @@ class SceneGraphBuilder extends FactoryBuilderSupport {
         }else {
             factory =  super.resolveFactory(name, attributes, value);
         }
-        
+
         return factory
     }
 
@@ -234,7 +234,7 @@ class SceneGraphBuilder extends FactoryBuilderSupport {
                 wv.engine.loadWorker.stateProperty().addListener(listener);
             }
         }
-        
+
         if(Platform.isFxApplicationThread()) {
               submitClosure.call()
         }else {
@@ -311,7 +311,7 @@ class SceneGraphBuilder extends FactoryBuilderSupport {
 
         throw new MissingPropertyException("Unrecognized property: ${name}", name, this.class);
     }
-    
+
     Color rgb(int r, int g, int b) {
         Color.rgb(r,g,b);
     }
@@ -419,6 +419,7 @@ class SceneGraphBuilder extends FactoryBuilderSupport {
     void registerContainers() {
         registerFactory "scene", new SceneFactory(Scene)
         registerFactory 'stylesheets', new StylesheetFactory(List)
+        registerFactory 'stylesheet',  new StylesheetFactory(List)   // <-- add this alias
         registerFactory 'resource', new ResourceFactory()
 
         registerFactory 'pane', new ContainerFactory(Pane)
@@ -441,13 +442,13 @@ class SceneGraphBuilder extends FactoryBuilderSupport {
         registerFactory 'row', new GridRowColumnFactory(GridRow);
         registerFactory 'column', new GridRowColumnFactory(GridColumn);
 
-        registerFactory 'top',new BorderPanePositionFactory(BorderPanePosition)
-        registerFactory 'bottom', new BorderPanePositionFactory(BorderPanePosition)
-        registerFactory 'left', new BorderPanePositionFactory(BorderPanePosition)
-        registerFactory 'right', new BorderPanePositionFactory(BorderPanePosition)
-        registerFactory 'center', new BorderPanePositionFactory(BorderPanePosition)
+        registerFactory 'top',    new BorderPanePositionFactory('top')
+        registerFactory 'bottom', new BorderPanePositionFactory('bottom')
+        registerFactory 'left',   new BorderPanePositionFactory('left')
+        registerFactory 'right',  new BorderPanePositionFactory('right')
+        registerFactory 'center', new BorderPanePositionFactory('center')
     }
-    
+
     void registerCanvas() {
         CanvasFactory cf = new CanvasFactory();
         
@@ -620,19 +621,18 @@ class SceneGraphBuilder extends FactoryBuilderSupport {
         registerFactory 'passwordField', new ControlFactory(PasswordField)
         registerFactory 'progressBar', new ControlFactory(ProgressBar)
         registerFactory 'progressIndicator', new ControlFactory(ProgressIndicator)
-        registerFactory 'scrollPane', new ControlFactory(ScrollPane)
-
+        registerFactory 'scrollPane', new ScrollPaneFactory()
         registerFactory 'comboBox', new ControlFactory(ComboBox)
 
 
-        registerFactory 'accordion', new ControlFactory(Accordion)
+        registerFactory 'accordion', new AccordionFactory()
+        registerFactory 'splitPane', new SplitPaneFactory()
+        registerFactory 'tabPane', new TabPaneFactory()
         registerFactory 'titledPane', new ControlFactory(TitledPane)
-        registerFactory 'splitPane', new ControlFactory(SplitPane)
         registerFactory 'dividerPosition', new DividerPositionFactory(DividerPosition)
-        registerFactory 'tabPane', new ControlFactory(TabPane)
         registerFactory 'tab', new TabFactory(Tab)
-        registerFactory 'toolBar', new ControlFactory(ToolBar)
-        registerFactory 'buttonBar', new ControlFactory(ButtonBar)
+        registerFactory 'toolBar', new ToolBarFactory()
+        registerFactory 'buttonBar', new ButtonBarFactory()
         registerFactory 'datePicker', new ControlFactory(DatePicker)
         registerFactory 'spinner', new ControlFactory(Spinner)
 
@@ -782,19 +782,33 @@ class SceneGraphBuilder extends FactoryBuilderSupport {
 
         addPostNodeCompletionDelegate(postCompletionDelegate)
         addAttributeDelegate(NodeFactory.attributeDelegate)
-        //addAttributeDelegate(BindFactory.bindingAttributeDelegate)
         addAttributeDelegate(idDelegate)
 
-        Color.NamedColors.namedColors.put("groovyblue", Color.rgb(99, 152, 170))
+        // Public API only: define any special/legacy colors you want as variables
+        setVariable("groovyblue", Color.rgb(99, 152, 170))
+        setVariable("GROOVYBLUE", Color.rgb(99, 152, 170))
 
-        Color.NamedColors.namedColors.each { name, color ->
-            setVariable(name, color) // would love to remove this one
-            setVariable(name.toUpperCase(), color)
+        // Optional: a small compatibility set of common CSS color names
+        // (JavaFX Color.web supports standard CSS color names.)
+        def commonColorNames = [
+                "black","white","red","green","blue","yellow","cyan","magenta",
+                "gray","grey","lightgray","darkgray","orange","pink","purple","brown",
+                "transparent"
+        ]
+        commonColorNames.each { n ->
+            try {
+                def c = Color.web(n)
+                setVariable(n, c)
+                setVariable(n.toUpperCase(), c)
+            } catch (ignored) {
+                // ignore if a name isn't recognized in a given JavaFX version
+            }
         }
 
         propertyMap.each { name, value ->
             setVariable(name, value)
         }
     }
+
 }
 

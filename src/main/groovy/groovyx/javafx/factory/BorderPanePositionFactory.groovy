@@ -17,41 +17,41 @@
  */
 package groovyx.javafx.factory
 
+import groovy.util.AbstractFactory
+import groovy.util.FactoryBuilderSupport
+import javafx.scene.Node
 import javafx.scene.layout.BorderPane
-import org.codehaus.groovy.runtime.InvokerHelper
 
-/**
- *
- * @author jimclarke
- */
-class BorderPanePositionFactory extends AbstractFXBeanFactory {
-    
-    BorderPanePositionFactory() {
-        super(BorderPanePosition)
+class BorderPanePositionFactory extends AbstractFactory {
+
+    private final String region
+
+    BorderPanePositionFactory(String region) {
+        this.region = region
     }
-    BorderPanePositionFactory(Class<BorderPanePosition> beanClass) {
-        super(beanClass)
+
+    @Override
+    boolean isLeaf() { false }
+
+    @Override
+    boolean isHandlesNodeChildren() { true }
+
+    @Override
+    Object newInstance(FactoryBuilderSupport builder, Object name, Object value, Map attributes) {
+        return new BorderPanePosition(region: region)
     }
-    
-    public Object newInstance(FactoryBuilderSupport builder, Object name, Object value, Map attributes) throws InstantiationException, IllegalAccessException {
-       BorderPanePosition bpp = super.newInstance(builder, name, value, attributes);
-       bpp.property = name;
-       bpp;
-    }
-    
-    public void setChild( FactoryBuilderSupport builder, Object parent, Object child ) {
-         if (child instanceof javafx.scene.Node) parent.addNode(child);
-    }
-    
-    public void onNodeCompleted(FactoryBuilderSupport builder, Object parent, Object bpp) {
-        InvokerHelper.setProperty(parent, bpp.property, bpp.node);
-        if(bpp.align != null) {
-            BorderPane.setAlignment(bpp.node, bpp.align);
-        }
-        if(bpp.margin != null) {
-            BorderPane.setMargin(bpp.node, bpp.margin);
+
+    @Override
+    void setChild(FactoryBuilderSupport builder, Object parent, Object child) {
+        if (parent instanceof BorderPanePosition && child instanceof Node) {
+            parent.node = (Node) child
         }
     }
-    
+
+    @Override
+    void onNodeCompleted(FactoryBuilderSupport builder, Object parent, Object node) {
+        if (parent instanceof BorderPane && node instanceof BorderPanePosition) {
+            ((BorderPanePosition) node).applyTo((BorderPane) parent)
+        }
+    }
 }
-

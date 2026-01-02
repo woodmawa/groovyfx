@@ -23,6 +23,7 @@ import javafx.beans.value.ChangeListener
 import javafx.beans.value.ObservableValue
 import javafx.collections.FXCollections
 import javafx.collections.ObservableList
+import javafx.scene.Node
 import javafx.scene.control.ButtonBase
 import javafx.scene.control.ChoiceBox
 import javafx.scene.control.ContextMenu
@@ -38,10 +39,13 @@ import static groovyx.javafx.factory.ActionFactory.extractActionParams
 class LabeledFactory extends AbstractNodeFactory {
 
     LabeledFactory(Class beanClass) {
-        super(beanClass);
+        super(beanClass)
     }
 
-    public Object newInstance(FactoryBuilderSupport builder, Object name, Object value, Map attributes) throws InstantiationException, IllegalAccessException {
+    @Override
+    Object newInstance(FactoryBuilderSupport builder, Object name, Object value, Map attributes)
+            throws InstantiationException, IllegalAccessException {
+
         Action action = null
         Map actionParams = [:]
         if (value instanceof Action) {
@@ -57,55 +61,56 @@ class LabeledFactory extends AbstractNodeFactory {
         }
 
         if (value != null) {
-            control.text = value.toString()
+            try {
+                control.text = value.toString()
+            } catch (MissingPropertyException ignored) {
+                // not all Labeled-ish controls expose text the same way; ignore
+            }
         }
-        control
+        return control
     }
 
     @Override
     boolean onHandleNodeAttributes(FactoryBuilderSupport builder, Object node, Map attributes) {
         if (node instanceof ChoiceBox) {
-            List items = attributes.remove("items");
+            List items = attributes.remove("items")
             if (items) {
                 if (!(items instanceof ObservableList)) {
                     items = FXCollections.observableArrayList(items)
                 }
-
-                node.setItems(items);
+                node.items = items
             }
-
         }
         return super.onHandleNodeAttributes(builder, node, attributes)
     }
 
-
-    public void setChild(FactoryBuilderSupport builder, Object parent, Object child) {
+    @Override
+    void setChild(FactoryBuilderSupport builder, Object parent, Object child) {
         switch (child) {
             case Tooltip:
-                parent.tooltip = child;
-                break;
+                parent.tooltip = child
+                break
 
             case ContextMenu:
-                parent.contextMenu = child;
-                break;
+                parent.contextMenu = child
+                break
 
             case Node:
-                parent.graphic = child;
-                break;
+                parent.graphic = child
+                break
 
             case GroovyCallback:
                 if ((parent instanceof ChoiceBox) && (child.property == "onSelect")) {
                     parent.selectionModel.selectedItemProperty().addListener(new ChangeListener() {
-                        public void changed(final ObservableValue observable, final Object oldValue, final Object newValue) {
-                            builder.defer({child.closure.call(parent, newValue);});
+                        void changed(final ObservableValue observable, final Object oldValue, final Object newValue) {
+                            builder.defer({ child.closure.call(parent, newValue) })
                         }
-                    });
+                    })
                 }
-                break;
+                break
 
             default:
-                super.setChild(builder, parent, child);
+                super.setChild(builder, parent, child)
         }
     }
 }
-

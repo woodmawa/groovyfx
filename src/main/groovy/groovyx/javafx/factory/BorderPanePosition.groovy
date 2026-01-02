@@ -21,31 +21,37 @@ import javafx.geometry.Insets
 import javafx.geometry.Pos
 import javafx.scene.Group
 import javafx.scene.Node
+import javafx.scene.layout.BorderPane
 
 /**
- *
- * @author jimclarke
+ * Wrapper passed as a child of BorderPane; ContainerFactory consumes it.
  */
 class BorderPanePosition {
-    public String property;
-    public Pos align;
-    public Insets margin;
-    public List<Node> nodes = new ArrayList<Node>();
-        
-    public void addNode(Node node) {
-        nodes.add(node);
-    }
-    public Node getNode() {
-        switch(nodes.size()) {
-            case 0:
-                return null;
-            case 1:
-                return nodes.get(0);
+    String region
+    Node node
+
+    void applyTo(BorderPane pane) {
+        if (pane == null || node == null) return
+        switch ((region ?: "").toLowerCase()) {
+            case "top":
+                pane.top = node
+                break
+            case "bottom":
+                pane.bottom = node
+                break
+            case "left":
+                pane.left = node
+                break
+            case "right":
+                pane.right = node
+                break
+            case "center":
+                pane.center = node
+                break
             default:
-                Group grp = new Group();
-                grp.getChildren().setAll(nodes);
-                return grp;
+                // Unknown region -> default to center for compatibility
+                pane.center = node
+                break
         }
     }
 }
-

@@ -16,42 +16,43 @@
  * limitations under the License.
  */
 package groovyx.javafx.factory
+
 /**
+ * StylesheetFactory - represents a stylesheet reference.
  *
- * @author jimclarke
+ * Parents (SceneFactory/StageFactory) consume StylesheetRef and add it to
+ * stylesheets collections.
  */
 class StylesheetFactory extends AbstractFXBeanFactory {
-    
-    StylesheetFactory() {
-        super(List, true)
+
+    StylesheetFactory(Class beanClass) {
+        super(beanClass)
     }
-    StylesheetFactory(Class<List> beanClass) {
-        super(beanClass, true)
+
+    @Override
+    Object newInstance(FactoryBuilderSupport builder, Object name, Object value, Map attributes)
+            throws InstantiationException, IllegalAccessException {
+
+        def url = value ?: attributes.remove("url") ?: attributes.remove("href") ?: attributes.remove("value")
+        if (url == null) {
+            throw new IllegalArgumentException(
+                    "stylesheet requires a url/value (e.g., stylesheet('app.css') or stylesheet(url:'app.css'))"
+            )
+        }
+        return new StylesheetRef(url.toString())
     }
-    public Object newInstance(FactoryBuilderSupport builder, Object name, Object value, Map attributes)
-        throws InstantiationException, IllegalAccessException {
-        if (checkValue(name, value)) {
-            return value
-        }
-        
-        def result = [];
-        switch(value) {
-            case GString:
-                result << value as String
-                break;
-            case String:
-                result << value
-                break;
-            case URL:
-                result << value.toExternalForm()
-                break;
-            case URI:
-                result << value.toURL().toExternalForm();
-                break;
-            default:
-                throw new RuntimeException("In $name value argument must be a List of Strings, a String, a URL, or a URI class");
-        }
-        result
+
+    // Defensive: even if someone nests nodes under stylesheet { ... },
+    // just ignore them instead of letting builder try to wire children.
+    @Override
+    void setChild(FactoryBuilderSupport builder, Object parent, Object child) {
+        // no-op
     }
 }
 
+/** Wrapper so we don’t confuse CSS strings with other Strings (like stage title). */
+class StylesheetRef {
+    final String url
+    StylesheetRef(String url) { this.url = url }
+    @Override String toString() { url }
+}

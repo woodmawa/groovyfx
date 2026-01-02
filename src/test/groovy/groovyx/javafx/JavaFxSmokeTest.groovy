@@ -42,7 +42,8 @@ class JavaFxSmokeTest extends Specification {
         cleanup:
         // Ensure the platform can exit (prevents leaked threads in some environments)
         try {
-            Platform.exit()
+            //don't call .exit() in tests
+            //Platform.exit()
         } catch (Throwable ignored) {
             // safe: platform may already be stopped
         }

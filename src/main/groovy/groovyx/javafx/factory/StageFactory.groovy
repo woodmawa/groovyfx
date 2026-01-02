@@ -17,118 +17,85 @@
  */
 package groovyx.javafx.factory
 
-import groovyx.javafx.event.GroovyEventHandler
-import javafx.event.EventHandler
-import javafx.stage.FileChooser
-import javafx.stage.Popup
+import javafx.scene.Scene
 import javafx.stage.Stage
-import javafx.stage.StageStyle
 
 /**
+ * StageFactory - creates a JavaFX Stage and wires Scene/stylesheets.
  *
- * @author jimclarke
+ * Headless-safe: does NOT call show().
  */
-class StageFactory extends AbstractFXBeanFactory {
-    
-    public StageFactory(Class beanClass) {
+class StageFactory extends AbstractNodeFactory {
+
+    private static final String PENDING_STYLESHEETS_KEY = "__pendingStageStylesheets"
+
+    StageFactory(Class beanClass) {
         super(beanClass)
     }
 
-    public Object newInstance(FactoryBuilderSupport builder, Object name, Object value, Map attributes)
+    @Override
+    Object newInstance(FactoryBuilderSupport builder, Object name, Object value, Map attributes)
             throws InstantiationException, IllegalAccessException {
-                if(Stage.isAssignableFrom(beanClass)) {
-                    return handleStage(builder, name, value, attributes)
+
+        Stage stage = (Stage) super.newInstance(builder, name, value, attributes)
+
+        // Convenience: stage("Title") { ... }
+        if (value != null && !(value instanceof Stage)) {
+            stage.title = value.toString()
+        }
+        return stage
+    }
+
+    @Override
+    void setChild(FactoryBuilderSupport builder, Object parent, Object child) {
+        switch (child) {
+            case Scene:
+                parent.scene = child
+                applyPendingStylesheets(parent)
+                break
+
+            case StylesheetRef:
+                addStageStylesheet(parent, child.url)
+                break
+
+            case String:
+                if (looksLikeStylesheet(child)) {
+                    addStageStylesheet(parent, child)
+                } else {
+                    parent.title = child
                 }
-                def window = super.newInstance(builder, name, value, attributes)
-                def id = attributes.remove("id");
-                if(id != null) {
-                    if(id != null)
-                        builder.getVariables().put(id, window);
-                }
-                if( ! FileChooser.isAssignableFrom(beanClass)) {
-                    def onHidden = attributes.remove("onHidden");
-                    if(onHidden != null) {
-                        window.onHidden = onHidden as EventHandler;
-                    }
-                    def onHidding = attributes.remove("onHidding");
-                    if(onHidding != null) {
-                        window.onHidding = onHidding as EventHandler;
-                    }
-                    def onShowing = attributes.remove("onShowing");
-                    if(onShowing != null) {
-                        window.onShowing = onShowing as EventHandler;
-                    }
-                    def onShown = attributes.remove("onShown");
-                    if(onShown != null) {
-                        window.onShown = onShown as EventHandler;
-                    }
-                }
+                break
 
-        return window;
-    }
-    
-    private Stage handleStage(FactoryBuilderSupport builder, Object name, Object value, Map attributes) {
-        def window = null;
-        def style = attributes.remove("style")
-        if(style == null) {
-            style = StageStyle.DECORATED;
-        }
-        if(style instanceof String) {
-            style = StageStyle.valueOf(style.toUpperCase())
-        }
-        def centerOnScreen = attributes.remove("centerOnScreen");
-        builder.context.put("centerOnScreen", centerOnScreen);
-
-        def show = attributes.remove("show");
-        if(show == null)
-            show = attributes.remove("visible");
-        builder.context.put("show", show);
-
-        def primary = attributes.remove("primary");
-        if(primary == null)
-            primary = true;
-
-        if (checkValue(name, value)) {
-            window = value
-        } else if (primary && builder.variables.primaryStage != null) {
-            window = builder.variables.primaryStage;
-            window.initStyle(style)
-        } else {
-            window = new Stage(style)
-            if(primary)
-                builder.variables.primaryStage = window;
-        }
-        
-        def id = attributes.remove("id");
-        if(id != null) {
-            builder.getVariables().put(id, window);
-        }
-        window;
-    }
-
-    public void setChild(FactoryBuilderSupport build, Object parent, Object child) {
-        if(parent instanceof Popup) {
-            parent.content.add(child);
-        }else if(parent instanceof FileChooser && child instanceof FileChooser.ExtensionFilter) {
-            parent.getExtensionFilters().add(child);
-        }else if (child instanceof GroovyEventHandler) {
-            FXHelper.setPropertyOrMethod(parent, child.property, child) 
+            default:
+                super.setChild(builder, parent, child)
         }
     }
 
-    public void onNodeCompleted(FactoryBuilderSupport builder, Object parent, Object node) {
-        if(node instanceof Stage) {
-            if(node.getWidth() == -1)
-                node.sizeToScene();
-            if(builder.context.centerOnScreen) {
-                node.centerOnScreen();
-            }
-            if (builder.context.show) {
-                node.show();
-            }
+    private static void addStageStylesheet(Stage stage, String url) {
+        if (stage.scene != null) {
+            stage.scene.stylesheets.add(url)
+            return
         }
-
+        // No real scene yet: queue it on stage properties
+        def props = stage.properties
+        def pending = (List<String>) props.get(PENDING_STYLESHEETS_KEY)
+        if (pending == null) {
+            pending = []
+            props.put(PENDING_STYLESHEETS_KEY, pending)
+        }
+        pending.add(url)
     }
 
+    private static void applyPendingStylesheets(Stage stage) {
+        if (stage.scene == null) return
+        def pending = (List<String>) stage.properties.remove(PENDING_STYLESHEETS_KEY)
+        if (pending) {
+            stage.scene.stylesheets.addAll(pending)
+        }
+    }
+
+    private static boolean looksLikeStylesheet(String s) {
+        def v = s?.toLowerCase()
+        return v?.endsWith(".css") || v?.startsWith("data:text/css") || v?.startsWith("http://") || v?.startsWith("https://")
+    }
 }
-

@@ -49,152 +49,180 @@ import javafx.scene.control.TreeView
  */
 class ControlFactory extends AbstractNodeFactory {
 
-    public ControlFactory(Class beanClass) {
-        super(beanClass);
+    ControlFactory(Class beanClass) {
+        super(beanClass)
     }
 
-    public Object newInstance(FactoryBuilderSupport builder, Object name, Object value, Map attributes) throws InstantiationException, IllegalAccessException {
-        Control control = super.newInstance(builder, name, value, attributes);
-        if(value != null) {
-              control.text = value.toString();
+    @Override
+    Object newInstance(FactoryBuilderSupport builder, Object name, Object value, Map attributes)
+            throws InstantiationException, IllegalAccessException {
+
+        Control control = (Control) super.newInstance(builder, name, value, attributes)
+
+        if (value != null) {
+            // Controls that expose text should get a reasonable default
+            try {
+                control.text = value.toString()
+            } catch (MissingPropertyException ignored) {
+                // some Controls don't have text; ignore
+            }
         }
-        if(SplitPane.isAssignableFrom(beanClass)) {
-             handleSplitPane(builder)
+
+        // BUGFIX: isAssignableFrom must be called on SplitPane.class
+        if (SplitPane.class.isAssignableFrom(beanClass)) {
+            handleSplitPane(builder)
         }
-        control;
+
+        return control
     }
-    
+
     private void handleSplitPane(builder) {
-        def cntx = builder.getContext();
-        List dividers = cntx.get(SceneGraphBuilder.CONTEXT_DIVIDER_KEY);
+        def cntx = builder.getContext()
+        List dividers = cntx.get(SceneGraphBuilder.CONTEXT_DIVIDER_KEY)
         if (dividers == null) {
-            cntx.put(SceneGraphBuilder.CONTEXT_DIVIDER_KEY, new ArrayList());
+            cntx.put(SceneGraphBuilder.CONTEXT_DIVIDER_KEY, new ArrayList())
         } else if (!dividers.isEmpty()) {
-            dividers.clear();
+            dividers.clear()
         }
     }
 
-    public void setChild(FactoryBuilderSupport builder, Object parent, Object child) {
-        switch(child) {
+    @Override
+    void setChild(FactoryBuilderSupport builder, Object parent, Object child) {
+        switch (child) {
             case Tooltip:
-                parent.setTooltip(child);
-                break;
+                parent.tooltip = child
+                break
+
             case GroovyCallback:
-                if(child.property == "onSelect") {
-                    switch(parent) {
+                if (child.property == "onSelect") {
+                    switch (parent) {
                         case ListView:
                         case ComboBox:
                         case DatePicker:
                         case TabPane:
                         case TreeView:
                             parent.selectionModel.selectedItemProperty().addListener(new ChangeListener() {
-                                public void changed(final ObservableValue observable, final Object oldValue, final Object newValue) {
-                                    builder.defer({child.closure.call(parent, newValue);});
+                                void changed(final ObservableValue observable, final Object oldValue, final Object newValue) {
+                                    builder.defer({ child.closure.call(parent, newValue) })
                                 }
-                            }); 
-                            break;
+                            })
+                            break
                         default:
-                            break;
+                            break
                     }
-                 } else if(child.property == "cellFactory") {
-                     switch(parent) {
-                         case ListView:
-                         case ComboBox:
-                         case DatePicker:
-                         case TreeView:
+                } else if (child.property == "cellFactory") {
+                    switch (parent) {
+                        case ListView:
+                        case ComboBox:
+                        case DatePicker:
+                        case TreeView:
                             parent.cellFactory = child
-                            break;
-                         default:
-                            break;
-                     }
-                 }
-                 break;
+                            break
+                        default:
+                            break
+                    }
+                }
+                break
+
             case ContextMenu:
-                parent.contextMenu = contextMenu;
-                break;
+                // BUGFIX: was assigning undefined variable 'contextMenu'
+                parent.contextMenu = child
+                break
+
             default:
-                switch(parent) {
+                switch (parent) {
                     case ScrollPane:
-                        parent.content = child;
-                        break;
+                        parent.content = child
+                        break
+
                     case TableView:
-                        if(child instanceof List)
-                            parent.columns.addAll(child);
+                        if (child instanceof List)
+                            parent.columns.addAll(child)
                         else if (child instanceof TableColumn)
-                            parent.columns.add(child);
-                        break;
+                            parent.columns.add(child)
+                        break
+
                     case Accordion:
                         if (child instanceof List)
-                            parent.panes.addAll(child);
+                            parent.panes.addAll(child)
                         else if (child instanceof TitledPane)
-                            parent.panes.add(child);
-                        break;
+                            parent.panes.add(child)
+                        break
+
                     case TitledPane:
-                        switch(child) {
+                        switch (child) {
                             case Node:
-                                parent.content = child;
+                                parent.content = child
                                 break
                             case TitledNode:
                                 child.pane = parent
-                                break;
+                                break
                             case TitledContent:
                                 child.pane = parent
                                 break
-                        }   
-                        break;
+                        }
+                        break
+
                     case SplitPane:
                         if (child instanceof Node) {
-                            parent.items.add(child);
+                            parent.items.add(child)
                         } else if (child instanceof List) {
-                            parent.items.addAll(child);
+                            parent.items.addAll(child)
                         } else if (child instanceof DividerPosition) {
-                            List dividers = builder.parentContext.get(SceneGraphBuilder.CONTEXT_DIVIDER_KEY);
-                            dividers.add(child);
+                            List dividers = builder.parentContext.get(SceneGraphBuilder.CONTEXT_DIVIDER_KEY)
+                            dividers.add(child)
                         }
-                        break;
+                        break
+
                     case ToolBar:
                         if (child instanceof List)
-                            parent.items.addAll(child);
+                            parent.items.addAll(child)
                         else if (child instanceof Node)
-                            parent.items.add(child);
-                        break;
+                            parent.items.add(child)
+                        break
+
                     case TabPane:
-                        if(child instanceof Tab) {
-                            parent.tabs.add(child);
-                        }else {
-                            super.setChild(builder, parent, child);
+                        if (child instanceof Tab) {
+                            parent.tabs.add(child)
+                        } else {
+                            super.setChild(builder, parent, child)
                         }
-                        break;
+                        break
+
                     case TreeView:
                         if (child instanceof TreeItem) {
                             parent.root = child
                         } else if (child instanceof GroovyEventHandler) {
                             FXHelper.setPropertyOrMethod(parent, child.property, child)
                         }
-                        break;
+                        break
+
                     case ButtonBar:
                         if (child instanceof Button) {
                             parent.buttons.add(child)
                         } else if (child instanceof List) {
                             parent.buttons.addAll(child)
                         }
+                        // (intentional fallthrough to default? no)
+                        break
+
                     default:
-                        super.setChild(builder, parent, child);
-                        break;
+                        super.setChild(builder, parent, child)
+                        break
                 }
                 break
         }
     }
 
-    public void onNodeCompleted(FactoryBuilderSupport builder, Object parent, Object child) {
+    @Override
+    void onNodeCompleted(FactoryBuilderSupport builder, Object parent, Object child) {
         if (child instanceof SplitPane) {
-            def cntx = builder.getContext();
-            List dividers = cntx.get(SceneGraphBuilder.CONTEXT_DIVIDER_KEY);
-            dividers.each {div ->
-                child.setDividerPosition(div.index, div.position);
+            def cntx = builder.getContext()
+            List dividers = cntx.get(SceneGraphBuilder.CONTEXT_DIVIDER_KEY)
+            dividers.each { div ->
+                child.setDividerPosition(div.index, div.position)
             }
-            dividers.clear();
+            dividers.clear()
         }
     }
 }
-
