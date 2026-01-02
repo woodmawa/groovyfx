@@ -29,7 +29,7 @@ import org.codehaus.groovy.runtime.InvokerHelper;
  * @author Dierk Koenig added the default delegate
  */
 public class GroovyFX extends Application {
-    public static Closure closure;
+    public static Closure<Object> closure;
 
     static {
         new JFXPanel();
@@ -50,7 +50,7 @@ public class GroovyFX extends Application {
      * @param buildMe The code that is to be built in the context of a SceneGraphBuilder for the primary
      *                stage and started
      */
-     public static void start(Closure buildMe) {
+     public static void start(Closure<Object> buildMe) {
          closure = buildMe;
          Application.launch();
      }
