@@ -57,7 +57,6 @@ javafx {
             'javafx.graphics',
             'javafx.controls',
             'javafx.fxml',
-            'javafx.swing',
             'javafx.web',
             'javafx.media'
     ]
@@ -98,7 +97,7 @@ dependencies {
     api "org.apache.groovy:groovy"
 
     // TEMP: SceneGraphBuilder imports groovy.swing.*; keep until we refactor it out
-    implementation "org.apache.groovy:groovy-swing"
+    //implementation "org.apache.groovy:groovy-swing"
 
     // JavaFX dependencies are supplied by org.openjfx plugin via the 'javafx { }' block
 

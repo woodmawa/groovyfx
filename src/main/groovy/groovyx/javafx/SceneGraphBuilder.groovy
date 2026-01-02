@@ -17,7 +17,7 @@
  */
 package groovyx.javafx
 
-import groovy.swing.factory.CollectionFactory
+import groovyx.javafx.factory.CollectionFactory
 import groovyx.javafx.animation.TargetHolder
 import groovyx.javafx.canvas.*
 import groovyx.javafx.event.GroovyCallback
