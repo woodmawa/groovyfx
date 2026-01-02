@@ -198,6 +198,7 @@ class B5SceneGraphBuilderContainersSmokeSpec extends Specification {
         given:
         TitledPane tp
 
+
         when:
         FxTestSupport.runFx {
             def b = new SceneGraphBuilder()
