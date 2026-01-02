@@ -32,7 +32,7 @@ version = (findProperty('version') ?: '0.0.0-SNAPSHOT') as String
 
 java {
     toolchain {
-        languageVersion = JavaLanguageVersion.of(25)
+        languageVersion = JavaLanguageVersion.of(21)
     }
     withJavadocJar()
     withSourcesJar()
