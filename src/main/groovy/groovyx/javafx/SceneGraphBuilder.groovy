@@ -121,6 +121,10 @@ import javafx.stage.Stage
 import javafx.stage.Window
 import org.codehaus.groovy.runtime.MethodClosure
 
+import groovyx.javafx.spi.SceneGraphAddon
+import java.util.ServiceLoader
+
+
 import java.util.logging.Logger
 
 /**
@@ -171,6 +175,18 @@ class SceneGraphBuilder extends FactoryBuilderSupport {
         }
         Platform.runLater(c);
         return this;
+    }
+
+    private void loadAddons() {
+        ServiceLoader.load(SceneGraphAddon, this.class.classLoader).each { addon ->
+            try {
+                LOG.info("load any component addons, via the spi ...")
+                addon.apply(this)
+            } catch (Throwable t) {
+                LOG.warning("Failed to load SceneGraphAddon ${addon?.class?.name}: ${t.message}")
+                // optionally rethrow if you want strict behavior
+            }
+        }
     }
 
     boolean isFxApplicationThread() {
@@ -661,6 +677,14 @@ class SceneGraphBuilder extends FactoryBuilderSupport {
         registerFactory "onEditStart", new ClosureHandlerFactory(GroovyEventHandler)
     }
 
+    /**
+     * Register a node name that maps to a class with a static build(builder, attrs, body) method
+     * OR a no-arg constructor returning a Node.
+     */
+    void registerComponent(String name, Class componentClass) {
+        registerFactory(name, new ComponentClassFactory(componentClass))
+    }
+
     void registerEffects() {
 
         // Dummy node for attaching child effects
@@ -808,6 +832,9 @@ class SceneGraphBuilder extends FactoryBuilderSupport {
         propertyMap.each { name, value ->
             setVariable(name, value)
         }
+
+        // NEW: discover external component libraries
+        loadAddons()
     }
 
 }

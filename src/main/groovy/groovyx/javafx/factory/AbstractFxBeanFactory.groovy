@@ -20,10 +20,12 @@ package groovyx.javafx.factory
 /**
  *
  * @author jimclarke
+ *
+ * @author adjusted bil Will Woodman making leaf protected
  */
 class AbstractFXBeanFactory extends AbstractFactory {
     final Class beanClass
-    final boolean leaf
+    protected boolean leaf
     
     Map<String, Factory> childFactories;
 

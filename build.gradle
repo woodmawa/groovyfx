@@ -18,6 +18,9 @@
 /*
  * SPDX-License-Identifier: Apache-2.0
  */
+
+import org.asciidoctor.gradle.jvm.AsciidoctorTask
+
 plugins {
     id 'groovy'
     id 'java-library'
@@ -29,6 +32,8 @@ plugins {
     id 'signing'
     // Root-project plugin that manages Sonatype staging repositories + publish/close/release automation
     id 'io.github.gradle-nexus.publish-plugin' version '2.0.0'
+
+    id "org.asciidoctor.jvm.convert" version "4.0.5"
 
 }
 
@@ -47,6 +52,44 @@ tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8'
     // JavaFX 25 requires JDK 23+, so target 23 bytecode for widest compatibility.
     options.release = 23
+}
+
+asciidoctorj {
+    // try bumping JRuby; exact chosen version may still be higher due to transitive deps
+    jrubyVersion = "10.0.0.0"
+}
+
+// Configure the generated 'asciidoctor' task explicitly
+tasks.named("asciidoctor", AsciidoctorTask).configure { t ->
+    t.sourceDir = layout.projectDirectory.dir("src/docs/asciidoc").asFile
+
+    t.sources {
+        include("**/*.adoc")
+        // or only the guide:
+        // include("component_authoring_guide.adoc")
+    }
+
+    t.outputDir = layout.buildDirectory.dir("docs/asciidoc").get().asFile
+
+    t.baseDirFollowsSourceDir()
+
+    t.resources {
+        from(t.sourceDir) {
+            include("images/**")
+            include("css/**")
+        }
+    }
+
+    // Use your custom stylesheet in src/docs/asciidoc/css/style.css
+    t.attributes(
+            "stylesheet": "style.css",
+            "stylesdir": "css"
+    )
+}
+
+// Optional: generate docs as part of build
+tasks.named("build").configure {
+    dependsOn(tasks.named("asciidoctor"))
 }
 
 jacoco {
@@ -392,3 +435,5 @@ tasks.register('publishToMavenCentral') {
         finalizedBy 'closeAndReleaseSonatypeStagingRepository'
     }
 }
+
+

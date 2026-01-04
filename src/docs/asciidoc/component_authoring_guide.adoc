@@ -1,0 +1,308 @@
+= GroovyFX Component Authoring Guide
+:revnumber: {project-version}
+:toc:
+:toclevels: 3
+:sectnums:
+:source-highlighter: pygments
+:icons: font
+:doctype: book
+
+== What is a GroovyFX component?
+
+A *GroovyFX component* is a reusable UI building block that:
+
+* is published as a JAR (a normal dependency),
+* registers itself into the GroovyFX `SceneGraphBuilder`,
+* becomes available to applications as a new builder node name.
+
+This enables a workflow where:
+
+. Component authors build reusable UI pieces in a separate project
+. Application authors add the component JAR as a dependency
+. Components are automatically discovered and available in builder scripts
+
+== How components are discovered
+
+GroovyFX supports a small plugin/SPI (service provider interface) that allows external JARs to register new factories into the `SceneGraphBuilder`.
+
+At runtime:
+
+. A `SceneGraphBuilder` initializes its built-in factories
+. It then loads `SceneGraphAddon` implementations using Java `ServiceLoader`
+. Each addon registers one or more component nodes (usually via factories)
+
+[NOTE]
+====
+If a component JAR is on the application's classpath, and it includes the correct `META-INF/services/...` entry, the component nodes should appear automatically.
+====
+
+== Quick start: create a component library project
+
+A component library is just a normal Gradle project that depends on GroovyFX.
+
+.Example `build.gradle`
+[source,groovy]
+----
+plugins {
+  id 'groovy'
+  id 'java-library'
+  id 'maven-publish'
+}
+
+repositories {
+  mavenCentral()
+  mavenLocal() // helpful during development
+}
+
+dependencies {
+  api "org.groovyfx:groovyfx:<VERSION>"
+}
+
+java {
+  withSourcesJar()
+  withJavadocJar()
+}
+----
+
+== Step 1: Implement an addon
+
+Create a class that implements the addon SPI and registers your component nodes.
+
+.Example addon: `com.acme.widgets.AcmeWidgetsAddon`
+[source,groovy]
+----
+package com.acme.widgets
+
+import groovyx.javafx.SceneGraphBuilder
+import groovyx.javafx.spi.SceneGraphAddon
+
+class AcmeWidgetsAddon implements SceneGraphAddon {
+
+  @Override
+  void apply(SceneGraphBuilder builder) {
+    // Option A: register as a class-backed component node
+    builder.registerComponentNode("acmePanel", AcmePanel)
+
+    // Option B: register as an explicit factory (classic approach)
+    // builder.registerFactory("acmePanel", new AcmePanelFactory())
+  }
+}
+----
+
+== Step 2: Provide the ServiceLoader registration file
+
+Add the following file to your component project:
+
+`src/main/resources/META-INF/services/groovyx.javafx.spi.SceneGraphAddon`
+
+Its contents must be the fully-qualified addon class name:
+
+[source,text]
+----
+com.acme.widgets.AcmeWidgetsAddon
+----
+
+This is how Java `ServiceLoader` discovers your addon at runtime.
+
+== Authoring components
+
+There are two recommended styles:
+
+* *Class-backed components* (easy authoring; uses `ComponentClassFactory`)
+* *Factory-backed components* (classic GroovyFX style; maximum control)
+
+=== Style A: Class-backed component nodes (recommended)
+
+When you register a component using:
+
+[source,groovy]
+----
+builder.registerComponentNode("acmePanel", AcmePanel)
+----
+
+GroovyFX binds the name `acmePanel` into the builder.
+
+Your component class can be authored in one of these patterns.
+
+==== Pattern A1: static `build(builder, attrs, body)` (most powerful)
+
+[source,groovy]
+----
+package com.acme.widgets
+
+import groovy.util.FactoryBuilderSupport
+import javafx.scene.Node
+
+class AcmePanel {
+
+  static Node build(FactoryBuilderSupport b, Map attrs, Closure body) {
+    b.vbox(spacing: 8) {
+      if (attrs.title) {
+        label(text: attrs.title.toString())
+      }
+      if (body != null) {
+        body.call()
+      }
+    }
+  }
+}
+----
+
+Use this style if you want the component to build and own its internal node tree.
+
+==== Pattern A2: `class extends Node` + optional `configure(attrs, body)`
+
+[source,groovy]
+----
+package com.acme.widgets
+
+import javafx.scene.control.Label
+import javafx.scene.layout.VBox
+
+class AcmePanel extends VBox {
+
+  void configure(Map attrs, Closure body) {
+    spacing = 8
+    if (attrs.title) {
+      children.add(new Label(attrs.title.toString()))
+    }
+    if (body != null) {
+      def c = body.rehydrate(this, body.owner, body.thisObject)
+      c.resolveStrategy = Closure.DELEGATE_FIRST
+      c.call()
+    }
+  }
+}
+----
+
+Use this style when your component is naturally a custom container type.
+
+==== Using the component in an application
+
+[source,groovy]
+----
+def sgb = new groovyx.javafx.SceneGraphBuilder()
+
+sgb.stage(title: "Demo", visible: true) {
+  scene(width: 600, height: 400) {
+    acmePanel(title: "Reusable Component") {
+      label(text: "Hello from app")
+    }
+  }
+}
+----
+
+[IMPORTANT]
+====
+A component must ultimately produce a `javafx.scene.Node`.
+====
+
+=== Style B: Factory-backed components (classic approach)
+
+If you want maximum control over child semantics, attributes, and how children are attached, create a custom factory and register it.
+
+.Example factory: `AcmePanelFactory`
+[source,groovy]
+----
+package com.acme.widgets
+
+import groovy.util.FactoryBuilderSupport
+import groovyx.javafx.factory.AbstractFXBeanFactory
+import javafx.scene.control.Label
+import javafx.scene.layout.VBox
+
+class AcmePanelFactory extends AbstractFXBeanFactory {
+
+  AcmePanelFactory() {
+    super(VBox, false) // leaf=false so it can accept children
+  }
+
+  @Override
+  Object newInstance(FactoryBuilderSupport builder, Object name, Object value, Map attributes) {
+    def attrs = new LinkedHashMap(attributes ?: [:])
+    def title = attrs.remove("title")
+
+    VBox box = new VBox()
+    box.spacing = 8
+
+    if (title != null) {
+      box.children.add(new Label(title.toString()))
+    }
+
+    return box
+  }
+}
+----
+
+Register it in the addon:
+
+[source,groovy]
+----
+builder.registerFactory("acmePanel", new AcmePanelFactory())
+----
+
+== Child handling and when to customize it
+
+Most components that return a JavaFX container node (like `VBox`, `HBox`, `Pane`, `BorderPane`, `Group`) can rely on GroovyFX's existing child attachment behavior.
+
+You may need custom handling if:
+
+* your component is *not* a container but still needs children,
+* children should be routed into an internal "slot" (header/body/footer),
+* you want strict child type rules,
+* you want to interpret children as configuration rather than UI nodes.
+
+In those cases, prefer a factory-backed component (Style B), or extend the class-backed system with a custom factory that implements the child routing logic.
+
+== Publishing and consumption
+
+=== Local development
+
+To test locally:
+
+. Publish the component library to Maven local
+. Consume it from an app that uses `mavenLocal()`
+
+[source,bash]
+----
+./gradlew publishToMavenLocal
+----
+
+=== Using from an application
+
+Add the dependency:
+
+[source,groovy]
+----
+dependencies {
+  implementation "org.groovyfx:groovyfx:<VERSION>"
+  implementation "com.acme:acme-widgets:1.0.0"
+}
+----
+
+Then use the component node in the builder.
+
+== Troubleshooting
+
+=== "Component node name not found"
+
+Checklist:
+
+* Is the component JAR on the runtime classpath?
+* Does it contain `META-INF/services/groovyx.javafx.spi.SceneGraphAddon`?
+* Does the file list the correct fully-qualified addon class name?
+* Does your addon `apply(builder)` register the component name?
+
+=== Java / JavaFX compatibility
+
+JavaFX versions require a minimum Java runtime level. Ensure the Java version you target and the JavaFX version you depend on are compatible.
+
+If you build GroovyFX using a modern toolchain but want users to run on a lower Java version, set `--release` accordingly.
+
+== Recommendations for component authors
+
+* Keep component attribute names stable over time.
+* Document any required attributes clearly.
+* Prefer returning simple container nodes unless you truly need custom Node types.
+* Avoid mutating the original attributes map passed by the builder; copy it first.
+* Write at least one small demo application that uses your component JAR.
