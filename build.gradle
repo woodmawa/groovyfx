@@ -24,6 +24,7 @@ import org.asciidoctor.gradle.jvm.AsciidoctorTask
 plugins {
     id 'groovy'
     id 'java-library'
+    id 'application'
     id 'idea'
     id 'jacoco'
     id 'org.openjfx.javafxplugin' version '0.1.0'
@@ -48,10 +49,67 @@ java {
     withSourcesJar()
 }
 
+/**
+ * AST bootstrap:
+ * - compileAstGroovy must produce FXBindable + FXBindableASTTransformation before main sources compile
+ * - Avoid compileAstJava/compileAstGroovy cycles by doing JOINT compilation in compileAstGroovy:
+ *   * ast Groovy srcDirs include src/ast/groovy AND src/ast/java (so Java AST transform compiles there)
+ *   * ast Java srcDirs is EMPTY (so compileAstJava is NO-SOURCE)
+ */
+sourceSets {
+    ast {
+        groovy.srcDirs = ['src/ast/groovy', 'src/ast/java']
+        java.srcDirs   = [] // critical: prevents compileAstJava sources & avoids task cycles
+        resources.srcDirs = ['src/ast/resources']
+
+        // allow AST compilation to reuse normal dependencies if needed
+        compileClasspath += sourceSets.main.compileClasspath
+        runtimeClasspath += output + compileClasspath
+    }
+    demo {
+        groovy {
+            srcDirs = ['src/demo/groovy']
+            include 'examples/**'
+        }
+        resources.srcDirs = ['src/demo/resources']
+        compileClasspath += sourceSets.main.output + sourceSets.main.compileClasspath
+        runtimeClasspath += output + compileClasspath + sourceSets.main.runtimeClasspath
+    }
+}
+
+// Add JavaFX to the demo source set configurations
+javafx.configurations.each {
+    configurations.getByName("demo${it.capitalize()}").extendsFrom(configurations.getByName(it))
+}
+
+configurations {
+    astImplementation.extendsFrom implementation
+    astCompileOnly.extendsFrom compileOnly
+    astRuntimeOnly.extendsFrom runtimeOnly
+
+    demoImplementation.extendsFrom implementation
+}
+
+// Move these after demoImplementation is defined
+
+application {
+    mainClass = 'examples.ModernDashboard'
+}
+
+// Ensure the IDE recognizes the demo source set
+idea {
+    module {
+        sourceDirs += sourceSets.demo.groovy.srcDirs
+        resourceDirs += sourceSets.demo.resources.srcDirs
+        // Make sure dependencies are included in the module
+        scopes.COMPILE.plus += [configurations.demoImplementation]
+    }
+}
+
 tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8'
-    // JavaFX 25 requires JDK 23+, so target 23 bytecode for widest compatibility.
-    options.release = 23
+    // JavaFX 25 requires JDK 23+, so target 25 bytecode for latest features and matching toolchain.
+    options.release = 25
 }
 
 asciidoctorj {
@@ -91,8 +149,7 @@ tasks.named("asciidoctor", AsciidoctorTask).configure { t ->
 tasks.withType(JavaExec).configureEach {
     jvmArgs += [
         '--enable-native-access=ALL-UNNAMED',
-        '--enable-native-access=javafx.graphics',
-        '-Djavafx.verbose=true'
+        '--enable-native-access=javafx.graphics'
     ]
     // Ensure JavaFX is on the module path
     doFirst {
@@ -107,14 +164,14 @@ tasks.withType(JavaExec).configureEach {
 task ModernDashboard(type: JavaExec) {
     group = "Examples"
     description = "Runs the Modern Dashboard example"
-    classpath = sourceSets.main.runtimeClasspath
+    classpath = sourceSets.demo.runtimeClasspath
     mainClass = 'examples.ModernDashboard'
 }
 
 task ResponsiveForm(type: JavaExec) {
     group = "Examples"
     description = "Runs the Responsive Form example"
-    classpath = sourceSets.main.runtimeClasspath
+    classpath = sourceSets.demo.runtimeClasspath
     mainClass = 'examples.ResponsiveForm'
 }
 
@@ -148,33 +205,9 @@ javafx {
             'javafx.controls',
             'javafx.fxml',
             'javafx.web',
-            'javafx.media'
+            'javafx.media',
+            'javafx.swing'
     ]
-}
-
-/**
- * AST bootstrap:
- * - compileAstGroovy must produce FXBindable + FXBindableASTTransformation before main sources compile
- * - Avoid compileAstJava/compileAstGroovy cycles by doing JOINT compilation in compileAstGroovy:
- *   * ast Groovy srcDirs include src/ast/groovy AND src/ast/java (so Java AST transform compiles there)
- *   * ast Java srcDirs is EMPTY (so compileAstJava is NO-SOURCE)
- */
-sourceSets {
-    ast {
-        groovy.srcDirs = ['src/ast/groovy', 'src/ast/java']
-        java.srcDirs   = [] // critical: prevents compileAstJava sources & avoids task cycles
-        resources.srcDirs = ['src/ast/resources']
-
-        // allow AST compilation to reuse normal dependencies if needed
-        compileClasspath += sourceSets.main.compileClasspath
-        runtimeClasspath += output + compileClasspath
-    }
-}
-
-configurations {
-    astImplementation.extendsFrom implementation
-    astCompileOnly.extendsFrom compileOnly
-    astRuntimeOnly.extendsFrom runtimeOnly
 }
 
 dependencies {
@@ -187,7 +220,7 @@ dependencies {
     api "org.apache.groovy:groovy"
 
     // TEMP: SceneGraphBuilder imports groovy.swing.*; keep until we refactor it out
-    //implementation "org.apache.groovy:groovy-swing"
+    implementation "org.apache.groovy:groovy-swing"
 
     // JavaFX dependencies are supplied by org.openjfx plugin via the 'javafx { }' block
 
@@ -199,6 +232,19 @@ dependencies {
     testImplementation "org.spockframework:spock-core:${spockVersion}"
     testImplementation("org.apache.groovy:groovy-test:${spockVersion}")
     testRuntimeOnly "org.junit.platform:junit-platform-launcher"
+
+    // Demo dependencies
+    demoImplementation 'jakarta.xml.bind:jakarta.xml.bind-api:4.0.2'
+    demoRuntimeOnly 'com.sun.xml.bind:jaxb-impl:4.0.5'
+
+    // Explicitly add JavaFX dependencies to demoImplementation for better IDE support
+    demoImplementation "org.openjfx:javafx-base:${javafxVersion}"
+    demoImplementation "org.openjfx:javafx-graphics:${javafxVersion}"
+    demoImplementation "org.openjfx:javafx-controls:${javafxVersion}"
+    demoImplementation "org.openjfx:javafx-fxml:${javafxVersion}"
+    demoImplementation "org.openjfx:javafx-web:${javafxVersion}"
+    demoImplementation "org.openjfx:javafx-media:${javafxVersion}"
+    demoImplementation "org.openjfx:javafx-swing:${javafxVersion}"
 }
 
 // Ensure main compilation sees the compiled AST output (annotation + transform)
@@ -213,11 +259,6 @@ tasks.named('compileJava', JavaCompile).configure {
 
 tasks.withType(GroovyCompile).configureEach {
     groovyOptions.encoding = 'UTF-8'
-}
-
-tasks.withType(JavaCompile).configureEach {
-    options.encoding = 'UTF-8'
-    options.release = 25
 }
 
 test {
@@ -240,6 +281,12 @@ tasks.named('compileTestGroovy', GroovyCompile).configure {
 }
 
 tasks.named('compileTestJava', JavaCompile).configure {
+    dependsOn(tasks.named('compileAstGroovy'))
+    classpath += sourceSets.ast.output
+}
+
+// Ensure demo source set also sees AST output
+tasks.named('compileDemoGroovy', GroovyCompile).configure {
     dependsOn(tasks.named('compileAstGroovy'))
     classpath += sourceSets.ast.output
 }
