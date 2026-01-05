@@ -87,6 +87,21 @@ tasks.named("asciidoctor", AsciidoctorTask).configure { t ->
     )
 }
 
+// Example tasks
+task ModernDashboard(type: JavaExec) {
+    group = "Examples"
+    description = "Runs the Modern Dashboard example"
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'examples.ModernDashboard'
+}
+
+task ResponsiveForm(type: JavaExec) {
+    group = "Examples"
+    description = "Runs the Responsive Form example"
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'examples.ResponsiveForm'
+}
+
 // Optional: generate docs as part of build
 tasks.named("build").configure {
     dependsOn(tasks.named("asciidoctor"))

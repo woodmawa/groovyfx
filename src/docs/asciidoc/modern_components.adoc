@@ -54,3 +54,23 @@ pagination(pageCount: 10, pageFactory: { index -> label("Page ${index + 1}") })
 GroovyFX can be extended with custom components through its SPI. External libraries can register new builder nodes that work seamlessly with the base library.
 
 See the link:component_authoring_guide.adoc[Component Authoring Guide] for details on how to create and use external components.
+
+== Example Applications
+
+To see these components in action, you can explore and run the example applications provided in the source tree under `src/main/groovy/examples`.
+
+=== Modern Dashboard
+Demonstrates `card`, `badge`, `icon`, `tableView` (with `autoColumns`), and the reactive `Store`.
+
+[source,bash]
+----
+./gradlew ModernDashboard
+----
+
+=== Responsive Form
+Demonstrates `formLayout`, `toggleSwitch`, `responsivePane`, and the `notify()` system.
+
+[source,bash]
+----
+./gradlew ResponsiveForm
+----
