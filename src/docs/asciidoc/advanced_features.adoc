@@ -1,0 +1,79 @@
+== Form Layout and Validation
+
+GroovyFX provides a `formLayout` component for creating structured forms with automatic label alignment and declarative validation. It also supports a `responsive` mode for better behavior on different screen sizes.
+
+[source,groovy]
+----
+formLayout(responsive: true) {
+    textField(label: "Username", validate: { it.length() < 3 ? "Too short" : null })
+    passwordField(label: "Password")
+    toggleSwitch(label: "Remember Me")
+}
+----
+
+The `label` attribute creates an aligned label to the left of the component. The `validate` attribute accepts a closure that returns an error message string if the value is invalid, or `null` if valid. Errors are displayed automatically below the field.
+
+== Responsive Layouts (ResponsivePane)
+
+For more flexible layouts that adapt to window resizing, `responsivePane` allows you to define a breakpoint.
+
+[source,groovy]
+----
+responsivePane(breakpoint: 500) {
+    button("Button 1")
+    button("Button 2")
+    button("Button 3")
+}
+----
+
+When the pane's width is less than the breakpoint, children are stacked vertically; otherwise, they flow horizontally.
+
+== Reactive State Management (Store)
+
+The `Store` class provides a modern way to manage application state, inspired by patterns like Vuex or Pinia.
+
+[source,groovy]
+----
+def store = new Store<Integer>(0)
+
+// Subscribe to changes
+store.subscribe { val ->
+    println "Count is now: ${val}"
+}
+
+// Update state
+store.setState(10)
+store.update { it + 1 }
+----
+
+== Modern Components
+
+=== ToggleSwitch
+A modern alternative to `CheckBox`.
+
+[source,groovy]
+----
+toggleSwitch(selected: true, onAction: { println "Toggled!" })
+----
+
+=== Notifications (Toasts)
+Non-blocking overlays for user feedback.
+
+[source,groovy]
+----
+notify("Operation successful!")
+----
+
+== Advanced Table DSL
+
+The `tableView` now supports "Auto-columns" for rapid prototyping.
+
+[source,groovy]
+----
+def data = [
+    [name: "John", age: 30],
+    [name: "Jane", age: 25]
+]
+
+tableView(items: data, autoColumns: data)
+----

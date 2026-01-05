@@ -1,0 +1,75 @@
+= Overall Architecture Approach
+:revnumber: {project-version}
+:toc:
+:toclevels: 3
+:sectnums:
+
+== Introduction
+
+This document provides an overview of the GroovyFX architecture, explaining how the library bridges the gap between the Groovy language and the JavaFX toolkit. It highlights the core patterns used to build the declarative DSL and summarizes the modernization efforts undertaken to support Java 25 and JavaFX 25.
+
+== Core Architectural Pattern: The Factory Builder
+
+GroovyFX is built upon the `groovy.util.FactoryBuilderSupport` class. This is a standard Groovy pattern for creating hierarchical, declarative DSLs.
+
+=== SceneGraphBuilder
+
+The heart of GroovyFX is `SceneGraphBuilder`. When you call `GroovyFX.start { ... }`, an instance of `SceneGraphBuilder` is created and used as the delegate for your closure.
+
+Each "tag" in the DSL (e.g., `button`, `vbox`, `stage`) corresponds to a *Factory* registered in the builder.
+
+=== The Factory Hierarchy
+
+To ensure consistency and reduce boilerplate, GroovyFX uses a hierarchy of abstract factory classes:
+
+*   **`AbstractFXBeanFactory`**: The base factory for most JavaFX objects. It handles basic instantiation and attribute mapping via `FXHelper`.
+*   **`AbstractNodeFactory`**: Extends `AbstractFXBeanFactory` for all classes inheriting from `javafx.scene.Node`. It adds support for:
+    ** Common layout constraints (e.g., `hgrow`, `vgrow`, `margin`).
+    ** Standard event handlers (e.g., `onMouseClicked`, `onKeyPressed`).
+    ** Modern JavaFX events added in the rebuild (e.g., `onScrollStarted`, `onZoomFinished`).
+*   **`ControlFactory`**: A specialized factory for UI controls that handles tooltips and other control-specific logic.
+
+=== Attribute Processing (FXHelper)
+
+Attribute processing is centralized in `FXHelper`. When you pass attributes to a node (e.g., `button(text: 'Click Me')`), `FXHelper` uses Groovy reflection and specialized mappers to:
+*   Convert String values to Enums (e.g., `pos: 'CENTER'`).
+*   Handle CSS-style units (e.g., `font: '16pt'`).
+*   Wire up property bindings (e.g., `text: bind(myProperty)`).
+*   Process complex types like `Insets`, `Paint`, and `Color`.
+
+== Package Structure and Responsibilities
+
+The codebase is organized into several functional packages:
+
+*   **`groovyx.javafx`**: Contains the main `SceneGraphBuilder` and entry points like `GroovyFX`.
+*   **`groovyx.javafx.factory`**: Contains all the factory implementations that define the DSL nodes.
+*   **`groovyx.javafx.components`**: The *Modern Component Pack*. Contains high-level, composite components like `Card`, `Badge`, `ToggleSwitch`, and `FormLayout`. These are built specifically for the modernization uplift.
+*   **`groovyx.javafx.extension`**: Contains Groovy extension modules that add convenience methods directly to JavaFX classes (e.g., adding `onChange` to properties).
+*   **`groovyx.javafx.binding`**: Manages the reactive binding system, including `GroovyClosureProperty` which allows using closures as binding expressions.
+*   **`groovyx.javafx.event`**: Provides wrappers that bridge Groovy closures to JavaFX event listeners and handlers.
+*   **`groovyx.javafx.animation`**: Contains helper classes for the declarative animation DSL (`GTimeline`, `TargetHolder`).
+*   **`groovyx.javafx.canvas`**: Provides a DSL wrapper around the JavaFX `GraphicsContext` for procedural drawing.
+*   **`groovyx.javafx.spi`**: The *Service Provider Interface*. Allows external developers to create "Addons" that register new components into the builder automatically.
+
+== Modernization Uplift: Legacy vs. JavaFX 25
+
+The project has undergone a significant "uplift" to transition from the legacy JavaFX 11/Groovy 2 era to the modern Java 25 / JavaFX 25 ecosystem.
+
+| Feature | Legacy GroovyFX (JFX 11) | Modern GroovyFX (JFX 25) |
+| :--- | :--- | :--- |
+| **Java Baseline** | Java 8 / 11 | Java 23 / 25 |
+| **Groovy Version** | Groovy 2.x / 3.x | Groovy 5.0+ |
+| **Listener Management** | Manual ChangeListeners | Integrated **Subscription API** |
+| **Component Set** | Standard JFX 11 Controls | JFX 25 + **Modern Component Pack** (Card, Badge, etc.) |
+| **Layouts** | Basic Layout Panes | **ResponsivePane** and **FormLayout** |
+| **State Management** | Property Binding only | **Reactive Store API** (Vuex/Pinia inspired) |
+| **Event Support** | Mouse/Key events | Added **Touch, Zoom, Rotate, Swipe, and Scroll** events |
+| **Icons** | Manual Image Loading | **Built-in Icon System** with SVG support |
+| **Build System** | Legacy Gradle | **Gradle 9.1+** with Java Toolchains |
+
+=== Key Modernization Highlights
+
+1.  **Immutability Support**: Modern JavaFX has moved towards more immutable objects (like `KeyFrame`). The `GTimeline` and its factories were refactored to support this pattern while maintaining a clean DSL.
+2.  **Reactive Paradigm**: The introduction of the `Store` API and the use of the `Subscription` API allow developers to build applications using reactive, unidirectional data flow patterns common in modern web development.
+3.  **Productivity DSL**: Features like `autoColumns` in `TableView` and the validation logic in `FormLayout` significantly reduce the amount of boilerplate code required for enterprise applications.
+4.  **Extensibility**: The SPI was refreshed to make it easier for the community to build and share their own GroovyFX component libraries.
