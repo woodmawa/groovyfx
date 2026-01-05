@@ -9,21 +9,26 @@ a clean DSL, and stable test execution.
 ---
 
 ## Documentation
-- [Quickstart](docs/quickstart.md)
-- [DSL Patterns](docs/dsl-patterns.md)
-- [Migration Guide](docs/migration.md)
+Comprehensive documentation is available in the `src/docs/asciidoc` directory and can be generated as HTML/PDF using the `./gradlew asciidoctor` task.
+
+### Key Guides:
+- [Getting Started](src/docs/asciidoc/getting_started.adoc)
+- [Modern Components](src/docs/asciidoc/modern_components.adoc)
+- [Advanced Features](src/docs/asciidoc/advanced_features.adoc)
+- [Component Authoring (SPI)](src/docs/asciidoc/component_authoring_guide.adoc)
+- [Overall Architecture](src/docs/asciidoc/overall_architecture_approach.adoc)
 
 ## Status
 
-**Current status:** Beta  
+**Current status:** Stable Baseline (v2.0.0)  
 **Latest tested stack:**
-- Java 21 and 25 (LTS)
-- Groovy 5.x
-- OpenJFX 25.x
-- Gradle 9.x
+- Java 23 and 25 (LTS)
+- Groovy 5.0.3
+- OpenJFX 25.0.1
+- Gradle 9.1
 
 GroovyFX has passed a full semantic and DSL audit against modern JavaFX and is
-approaching a stable 1.0.0 release.
+now at a stable 2.0.0 release.
 
 ---
 
@@ -118,8 +123,8 @@ This makes GroovyFX tests reliable in CI and on modern JDKs.
 
 ## Requirements
 
-- Java 21 or 25
-- Groovy 5.x
+- Java 23 or 25 (JDK 23+ required for JavaFX 25)
+- Groovy 5.0.3+
 - JavaFX 25.x
 
 JavaFX must be available either via build dependencies
@@ -141,12 +146,17 @@ or a locally installed OpenJFX distribution.
 - JavaFX 25 migration
 - Removal of legacy internals and illegal access
 - Container semantic fixes
-- DSL audit via contract tests
+- Modern Component Pack (Card, Badge, ToggleSwitch, Icon, etc.)
+- Reactive State Management (Store API)
+- JavaFX 25 Subscription API integration
+- Responsive Layout support (ResponsivePane, FormLayout)
+- Enhanced SPI for external component authoring
+- Full Documentation refresh (Asciidoc)
 
-### Planned before 1.0.0
-- Documentation polish
-- CI matrix (Java 21 + 25)
-- Final release notes
+### Planned
+- Continuous CI matrix expansion
+- Community component library integrations
+- Performance benchmarking vs. web frameworks
 
 ---
 
