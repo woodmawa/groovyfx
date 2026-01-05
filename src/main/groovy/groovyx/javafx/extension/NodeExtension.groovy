@@ -19,6 +19,9 @@ package groovyx.javafx.extension
 
 import javafx.event.EventHandler
 import javafx.scene.Node
+import javafx.util.Subscription
+import javafx.beans.value.ObservableValue
+import java.util.function.Consumer
 
 /**
  * @author Andres Almiray
@@ -71,4 +74,34 @@ class NodeExtension {
     static void onMouseReleased(Node self, Closure listener) { self.setOnMouseReleased(listener as EventHandler) }
 
     static void onScroll(Node self, Closure listener) { self.setOnScroll(listener as EventHandler) }
+
+    static void onScrollStarted(Node self, Closure listener) { self.setOnScrollStarted(listener as EventHandler) }
+
+    static void onScrollFinished(Node self, Closure listener) { self.setOnScrollFinished(listener as EventHandler) }
+
+    static void onRotationStarted(Node self, Closure listener) { self.setOnRotationStarted(listener as EventHandler) }
+
+    static void onRotationFinished(Node self, Closure listener) { self.setOnRotationFinished(listener as EventHandler) }
+
+    static void onSwipeLeft(Node self, Closure listener) { self.setOnSwipeLeft(listener as EventHandler) }
+
+    static void onSwipeRight(Node self, Closure listener) { self.setOnSwipeRight(listener as EventHandler) }
+
+    static void onSwipeUp(Node self, Closure listener) { self.setOnSwipeUp(listener as EventHandler) }
+
+    static void onSwipeDown(Node self, Closure listener) { self.setOnSwipeDown(listener as EventHandler) }
+
+    static void onZoomStarted(Node self, Closure listener) { self.setOnZoomStarted(listener as EventHandler) }
+
+    static void onZoomFinished(Node self, Closure listener) { self.setOnZoomFinished(listener as EventHandler) }
+
+    static void onContextMenuRequested(Node self, Closure listener) { self.setOnContextMenuRequested(listener as EventHandler) }
+
+    static Subscription subscribe(ObservableValue self, Closure subscriber) {
+        return self.subscribe(subscriber as Consumer)
+    }
+
+    static Subscription subscribe(ObservableValue self, Runnable subscriber) {
+        return self.subscribe(subscriber)
+    }
 }

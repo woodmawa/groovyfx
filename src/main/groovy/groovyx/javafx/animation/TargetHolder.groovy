@@ -72,6 +72,8 @@ class TargetHolder {
                 return Interpolator.EASE_IN;
             case 'EASE_OUT':
                 return Interpolator.EASE_OUT;
+            case 'TANGENT':
+                return Interpolator.TANGENT(Duration.ZERO, 0); // Default tangent?
             default:
                 throw new IllegalArgumentException("Unkown Interpotor string: ${str}")
         }

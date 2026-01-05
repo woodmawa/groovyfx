@@ -17,6 +17,7 @@
  */
 package groovyx.javafx.animation
 
+import groovyx.javafx.event.GroovyEventHandler
 import javafx.animation.KeyFrame
 import javafx.animation.Timeline
 import javafx.util.Duration
@@ -97,7 +98,14 @@ class GTimeline {
     }
 
 
-    def action (Closure c) { currentFrame.action = new FunctionWrapper(closure: c) }
+    def onFinished(Closure c) { timeline.onFinished = new GroovyEventHandler(closure: c) }
+
+    def action (Closure c) {
+        def oldFrame = currentFrame
+        currentFrame = new KeyFrame(oldFrame.time, oldFrame.name, new GroovyEventHandler(closure: c), oldFrame.values)
+        timeline.keyFrames.remove(oldFrame)
+        timeline.keyFrames.add(currentFrame)
+    }
 	
 }
 

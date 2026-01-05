@@ -126,6 +126,7 @@ import java.util.ServiceLoader
 
 
 import java.util.logging.Logger
+import java.util.function.Consumer
 
 /**
  *
@@ -187,6 +188,26 @@ class SceneGraphBuilder extends FactoryBuilderSupport {
                 // optionally rethrow if you want strict behavior
             }
         }
+    }
+
+    /**
+     * Subscribe to an ObservableValue.
+     * @param observable the observable to subscribe to
+     * @param subscriber the closure to call when the observable changes
+     * @return a Subscription that can be used to unsubscribe
+     */
+    def subscribe(ObservableValue observable, Closure subscriber) {
+        return observable.subscribe(subscriber as Consumer)
+    }
+
+    /**
+     * Subscribe to an ObservableValue.
+     * @param observable the observable to subscribe to
+     * @param subscriber the closure to call when the observable changes
+     * @return a Subscription that can be used to unsubscribe
+     */
+    def subscribe(ObservableValue observable, Runnable subscriber) {
+        return observable.subscribe(subscriber)
     }
 
     boolean isFxApplicationThread() {

@@ -122,4 +122,12 @@ class ControlsExtension {
     static void onCloseRequest(Window self, Closure closure) { self.setOnCloseRequest(closure as EventHandler) }
 
     static void onAction(MenuItem self, Closure closure) { self.setOnAction(closure as EventHandler) }
+
+    static void cellFactory(TableColumn self, Map attributes, Closure closure) {
+        self.setCellFactory(closure as Callback)
+    }
+
+    static void onScrollStarted(TabPane self, Closure listener) { self.setOnScrollStarted(listener as EventHandler) }
+
+    static void onScrollFinished(TabPane self, Closure listener) { self.setOnScrollFinished(listener as EventHandler) }
 }
