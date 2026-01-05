@@ -17,7 +17,7 @@ import javafx.scene.paint.Color
 def counterStore = new Store<Integer>(0)
 
 start {
-    stage(title: 'GroovyFX Modern Dashboard', width: 800, height: 600, visible: true) {
+    stage(title: 'GroovyFX Modern Dashboard', width: 800, height: 600, show: true) {
         scene(fill: Color.WHITESMOKE) {
             vbox(spacing: 20, padding: 25) {
                 // Header Area

@@ -13,7 +13,7 @@ import javafx.scene.paint.Color
  */
 
 start {
-    stage(title: 'GroovyFX User Profile', width: 500, height: 650, visible: true) {
+    stage(title: 'GroovyFX User Profile', width: 500, height: 650, show: true) {
         scene(fill: Color.WHITE) {
             vbox(spacing: 20, padding: 30) {
                 hbox(spacing: 15, alignment: 'CENTER_LEFT') {

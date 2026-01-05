@@ -88,6 +88,22 @@ tasks.named("asciidoctor", AsciidoctorTask).configure { t ->
 }
 
 // Example tasks
+tasks.withType(JavaExec).configureEach {
+    jvmArgs += [
+        '--enable-native-access=ALL-UNNAMED',
+        '--enable-native-access=javafx.graphics',
+        '-Djavafx.verbose=true'
+    ]
+    // Ensure JavaFX is on the module path
+    doFirst {
+        def jfxModules = javafx.modules.join(',')
+        jvmArgs += [
+            '--module-path', classpath.asPath,
+            '--add-modules', jfxModules
+        ]
+    }
+}
+
 task ModernDashboard(type: JavaExec) {
     group = "Examples"
     description = "Runs the Modern Dashboard example"

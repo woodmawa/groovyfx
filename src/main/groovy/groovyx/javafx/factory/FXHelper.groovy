@@ -113,12 +113,21 @@ class FXHelper {
         if (value != null)
             AnchorPane.setLeftAnchor((Node)delegate, getAnchorValue(value));
     }
+
+    private static def setShow = { delegate, value ->
+        if (value != null && (boolean) value) {
+            if (delegate instanceof javafx.stage.Window) {
+                delegate.show()
+            }
+        }
+    }
     
     private static anchorMap = [
         topAnchor: setTopAnchor,
         bottomAnchor: setBottomAnchor,
         rightAnchor: setRightAnchor,
-        leftAnchor: setLeftAnchor
+        leftAnchor: setLeftAnchor,
+        show: setShow
     ]
     
     private static processAnchorList(Node node, List anchorList) {

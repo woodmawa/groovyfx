@@ -34,6 +34,7 @@ import javafx.scene.control.TableColumn
 import javafx.scene.control.TableView
 import javafx.scene.control.TextField
 import javafx.scene.control.cell.PropertyValueFactory
+import javafx.scene.control.cell.MapValueFactory
 import javafx.scene.input.KeyCode
 import org.codehaus.groovy.runtime.InvokerHelper
 
@@ -271,6 +272,29 @@ class TableFactory extends AbstractNodeFactory {
             if(selectedItem != null) {
                 node.getSelectionModel().selectedItem = selectedItem;
             }
+
+            if (attributes.containsKey("autoColumns")) {
+                def items = attributes.remove("autoColumns")
+                if (items instanceof List && !items.isEmpty()) {
+                    def first = items[0]
+                    if (first instanceof Map) {
+                        first.keySet().each { key ->
+                            def col = new TableColumn(key.toString().capitalize())
+                            col.setCellValueFactory(new MapValueFactory(key.toString()))
+                            node.columns.add(col)
+                        }
+                    } else if (first != null) {
+                        // try to extract properties from POGO
+                        first.properties.keySet().each { key ->
+                            if (key != "class" && key != "metaClass") {
+                                def col = new TableColumn(key.toString().capitalize())
+                                col.setCellValueFactory(new PropertyValueFactory(key.toString()))
+                                node.columns.add(col)
+                            }
+                        }
+                    }
+                }
+            }
         }else { // TableColumn
             def converter = attributes.remove("converter");
             //TODO what how to do conversion like date-String etc.
@@ -283,30 +307,6 @@ class TableFactory extends AbstractNodeFactory {
                     node.cellValueFactory = new PropertyValueFactory(property);
                 }
             }
-            
-            if (attributes.containsKey("autoColumns")) {
-                def items = attributes.remove("autoColumns")
-                if (items instanceof List && !items.isEmpty()) {
-                    def first = items[0]
-                    if (first instanceof Map) {
-                        first.keySet().each { key ->
-                            def col = new TableColumn(key.toString().capitalize())
-                            col.setCellValueFactory(new PropertyValueFactory(key.toString()))
-                            node.columns.add(col)
-                        }
-                    } else {
-                        // try to extract properties from POGO
-                        first.properties.keySet().each { key ->
-                            if (key != "class" && key != "metaClass") {
-                                def col = new TableColumn(key.toString().capitalize())
-                                col.setCellValueFactory(new PropertyValueFactory(key.toString()))
-                                node.columns.add(col)
-                            }
-                        }
-                    }
-                }
-            }
-            
             
             // class type for the field, default is String
             

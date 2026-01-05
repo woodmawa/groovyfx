@@ -248,6 +248,14 @@ class SceneGraphBuilder extends FactoryBuilderSupport {
         Notification.show(getPrimaryStage(), message, duration)
     }
 
+    /**
+     * Show a non-blocking notification with named arguments.
+     */
+    void notify(Map args, String message) {
+        Duration duration = args.duration ?: Duration.seconds(3)
+        Notification.show(getPrimaryStage(), message, duration)
+    }
+
     boolean isFxApplicationThread() {
         Platform.isFxApplicationThread();
     }
@@ -598,6 +606,7 @@ class SceneGraphBuilder extends FactoryBuilderSupport {
 
     void registerThreading() {
         registerExplicitMethod "defer", this.&defer
+        registerExplicitMethod "notify", this.&notify
     }
 
     void registerMenus() {
