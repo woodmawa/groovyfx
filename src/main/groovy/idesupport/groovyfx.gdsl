@@ -142,6 +142,19 @@ private void contributeNodes(delegate) {
     delegate.method(name: 'nodes', type: 'java.util.List', params: [list: 'java.util.List'] )
     delegate.method(name: 'container', type: 'javafx.scene.Parent', params: [args: [:], body: {}] )
     delegate.method(name: 'fxml', type: 'javafx.scene.Node', params: [args: [:], body: {}] )
+
+    // Modern Components
+    delegate.method(name: 'card', type: 'groovyx.javafx.components.Card', params: [args: [:], body: {}])
+    if (delegate.enclosingCall('card')) {
+        ['cardHeader', 'cardBody', 'cardFooter'].each {
+            delegate.method(name: it, type: 'javafx.scene.layout.VBox', params: [args: [:], body: {}])
+        }
+    }
+    delegate.method(name: 'badge', type: 'groovyx.javafx.components.Badge', params: [args: [text: 'java.lang.String', backgroundFill: 'javafx.scene.paint.Paint']])
+    delegate.method(name: 'icon', type: 'groovyx.javafx.components.Icon', params: [args: [iconName: 'java.lang.String', fill: 'javafx.scene.paint.Paint', content: 'java.lang.String']])
+    delegate.method(name: 'toggleSwitch', type: 'groovyx.javafx.components.ToggleSwitch', params: [args: [selected: 'java.lang.Boolean']])
+    delegate.method(name: 'formLayout', type: 'groovyx.javafx.components.FormLayout', params: [args: [responsive: 'java.lang.Boolean'], body: {}])
+    delegate.method(name: 'responsivePane', type: 'groovyx.javafx.components.ResponsivePane', params: [args: [breakpoint: 'java.lang.Double'], body: {}])
 }
 
 private void contributeMedia(delegate) {
@@ -215,6 +228,8 @@ private void contributeControls(delegate) {
     delegate.method(name: 'buttonBar', type: 'javafx.scene.control.ButtonBar', params: [args: [:], body: {}])
     delegate.method(name: 'datePicker', type: 'javafx.scene.control.DatePicker', params: [args: [:], body: {}])
     delegate.method(name: 'spinner', type: 'javafx.scene.control.Spinner', params: [args: [:], body: {}])
+    delegate.method(name: 'colorPicker', type: 'javafx.scene.control.ColorPicker', params: [args: [:], body: {}])
+    delegate.method(name: 'pagination', type: 'javafx.scene.control.Pagination', params: [args: [:], body: {}])
 
     noArgsMethodWithClosure(delegate, 'title', 'groovyx.javafx.factory.Titled')
     noArgsMethodWithClosure(delegate, 'content', 'groovyx.javafx.factory.Titled')
@@ -329,6 +344,22 @@ private void contributeListeners(delegate) {
     delegate.method(name: 'onDragExited', type: 'javafx.event.EventHandler', params: [body: {}])
     delegate.method(name: 'onDragOver', type: 'javafx.event.EventHandler', params: [body: {}])
     delegate.method(name: 'onDragDropped', type: 'javafx.event.EventHandler', params: [body: {}])
+
+    // Modern JavaFX events
+    delegate.method(name: 'onScrollStarted', type: 'javafx.event.EventHandler', params: [body: {}])
+    delegate.method(name: 'onScrollFinished', type: 'javafx.event.EventHandler', params: [body: {}])
+    delegate.method(name: 'onRotationStarted', type: 'javafx.event.EventHandler', params: [body: {}])
+    delegate.method(name: 'onRotationFinished', type: 'javafx.event.EventHandler', params: [body: {}])
+    delegate.method(name: 'onSwipeLeft', type: 'javafx.event.EventHandler', params: [body: {}])
+    delegate.method(name: 'onSwipeRight', type: 'javafx.event.EventHandler', params: [body: {}])
+    delegate.method(name: 'onSwipeUp', type: 'javafx.event.EventHandler', params: [body: {}])
+    delegate.method(name: 'onSwipeDown', type: 'javafx.event.EventHandler', params: [body: {}])
+    delegate.method(name: 'onZoomStarted', type: 'javafx.event.EventHandler', params: [body: {}])
+    delegate.method(name: 'onZoomFinished', type: 'javafx.event.EventHandler', params: [body: {}])
+    delegate.method(name: 'onContextMenuRequested', type: 'javafx.event.EventHandler', params: [body: {}])
+
+    // Subscription API
+    delegate.method(name: 'subscribe', type: 'javafx.util.Subscription', params: [observable: 'javafx.beans.value.ObservableValue', subscriber: {}])
 
     // todo dk: why is this here 3 times?
     delegate.method(name: 'onMouseClicked', type: 'javafx.event.EventHandler', params: [body: {}])

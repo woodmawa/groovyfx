@@ -50,6 +50,7 @@ The codebase is organized into several functional packages:
 *   **`groovyx.javafx.animation`**: Contains helper classes for the declarative animation DSL (`GTimeline`, `TargetHolder`).
 *   **`groovyx.javafx.canvas`**: Provides a DSL wrapper around the JavaFX `GraphicsContext` for procedural drawing.
 *   **`groovyx.javafx.spi`**: The *Service Provider Interface*. Allows external developers to create "Addons" that register new components into the builder automatically.
+*   **`idesupport`**: Contains the IntelliJ IDEA GDSL file (`groovyfx.gdsl`) which provides rich auto-completion and DSL awareness in the IDE.
 
 == Modernization Uplift: Legacy vs. JavaFX 25
 
@@ -73,3 +74,4 @@ The project has undergone a significant "uplift" to transition from the legacy J
 2.  **Reactive Paradigm**: The introduction of the `Store` API and the use of the `Subscription` API allow developers to build applications using reactive, unidirectional data flow patterns common in modern web development.
 3.  **Productivity DSL**: Features like `autoColumns` in `TableView` and the validation logic in `FormLayout` significantly reduce the amount of boilerplate code required for enterprise applications.
 4.  **Extensibility**: The SPI was refreshed to make it easier for the community to build and share their own GroovyFX component libraries.
+5.  **IDE Support**: The GDSL was completely refreshed to ensure modern IDEs like IntelliJ IDEA can provide accurate auto-completion and documentation for all new components and events.
