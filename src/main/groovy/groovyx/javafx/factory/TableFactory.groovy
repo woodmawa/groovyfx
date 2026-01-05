@@ -284,6 +284,29 @@ class TableFactory extends AbstractNodeFactory {
                 }
             }
             
+            if (attributes.containsKey("autoColumns")) {
+                def items = attributes.remove("autoColumns")
+                if (items instanceof List && !items.isEmpty()) {
+                    def first = items[0]
+                    if (first instanceof Map) {
+                        first.keySet().each { key ->
+                            def col = new TableColumn(key.toString().capitalize())
+                            col.setCellValueFactory(new PropertyValueFactory(key.toString()))
+                            node.columns.add(col)
+                        }
+                    } else {
+                        // try to extract properties from POGO
+                        first.properties.keySet().each { key ->
+                            if (key != "class" && key != "metaClass") {
+                                def col = new TableColumn(key.toString().capitalize())
+                                col.setCellValueFactory(new PropertyValueFactory(key.toString()))
+                                node.columns.add(col)
+                            }
+                        }
+                    }
+                }
+            }
+            
             
             // class type for the field, default is String
             

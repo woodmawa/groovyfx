@@ -31,6 +31,22 @@ At runtime:
 . It then loads `SceneGraphAddon` implementations using Java `ServiceLoader`
 . Each addon registers one or more component nodes (usually via factories)
 
+You can also manually register addons or factories in your GroovyFX scripts:
+
+[source,groovy]
+----
+start {
+    // Register a custom factory
+    register("myNode", new MyFactory())
+    
+    // Manually apply an addon instance
+    addon(new MyAddon())
+    
+    // Apply an addon by class
+    addon(MyAddon)
+}
+----
+
 [NOTE]
 ====
 If a component JAR is on the application's classpath, and it includes the correct `META-INF/services/...` entry, the component nodes should appear automatically.

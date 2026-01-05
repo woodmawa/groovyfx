@@ -66,7 +66,16 @@ import javafx.scene.chart.ScatterChart
 import javafx.scene.chart.StackedAreaChart
 import javafx.scene.chart.StackedBarChart
 import javafx.scene.chart.XYChart
+import groovyx.javafx.components.Badge
+import groovyx.javafx.components.Card
+import groovyx.javafx.components.FormLayout
+import groovyx.javafx.components.Icon
+import groovyx.javafx.components.Notification
+import groovyx.javafx.components.ResponsivePane
+import groovyx.javafx.components.ToggleSwitch
 import javafx.scene.control.*
+import javafx.scene.control.ColorPicker
+import javafx.scene.control.Pagination
 import javafx.scene.effect.Blend
 import javafx.scene.effect.Bloom
 import javafx.scene.effect.BoxBlur
@@ -127,6 +136,7 @@ import java.util.ServiceLoader
 
 import java.util.logging.Logger
 import java.util.function.Consumer
+import javafx.util.Duration
 
 /**
  *
@@ -191,6 +201,27 @@ class SceneGraphBuilder extends FactoryBuilderSupport {
     }
 
     /**
+     * Manually apply an addon to this builder instance.
+     */
+    void addon(SceneGraphAddon addon) {
+        addon.apply(this)
+    }
+
+    /**
+     * Manually apply an addon by class name.
+     */
+    void addon(Class<? extends SceneGraphAddon> addonClass) {
+        addonClass.getDeclaredConstructor().newInstance().apply(this)
+    }
+
+    /**
+     * Manually register a factory.
+     */
+    void register(String name, Factory factory) {
+        registerFactory(name, factory)
+    }
+
+    /**
      * Subscribe to an ObservableValue.
      * @param observable the observable to subscribe to
      * @param subscriber the closure to call when the observable changes
@@ -208,6 +239,13 @@ class SceneGraphBuilder extends FactoryBuilderSupport {
      */
     def subscribe(ObservableValue observable, Runnable subscriber) {
         return observable.subscribe(subscriber)
+    }
+
+    /**
+     * Show a non-blocking notification.
+     */
+    void notify(String message, Duration duration = Duration.seconds(3)) {
+        Notification.show(getPrimaryStage(), message, duration)
     }
 
     boolean isFxApplicationThread() {
@@ -580,6 +618,18 @@ class SceneGraphBuilder extends FactoryBuilderSupport {
         registerFactory 'pieChart', new PieChartFactory(PieChart)
         registerFactory 'lineChart', new XYChartFactory(LineChart)
         registerFactory 'areaChart', new XYChartFactory(AreaChart)
+        
+        // Modern Components
+        CardFactory cardFactory = new CardFactory()
+        registerFactory 'card', cardFactory
+        cardFactory.registerFactory 'cardHeader', new CardSectionFactory('cardHeader')
+        cardFactory.registerFactory 'cardBody', new CardSectionFactory('cardBody')
+        cardFactory.registerFactory 'cardFooter', new CardSectionFactory('cardFooter')
+        registerFactory 'badge', new BadgeFactory()
+        registerFactory 'icon', new IconFactory()
+        registerFactory 'toggleSwitch', new ToggleSwitchFactory()
+        registerFactory 'formLayout', new FormLayoutFactory()
+        registerFactory 'responsivePane', new ResponsivePaneFactory()
         registerFactory 'stackedAreaChart', new XYChartFactory(StackedAreaChart)
         registerFactory 'bubbleChart', new XYChartFactory(BubbleChart)
         registerFactory 'barChart', new XYChartFactory(BarChart)
@@ -670,6 +720,8 @@ class SceneGraphBuilder extends FactoryBuilderSupport {
         registerFactory 'tab', new TabFactory(Tab)
         registerFactory 'toolBar', new ToolBarFactory()
         registerFactory 'buttonBar', new ButtonBarFactory()
+        registerFactory 'colorPicker', new ControlFactory(ColorPicker)
+        registerFactory 'pagination', new ControlFactory(Pagination)
         registerFactory 'datePicker', new ControlFactory(DatePicker)
         registerFactory 'spinner', new ControlFactory(Spinner)
 
@@ -702,8 +754,16 @@ class SceneGraphBuilder extends FactoryBuilderSupport {
      * Register a node name that maps to a class with a static build(builder, attrs, body) method
      * OR a no-arg constructor returning a Node.
      */
-    void registerComponent(String name, Class componentClass) {
+    void registerComponentNode(String name, Class componentClass) {
         registerFactory(name, new ComponentClassFactory(componentClass))
+    }
+
+    /**
+     * @deprecated use registerComponentNode
+     */
+    @Deprecated
+    void registerComponent(String name, Class componentClass) {
+        registerComponentNode(name, componentClass)
     }
 
     void registerEffects() {

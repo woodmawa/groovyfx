@@ -92,4 +92,17 @@ toolBar {
 
 == Lists, Tables, and Trees
 
+=== Advanced Table DSL
+
+The `tableView` supports an `autoColumns` attribute that automatically generates columns from a list of Maps or POGOs.
+
+[source,groovy]
+----
+def data = [
+    [name: "John", age: 30],
+    [name: "Jane", age: 25]
+]
+tableView(items: data, autoColumns: data)
+----
+
 == File Choosers

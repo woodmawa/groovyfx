@@ -19,12 +19,15 @@ GroovyFX code easier to write and, just as importantly, easier to read.
 
 GroovyFX provides the SceneGraphBuilder object, which offers support for:
 
-* All of the JavaFX core controls
-* All of the core JavaFX layout containers
+* All of the JavaFX core controls (up to JavaFX 25)
+* Modern UI components like Cards, Badges, and ToggleSwitches
+* Responsive layout containers
+* Built-in Icon system
 * Shapes, colors, and gradients
 * Video and audio (including H.264 support)
 * Bar charts, line charts, pie charts, and the rest of core JavaFX charts
 * Full property and binding support
+* The modern JavaFX Subscription API
 * The @FXBindable annotation, which eliminates the boilerplate required to
   define JavaFX properties
 

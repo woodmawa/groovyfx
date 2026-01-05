@@ -1,46 +1,22 @@
 
 = Getting Started
 
-== What's New in Version 8.0.0
-GroovyFX version 8.0.0 includes support for Groovy 2.4, Java 8, and JavaFX 8. +
-JavaFX 2 is no longer supported.
+== What's New in Version 25
+GroovyFX has been significantly modernized for JavaFX 25 and Groovy 5.
 
-== What's New in Version 0.4.0
-GroovyFX version 0.4 includes support for Groovy 2.3, Java 8, and JavaFX 8.
+=== Key Enhancements:
 
-== What's New in Version 0.2.0
-GroovyFX version 0.2 has a number of fixes, new functionality, and other
-enhancements.  This includes some changes that are incompatible with version
-0.1.  See the Breaking Changes section below for details on these changes.
-
-=== Improvements
-The following JavaFX 2.1 and 2.2 features have been added:
-
-* DirectoryChooser
-* ComboBox
-* StackedBarChart and StackedAreaChart
-* Canvas
-
-Other improvements:
-
-* Usage of Node IDs
-* Actions
-* Nested Table Column Support
-* onSelect Pseudo-Property Added to ListView, TreeView, ComboBox, ChoiceBox,
-  and TabPane
-* Cell Factory Support
-
-=== Breaking Changes
-
-The following changes are not backwards compatible with previous versions.
-
-* New usage of GroovyFX and SceneGraphBuilder classes
-* New Binding
-* TimelineBuilder went away
+* **JavaFX 25 Support**: Full compatibility with the latest JavaFX features.
+* **Modern Component Pack**: New high-level components including `Card`, `Badge`, `ToggleSwitch`, `Icon`, and `ResponsivePane`.
+* **Reactive State Management**: New `Store` API for predictable state updates, inspired by Vuex/Pinia.
+* **Advanced Table DSL**: `autoColumns` support in `TableView` for rapid prototyping.
+* **JavaFX 25 Subscription API**: Integrated for cleaner, memory-safe listener management.
+* **Modern Events**: DSL support for Zoom, Rotate, Swipe, and Scroll events.
+* **Form Layout & Validation**: New `formLayout` for automated label alignment and declarative validation.
 
 == Installation Requirements
 Before installing GroovyFX you will need to install the Java Development Kit
-(JDK) version 1.8 or above.
+(JDK) version 23 or above (required for JavaFX 25).
 
 http://java.com/en/download/manual.jsp[Download the appropriate JDK] for your
 operating system, run the installer, and then set up an environment
@@ -78,33 +54,21 @@ build system.  This sample build.gradle script will get you started.
 [source,groovy]
 [subs="attributes"]
 ----
-apply plugin: 'groovy'
-
-project.ext.set('javaHome', System.env['JAVA_HOME']
+plugins {
+    id 'groovy'
+    id 'org.openjfx.javafxplugin' version '0.1.0'
+}
 
 repositories { mavenCentral() }
 
 dependencies {
-    compile 'org.codehaus.groovy:groovy-all:{groovy-version}'
-    compile 'org.groovyfx:groovyfx:{groovyfx-version}'
-    compile files("${javaHome}/jre/lib/ext/jfxrt.jar")
+    implementation 'org.apache.groovy:groovy:{groovy-version}'
+    implementation 'org.groovyfx:groovyfx:{groovyfx-version}'
 }
 
-task run(type: JavaExec) {
-    main = 'helloGroovyFX'
-    classpath sourceSets.main.runtimeClasspath
-}
-
-task makeDirs(description:'make all dirs for project setup') << {
-    def sources = [sourceSets.main, sourceSets.test]
-    sources*.allSource*.srcDirs.flatten().each { File srcDir ->
-        println "making $srcDir"
-        srcDir.mkdirs()
-    }
-}
-
-task wrap(type:Wrapper, description:"create a gradlew") {
-    gradleVersion = '2.9'
+javafx {
+    version = "{javafx-version}"
+    modules = [ 'javafx.controls', 'javafx.fxml', 'javafx.web', 'javafx.media' ]
 }
 ----
 
@@ -124,18 +88,11 @@ https://github.com/groovyfx-project/groovyfx[GitHub].  You can clone the
 GroovyFX repository using the following http://git-scm.com/[Git] command
 
 [source]
-git clone git://github.com/groovyfx-project/groovyfx.git
+git clone https://github.com/groovyfx-project/groovyfx.git
 
 === Installation Requirements
 
-Once you have downloaded and installed a Java8 SDK, set up an environment variable
-called JAVAFX_HOME pointing to the location of the JavaFX SDK.
-
-[NOTE]
-The JavaFX 8 SDK is included in Oracle Java 8 and above. If you are using this
-version of the JDK, you do not need to install a separate SDK and set the
-JAVAFX_HOME environment unless you would like to use a different version of the
-JavaFX SDK than the one included in your JDK.
+Once you have downloaded and installed a Java 23+ SDK.
 
 === Building with Gradle
 GroovyFX uses http://www.gradle.org[Gradle] as its primary build system.

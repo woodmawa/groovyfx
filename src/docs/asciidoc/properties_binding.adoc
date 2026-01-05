@@ -12,3 +12,16 @@
 === Closure Binding Expressions
 
 === FXBindable Properties
+
+=== Subscription API
+GroovyFX supports the modern JavaFX `Subscription` API, providing a clean way to manage listeners and subscriptions.
+
+[source,groovy]
+----
+def sub = subscribe(myProperty) { val ->
+    println "Property changed to: ${val}"
+}
+
+// Later, to stop listening:
+sub.unsubscribe()
+----

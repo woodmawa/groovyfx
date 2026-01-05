@@ -581,6 +581,8 @@ class FXHelper {
 
     public static void fxAttributes(delegate, attributes) {
         def removelist = [];
+        attributes.remove("label")
+        attributes.remove("validate")
         for (i in attributes) {
             if(fxAttribute(delegate, i.getKey(), i.getValue())) {
                 removelist.add(i.getKey());

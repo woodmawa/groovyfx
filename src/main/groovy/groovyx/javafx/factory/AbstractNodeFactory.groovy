@@ -92,6 +92,9 @@ public abstract class AbstractNodeFactory extends AbstractFXBeanFactory {
     }
 
     public boolean onHandleNodeAttributes(FactoryBuilderSupport builder, Object node, Map attributes) {
+        // Store attributes in context for potential use in setChild (e.g., FormLayout)
+        builder.getContext().put(node, new HashMap(attributes))
+        
         for (v in nodeEvents) {
             if (attributes.containsKey(v)) {
                 def val = attributes.remove(v)

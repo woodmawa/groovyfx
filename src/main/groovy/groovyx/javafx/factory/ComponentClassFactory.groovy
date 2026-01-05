@@ -18,6 +18,7 @@ import javafx.scene.Node
 class ComponentClassFactory extends AbstractFXBeanFactory {
 
     final Class<?> componentClass
+    private Closure bodyClosure
 
     ComponentClassFactory(Class<?> componentClass) {
         // We don’t know the concrete type up front; use Node as a safe base.
@@ -30,32 +31,38 @@ class ComponentClassFactory extends AbstractFXBeanFactory {
         // We must not mutate the original map in surprising ways
         Map attrs = (attributes != null) ? new LinkedHashMap(attributes) : [:]
 
-        // The "value" can be used as shorthand content; pass through if you want.
-        // You can choose to interpret it (e.g., as text) but for now we ignore.
-
-        Closure body = null
-        // Body is handled by FactoryBuilderSupport via onHandleNodeAttributes / setChild, etc.
-        // But for component classes, we want access to the body closure. The simplest approach:
-        // users pass it as 'body:' attribute OR you use builder's mechanism to capture it.
-        //
-        // In GroovyFX scripts, body closure is the node body; we’ll capture it via builder context:
-        // builder.current may have the closure; however that’s internal.
-        // So: we support passing body via attribute `__body` injected by a custom registerComponent helper.
-        if (attrs.containsKey('__body')) {
-            body = (Closure) attrs.remove('__body')
-        }
+        // Body is handled via isHandlesNodeChildren / onNodeChildren.
+        // But for static build style, we might need it NOW.
+        // Unfortunately builder calls newInstance BEFORE onNodeChildren.
+        // So we support Style A1 (static build) but we have to accept that 
+        // if it uses the body, the body must be processed via setChild 
+        // OR we must find a way to get the body earlier.
+        
+        // Actually, if Style A1 returns a Node that is a container, 
+        // builder will naturally call setChild for everything in the closure.
+        
+        // If the user wants Style A1 as documented: 
+        // static Node build(b, attrs, body)
+        // and they want to call body.call(), they have to realize body 
+        // is the closure block.
 
         // 1) Prefer static build(builder, attrs, body)
         def m = componentClass.metaClass.getStaticMetaMethod('build', FactoryBuilderSupport, Map, Closure)
         if (m != null) {
-            def node = m.invoke(componentClass, builder, attrs, body) as Object
+            // We pass null for body here because we don't have it yet.
+            // BUT we return the node.
+            def node = m.invoke(componentClass, builder, attrs, null) as Object
+            // Remove attributes handled by build if possible, but build is opaque.
+            // Documentation says build owns the block.
+            attributes?.clear() 
             return assertNode(node, componentClass)
         }
 
         // 2) static build(attrs, body)
         m = componentClass.metaClass.getStaticMetaMethod('build', Map, Closure)
         if (m != null) {
-            def node = m.invoke(componentClass, attrs, body) as Object
+            def node = m.invoke(componentClass, attrs, null) as Object
+            attributes?.clear()
             return assertNode(node, componentClass)
         }
 
@@ -67,30 +74,21 @@ class ComponentClassFactory extends AbstractFXBeanFactory {
             )
         }
 
-        // instance.configure(Map, Closure)
-        def im = instance.metaClass.getMetaMethod('configure', Map, Closure)
-        if (im != null) {
-            im.invoke(instance, attrs, body)
-        } else {
-            // Apply properties from attrs where possible
-            attrs.each { k, v ->
-                try {
-                    instance."$k" = v
-                } catch (MissingPropertyException ignored) {
-                    // ignore unknown properties, or throw if you want strictness
-                }
-            }
-            // If they provided a body, run it with builder semantics if they want:
-            if (body != null) {
-                // Run closure with delegate = instance so they can do:
-                // acmePanel { spacing = 10 }
-                def c = body.rehydrate(instance, body.owner, body.thisObject)
-                c.resolveStrategy = Closure.DELEGATE_FIRST
-                c.call()
-            }
-        }
-
+        // Apply remaining attributes via standard FXHelper (called by super.onHandleNodeAttributes later)
         return instance
+    }
+
+    @Override
+    void setChild(FactoryBuilderSupport builder, Object parent, Object child) {
+        if (parent instanceof Node && child instanceof Node) {
+             if (parent instanceof javafx.scene.layout.Pane) {
+                 parent.children.add(child)
+             } else if (parent instanceof javafx.scene.Group) {
+                 parent.children.add(child)
+             }
+        } else {
+            super.setChild(builder, parent, child)
+        }
     }
 
     @Override

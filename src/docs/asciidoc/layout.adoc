@@ -1,3 +1,31 @@
 
 = Layout
 
+GroovyFX supports all standard JavaFX layout containers, plus modern responsive layouts.
+
+== Standard Layouts
+Standard JavaFX layouts like `hbox`, `vbox`, `stackPane`, `borderPane`, `anchorPane`, `flowPane`, `tilePane`, and `gridPane` are fully supported with a clean DSL.
+
+== Form Layout
+The `formLayout` component simplifies the creation of data-entry forms by automatically aligning labels and fields.
+
+[source,groovy]
+----
+formLayout {
+    textField(label: "First Name")
+    textField(label: "Last Name")
+    datePicker(label: "Birth Date")
+}
+----
+
+== Responsive Layout
+`responsivePane` adapt their child layout based on the window width.
+
+[source,groovy]
+----
+responsivePane(breakpoint: 600) {
+    button("Button 1")
+    button("Button 2")
+}
+----
+
