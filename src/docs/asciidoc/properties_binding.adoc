@@ -1,27 +1,424 @@
 
 = Properties and Binding
 
-== Binding Support
+One of JavaFX's most powerful features is its property and binding system. JavaFX properties are observable values that can notify listeners when they change, and bindings allow you to create automatic dependencies between properties. GroovyFX makes working with JavaFX properties and bindings much more natural and concise through its DSL syntax and the `@FXBindable` annotation.
 
-=== Property Names
+== Understanding JavaFX Properties
 
-=== Bidirectional
+JavaFX properties are special observable wrappers around values. Instead of simple fields, JavaFX uses property objects like `StringProperty`, `IntegerProperty`, `BooleanProperty`, etc. These properties:
 
-=== Unidirectional
+* Notify listeners when their values change
+* Can be bound to other properties
+* Support bidirectional synchronization
+* Work seamlessly with JavaFX's UI update mechanism
 
-=== Closure Binding Expressions
+In traditional Java code, creating JavaFX properties requires substantial boilerplate. GroovyFX eliminates this through the `@FXBindable` annotation.
 
-=== FXBindable Properties
+== The @FXBindable Annotation
 
-=== Subscription API
-GroovyFX supports the modern JavaFX `Subscription` API, providing a clean way to manage listeners and subscriptions.
+The `@FXBindable` annotation is an AST transformation that automatically converts simple Groovy properties into full JavaFX properties with all the necessary boilerplate generated at compile time.
+
+=== Annotating Individual Properties
+
+You can annotate specific properties in a class:
 
 [source,groovy]
 ----
-def sub = subscribe(myProperty) { val ->
-    println "Property changed to: ${val}"
+import groovyx.javafx.beans.FXBindable
+
+class Person {
+    @FXBindable String firstName
+    @FXBindable String lastName
+    @FXBindable int age
+}
+----
+
+This generates:
+
+* A private JavaFX property field (e.g., `StringProperty firstNameProperty`)
+* Getter and setter methods
+* A property accessor method (e.g., `firstNameProperty()`)
+
+=== Annotating an Entire Class
+
+You can annotate the class itself to make all properties bindable:
+
+[source,groovy]
+----
+import groovyx.javafx.beans.FXBindable
+
+@FXBindable
+class Person {
+    String firstName
+    String lastName
+    int age
+}
+----
+
+All properties in the class become JavaFX properties automatically.
+
+=== Working with Observable Collections
+
+`@FXBindable` also supports JavaFX's observable collections:
+
+[source,groovy]
+----
+import groovyx.javafx.beans.FXBindable
+import javafx.collections.ObservableList
+import javafx.collections.ObservableMap
+import javafx.collections.ObservableSet
+
+@FXBindable
+class Person {
+    String firstName
+    String lastName
+    ObservableList likes = []
+    ObservableMap attributes = [:]
+    ObservableSet tags = [] as Set
+}
+----
+
+These collections automatically notify listeners when items are added, removed, or changed.
+
+=== Using FXBindable Properties
+
+Once properties are annotated with `@FXBindable`, you can access them naturally:
+
+[source,groovy]
+----
+def person = new Person()
+
+// Set values normally
+person.firstName = 'John'
+person.lastName = 'Doe'
+person.age = 30
+
+// Access the JavaFX property
+person.firstNameProperty().addListener { observable, oldValue, newValue ->
+    println "Name changed from $oldValue to $newValue"
+}
+
+// Or use the shorter accessor
+person.lastNameProperty().bind(anotherProperty)
+----
+
+== Binding Support
+
+GroovyFX provides a powerful and flexible `bind()` method that works throughout the SceneGraphBuilder DSL. The bind syntax is much more concise than standard JavaFX binding.
+
+=== Basic Binding Syntax
+
+The `bind()` method can be used in several ways:
+
+[source,groovy]
+----
+import static groovyx.javafx.GroovyFX.start
+
+start {
+    stage(title: "Binding Demo", visible: true) {
+        scene {
+            vbox(spacing: 10, padding: 10) {
+                def tf = textField(text: 'Change Me!')
+
+                // Bind to a property object
+                label(text: bind(tf.textProperty()))
+
+                // Bind using source and property name
+                label(text: bind(tf, 'text'))
+
+                // Bind using a closure expression
+                label(text: bind { tf.text })
+
+                // Bind with a transformation using()
+                label(text: bind(tf.textProperty()).using { "Value: $it" })
+            }
+        }
+    }
+}
+----
+
+=== Property Names
+
+When binding to a property by name, GroovyFX automatically resolves it to the underlying JavaFX property:
+
+[source,groovy]
+----
+// These are equivalent:
+bind(textField, 'text')
+bind(textField.textProperty())
+----
+
+The property name form is often more concise and readable, especially when working with `@FXBindable` properties:
+
+[source,groovy]
+----
+def person = new Person()
+label(text: bind(person, 'firstName'))
+----
+
+=== Unidirectional Binding
+
+Unidirectional binding creates a one-way dependency where the target automatically updates when the source changes, but not vice versa. This is the default binding behavior:
+
+[source,groovy]
+----
+start {
+    stage(title: "Unidirectional Binding", visible: true) {
+        scene {
+            vbox(spacing: 10, padding: 10) {
+                textField(id: 'source', promptText: 'Type here')
+
+                // These labels update when the text field changes
+                label(text: bind(source.textProperty()))
+                label(text: bind(source, 'text'))
+                label(text: bind { source.text.toUpperCase() })
+            }
+        }
+    }
+}
+----
+
+=== Bidirectional Binding
+
+Bidirectional binding creates a two-way synchronization where changes to either property update the other. Use the `to` keyword for bidirectional bindings:
+
+[source,groovy]
+----
+start {
+    def person = new Person()
+
+    stage(title: "Bidirectional Binding", visible: true) {
+        scene {
+            vbox(spacing: 10, padding: 10) {
+                textField(id: 'nameField')
+                textField(id: 'mirrorField')
+                label(id: 'display')
+            }
+        }
+    }
+
+    // Bidirectional binding between two text fields
+    bind nameField.text() to mirrorField.text()
+
+    // Chain bindings with transformations
+    bind nameField.text() to person, 'firstName'
+    bind display.text() to person, 'firstName' using { "Name: $it" }
+}
+----
+
+Multiple properties can be chained in a bidirectional binding:
+
+[source,groovy]
+----
+bind field1.text() to field2.text() to field3.text()
+----
+
+=== Closure Binding Expressions
+
+Closure-based bindings allow you to create computed properties that depend on one or more source properties:
+
+[source,groovy]
+----
+start {
+    stage(title: "Computed Binding", visible: true) {
+        scene {
+            gridPane(hgap: 10, vgap: 10, padding: 10) {
+                label('First Name:', row: 0, column: 0)
+                textField(id: 'firstName', row: 0, column: 1)
+
+                label('Last Name:', row: 1, column: 0)
+                textField(id: 'lastName', row: 1, column: 1)
+
+                label('Full Name:', row: 2, column: 0)
+                label(
+                    text: bind {
+                        "${firstName.text} ${lastName.text}".trim()
+                    },
+                    row: 2, column: 1
+                )
+            }
+        }
+    }
+}
+----
+
+The closure automatically tracks dependencies and updates when any referenced property changes.
+
+=== Transformation with using()
+
+The `using()` method allows you to transform bound values:
+
+[source,groovy]
+----
+// Simple transformation
+label(text: bind(slider.valueProperty()).using { "Value: ${it.intValue()}" })
+
+// With FXBindable properties
+label(text: bind(person, 'age').using {
+    it < 18 ? 'Minor' : 'Adult'
+})
+
+// Complex transformation
+label(text: bind(textField.textProperty()).using {
+    it ? it.toUpperCase() : 'EMPTY'
+})
+----
+
+=== Binding to @FXBindable Properties
+
+When binding to properties created with `@FXBindable`, you can use any of the binding forms:
+
+[source,groovy]
+----
+import groovyx.javafx.beans.FXBindable
+import static groovyx.javafx.GroovyFX.start
+
+class ViewModel {
+    @FXBindable String message = "Hello"
+    @FXBindable int counter = 0
+}
+
+start {
+    def vm = new ViewModel()
+
+    stage(title: "ViewModel Binding", visible: true) {
+        scene {
+            vbox(spacing: 10, padding: 10) {
+                // Bind to property by name
+                label(text: bind(vm, 'message'))
+
+                // Bind to property accessor
+                label(text: bind(vm.messageProperty()))
+
+                // Bind with transformation
+                label(text: bind(vm, 'counter').using { "Count: $it" })
+
+                button('Increment', onAction: {
+                    vm.counter++
+                    vm.message = "Clicked ${vm.counter} times"
+                })
+            }
+        }
+    }
+}
+----
+
+=== Complex Binding Example
+
+Here's a complete example showing various binding techniques:
+
+[source,groovy]
+----
+import groovyx.javafx.beans.FXBindable
+import static groovyx.javafx.GroovyFX.start
+
+@FXBindable
+class Email {
+    String name
+    String address
+    String feedback
+
+    String toString() { "<$name> $address : $feedback" }
+}
+
+start {
+    def email = new Email()
+
+    stage(title: "Feedback Form", visible: true) {
+        scene {
+            gridPane(hgap: 10, vgap: 10, padding: 20) {
+                label('Name:', row: 0, column: 0)
+                textField(id: 'nameField', row: 0, column: 1)
+
+                label('Email:', row: 1, column: 0)
+                textField(id: 'addressField', row: 1, column: 1)
+
+                label('Feedback:', row: 2, column: 0)
+                textArea(id: 'feedbackArea', row: 2, column: 1, prefRowCount: 5)
+
+                button('Submit', row: 3, column: 1, onAction: {
+                    println "Submitting: $email"
+                })
+            }
+        }
+    }
+
+    // Bind model properties to UI controls
+    email.nameProperty().bind(nameField.textProperty())
+    email.addressProperty().bind(addressField.textProperty())
+    email.feedbackProperty().bind(feedbackArea.textProperty())
+}
+----
+
+== Subscription API
+
+GroovyFX supports the modern JavaFX `Subscription` API, providing a clean way to manage listeners and subscriptions. This API offers better resource management than traditional listeners.
+
+[source,groovy]
+----
+import javafx.beans.binding.Bindings
+
+def subscription = myProperty.subscribe { newValue ->
+    println "Property changed to: $newValue"
 }
 
 // Later, to stop listening:
-sub.unsubscribe()
+subscription.unsubscribe()
 ----
+
+The Subscription API is particularly useful for temporary listeners and helps prevent memory leaks by making it easy to unsubscribe when done.
+
+== Best Practices
+
+=== Use @FXBindable for Model Classes
+
+Always use `@FXBindable` on your model/ViewModel classes to eliminate boilerplate:
+
+[source,groovy]
+----
+@FXBindable
+class UserPreferences {
+    boolean darkMode
+    String theme
+    int fontSize
+}
+----
+
+=== Prefer Unidirectional Binding When Possible
+
+Unidirectional bindings are simpler to reason about and debug. Use bidirectional binding only when you truly need two-way synchronization.
+
+=== Use Closure Bindings for Computed Properties
+
+When a property depends on multiple sources, closure bindings provide clean, declarative syntax:
+
+[source,groovy]
+----
+label(text: bind {
+    "Total: ${quantity.value * price.value}"
+})
+----
+
+=== Clean Up Bindings
+
+Remember to unbind properties when they're no longer needed, especially in long-running applications:
+
+[source,groovy]
+----
+property.unbind()
+subscription.unsubscribe()
+----
+
+== Summary
+
+GroovyFX's property and binding system provides:
+
+* **@FXBindable annotation** - Eliminates JavaFX property boilerplate
+* **Flexible bind() syntax** - Multiple ways to create bindings
+* **Unidirectional and bidirectional binding** - Control data flow
+* **Closure-based bindings** - Computed properties with automatic dependency tracking
+* **Transformation with using()** - Transform bound values declaratively
+* **Observable collections** - Automatic change notifications for lists, maps, and sets
+* **Subscription API** - Modern listener management
+
+These features make GroovyFX property binding both powerful and intuitive, significantly reducing the code required compared to pure JavaFX.

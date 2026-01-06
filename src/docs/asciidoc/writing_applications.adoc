@@ -1,5 +1,678 @@
 
 = Writing Applications
 
+Writing well-structured GroovyFX applications requires careful consideration of architecture, code organization, and separation of concerns. While GroovyFX makes it easy to create simple applications with everything in one place, larger applications benefit from proper structure and design patterns.
+
+== Application Architecture Approaches
+
+There are several ways to structure a GroovyFX application, ranging from simple scripts to fully-structured applications with separation of concerns.
+
+=== All-in-One Applications
+
+The simplest approach puts all code in a single file. This is fine for demos, prototypes, and small utilities:
+
+[source,groovy]
+----
+import groovyx.javafx.beans.FXBindable
+import static groovyx.javafx.GroovyFX.start
+
+@FXBindable
+class Email {
+    String name
+    String address
+    String feedback
+
+    String toString() { "<$name> $address : $feedback" }
+}
+
+start {
+    def email = new Email()
+
+    stage(title: "Feedback Form", visible: true) {
+        scene {
+            gridPane(hgap: 10, vgap: 10, padding: 20) {
+                label('Name:', row: 0, column: 0)
+                textField(id: 'nameField', row: 0, column: 1)
+
+                label('Email:', row: 1, column: 0)
+                textField(id: 'emailField', row: 1, column: 1)
+
+                label('Feedback:', row: 2, column: 0)
+                textArea(id: 'feedbackArea', row: 2, column: 1, prefRowCount: 5)
+
+                button('Submit', row: 3, column: 1, onAction: {
+                    println "Submitting: $email"
+                    // Handle submission...
+                })
+            }
+        }
+    }
+
+    // Bind model to UI
+    email.nameProperty().bind(nameField.textProperty())
+    email.addressProperty().bind(emailField.textProperty())
+    email.feedbackProperty().bind(feedbackArea.textProperty())
+}
+----
+
+**Pros:**
+* Simple and direct
+* Easy to understand for small applications
+* Quick to prototype
+
+**Cons:**
+* Mixes concerns (model, view, logic, style)
+* Hard to test
+* Difficult to maintain as the application grows
+* No reusability
+
 == Structuring GroovyFX Applications
+
+For larger applications, separating concerns improves maintainability, testability, and reusability. A well-structured GroovyFX application typically separates:
+
+* **Model/Domain classes** - Business data and logic
+* **View layout** - UI structure
+* **Styling** - Visual appearance (CSS and programmatic styles)
+* **Controllers/Handlers** - Event handling and coordination
+* **Bindings** - Connecting model to view
+
+=== Separated Concerns Architecture
+
+Here's an improved version that separates the main concerns:
+
+[source,groovy]
+----
+// Model.groovy
+import groovyx.javafx.beans.FXBindable
+
+@FXBindable
+class Email {
+    String name
+    String address
+    String feedback
+
+    String toString() { "<$name> $address : $feedback" }
+}
+
+// View.groovy
+import groovyx.javafx.SceneGraphBuilder
+import static javafx.geometry.HPos.RIGHT
+import static javafx.geometry.VPos.BASELINE
+
+class EmailFormView {
+    static layoutFrame(SceneGraphBuilder sgb) {
+        sgb.stage(title: "Feedback Form") {
+            scene {
+                gridPane(id: 'mainGrid') {
+                    label(id: 'header', 'Please Send Us Your Feedback',
+                          row: 0, columnSpan: 2)
+
+                    label('Name', row: 1, column: 0)
+                    textField(id: 'nameField', row: 1, column: 1)
+
+                    label('Email', row: 2, column: 0)
+                    textField(id: 'emailField', row: 2, column: 1)
+
+                    label('Feedback', row: 3, column: 0, valignment: BASELINE)
+                    textArea(id: 'feedbackArea', row: 3, column: 1, prefRowCount: 8)
+
+                    button(id: 'submitButton', 'Send Feedback',
+                           row: 4, column: 1, halignment: RIGHT)
+                }
+            }
+        }
+    }
+}
+
+// Style.groovy
+import groovyx.javafx.SceneGraphBuilder
+import javafx.scene.layout.GridPane
+
+class EmailFormStyle {
+    static applyStyle(SceneGraphBuilder sgb) {
+        // Apply CSS stylesheet
+        sgb.primaryStage.scene.stylesheets << 'styles/email-form.css'
+
+        // Configure layout constraints
+        GridPane grid = sgb.mainGrid
+        grid.hgap = 10
+        grid.vgap = 10
+        grid.padding = insets(20)
+
+        grid.columnConstraints << sgb.columnConstraints(
+            halignment: 'right',
+            minWidth: 100
+        )
+        grid.columnConstraints << sgb.columnConstraints(
+            hgrow: 'always',
+            prefWidth: 300
+        )
+    }
+}
+
+// Controller.groovy
+import groovyx.javafx.SceneGraphBuilder
+
+class EmailFormController {
+    static void bindModel(Email model, SceneGraphBuilder sgb) {
+        sgb.with {
+            model.nameProperty().bind(nameField.textProperty())
+            model.emailProperty().bind(emailField.textProperty())
+            model.feedbackProperty().bind(feedbackArea.textProperty())
+        }
+    }
+
+    static void attachHandlers(Email model, SceneGraphBuilder sgb) {
+        sgb.submitButton.onAction = {
+            if (validateEmail(model)) {
+                submitFeedback(model)
+            }
+        }
+    }
+
+    private static boolean validateEmail(Email email) {
+        if (!email.name || !email.address || !email.feedback) {
+            println "All fields are required"
+            return false
+        }
+        return true
+    }
+
+    private static void submitFeedback(Email email) {
+        println "Submitting feedback: $email"
+        // Actual submission logic here...
+    }
+}
+
+// Main.groovy - Application entry point
+import static groovyx.javafx.GroovyFX.start
+
+start { app ->
+    def builder = delegate
+    def model = new Email()
+
+    // Setup in logical order
+    EmailFormView.layoutFrame(builder)
+    EmailFormStyle.applyStyle(builder)
+    EmailFormController.bindModel(model, builder)
+    EmailFormController.attachHandlers(model, builder)
+
+    primaryStage.show()
+}
+----
+
+This structure provides:
+
+* **Clear separation** - Each file has a single responsibility
+* **Reusability** - View components can be reused
+* **Testability** - Controllers and models can be tested independently
+* **Maintainability** - Easy to find and modify specific aspects
+* **Scalability** - Pattern scales to larger applications
+
+=== Model-View-ViewModel (MVVM) Pattern
+
+For complex applications, the MVVM pattern provides excellent separation and testability. The ViewModel acts as an intermediary between the Model (data) and View (UI):
+
+[source,groovy]
+----
+// Model - Domain data
+@FXBindable
+class User {
+    String username
+    String email
+    boolean premium
+}
+
+// ViewModel - Presentation logic and state
+import groovyx.javafx.beans.FXBindable
+
+@FXBindable
+class UserProfileViewModel {
+    // Exposed properties for the view
+    String displayName
+    String emailAddress
+    boolean canUpgrade
+    String statusMessage
+
+    private User user
+
+    UserProfileViewModel(User user) {
+        this.user = user
+        updateFromUser()
+    }
+
+    void updateFromUser() {
+        this.displayName = user.username
+        this.emailAddress = user.email
+        this.canUpgrade = !user.premium
+        updateStatus()
+    }
+
+    void upgradeAccount() {
+        user.premium = true
+        canUpgrade = false
+        statusMessage = "Account upgraded successfully!"
+    }
+
+    private void updateStatus() {
+        statusMessage = user.premium ? "Premium Member" : "Free Member"
+    }
+}
+
+// View - UI layout
+import static groovyx.javafx.GroovyFX.start
+
+start {
+    def user = new User(username: 'jdoe', email: 'jdoe@example.com', premium: false)
+    def viewModel = new UserProfileViewModel(user)
+
+    stage(title: "User Profile", visible: true) {
+        scene {
+            vbox(spacing: 10, padding: 20) {
+                label(text: bind(viewModel, 'displayName'),
+                      style: '-fx-font-size: 18px; -fx-font-weight: bold;')
+
+                label(text: bind(viewModel, 'emailAddress'))
+
+                label(text: bind(viewModel, 'statusMessage'),
+                      style: '-fx-text-fill: blue;')
+
+                button('Upgrade to Premium',
+                       disable: bind(viewModel, 'canUpgrade').using { !it },
+                       onAction: { viewModel.upgradeAccount() })
+            }
+        }
+    }
+}
+----
+
+The MVVM pattern offers:
+
+* **Complete separation** - View knows nothing about Model
+* **Testable logic** - ViewModel can be unit tested without UI
+* **Reactive updates** - Bindings automatically propagate changes
+* **Clean architecture** - Clear data flow and responsibilities
+
+=== Component-Based Architecture
+
+For large applications, breaking the UI into reusable components improves organization:
+
+[source,groovy]
+----
+// Reusable component
+class UserCard {
+    static build(SceneGraphBuilder sgb, String name, String role) {
+        sgb.card {
+            cardHeader {
+                label(name, style: '-fx-font-weight: bold;')
+            }
+            cardBody {
+                label("Role: $role")
+                button('View Profile', onAction: {
+                    println "Viewing profile for $name"
+                })
+            }
+        }
+    }
+}
+
+// Composing application from components
+start {
+    stage(title: "Team Dashboard", visible: true) {
+        scene(width: 600, height: 400) {
+            vbox(spacing: 10, padding: 10) {
+                label('Team Members', style: '-fx-font-size: 20px;')
+
+                flowPane(hgap: 10, vgap: 10) {
+                    UserCard.build(delegate, 'Alice', 'Developer')
+                    UserCard.build(delegate, 'Bob', 'Designer')
+                    UserCard.build(delegate, 'Charlie', 'Manager')
+                }
+            }
+        }
+    }
+}
+----
+
+== Styling Applications
+
+=== Using CSS Stylesheets
+
+CSS provides the cleanest way to style JavaFX applications:
+
+[source,groovy]
+----
+// In your application:
+start {
+    stage(title: "Styled App", visible: true) {
+        scene {
+            stackPane {
+                label('Styled Label', styleClass: 'custom-label')
+            }
+        }
+    }
+
+    // Load CSS stylesheet
+    primaryStage.scene.stylesheets << 'styles/application.css'
+}
+----
+
+[source,css]
+----
+/* styles/application.css */
+.root {
+    -fx-background-color: #f0f0f0;
+}
+
+.custom-label {
+    -fx-font-size: 18px;
+    -fx-text-fill: #333333;
+    -fx-font-weight: bold;
+}
+----
+
+=== Inline Styles
+
+For quick styling or dynamic styles, use inline styles:
+
+[source,groovy]
+----
+label('Warning!', style: '-fx-text-fill: red; -fx-font-weight: bold;')
+----
+
+=== Programmatic Styling
+
+For complex or computed styles:
+
+[source,groovy]
+----
+def applyTheme(Node node, boolean darkMode) {
+    if (darkMode) {
+        node.style = '-fx-background-color: #2b2b2b; -fx-text-fill: white;'
+    } else {
+        node.style = '-fx-background-color: white; -fx-text-fill: black;'
+    }
+}
+----
+
+== Managing Application State
+
+=== Using the Store Pattern
+
+GroovyFX provides a `Store` class for centralized state management:
+
+[source,groovy]
+----
+import groovyx.javafx.components.Store
+
+class AppState {
+    int counter = 0
+    String message = ''
+}
+
+start {
+    def store = new Store<AppState>(new AppState())
+
+    store.subscribe { state ->
+        println "State changed: counter=${state.counter}, message=${state.message}"
+    }
+
+    stage(title: "State Demo", visible: true) {
+        scene {
+            vbox(spacing: 10, padding: 10) {
+                label(id: 'counterLabel', text: '0')
+                label(id: 'messageLabel')
+
+                button('Increment', onAction: {
+                    store.update { state ->
+                        state.counter++
+                        state.message = "Clicked ${state.counter} times"
+                    }
+                    counterLabel.text = store.state.counter.toString()
+                    messageLabel.text = store.state.message
+                })
+            }
+        }
+    }
+}
+----
+
+=== Observable Properties for State
+
+For simpler cases, use `@FXBindable` properties:
+
+[source,groovy]
+----
+@FXBindable
+class AppState {
+    int itemCount = 0
+    boolean loading = false
+    String status = 'Ready'
+}
+
+def state = new AppState()
+
+// Bind UI to state
+label(text: bind(state, 'status'))
+progressIndicator(visible: bind(state, 'loading'))
+----
+
+== Error Handling and Validation
+
+=== Form Validation
+
+[source,groovy]
+----
+class Validator {
+    static String validateEmail(String email) {
+        if (!email) return "Email is required"
+        if (!email.contains('@')) return "Invalid email format"
+        return null // Valid
+    }
+
+    static String validatePassword(String password) {
+        if (!password) return "Password is required"
+        if (password.length() < 8) return "Password must be at least 8 characters"
+        return null
+    }
+}
+
+start {
+    stage(title: "Validated Form", visible: true) {
+        scene {
+            formLayout {
+                textField(id: 'emailField', label: 'Email',
+                          validate: { Validator.validateEmail(it) })
+
+                passwordField(id: 'passwordField', label: 'Password',
+                              validate: { Validator.validatePassword(it) })
+
+                button('Submit', onAction: {
+                    if (!emailField.text || !passwordField.text) {
+                        println "Please fix validation errors"
+                        return
+                    }
+                    println "Form submitted successfully"
+                })
+            }
+        }
+    }
+}
+----
+
+=== Exception Handling
+
+[source,groovy]
+----
+button('Load Data', onAction: {
+    try {
+        loadDataFromServer()
+        statusLabel.text = 'Data loaded successfully'
+    } catch (IOException e) {
+        statusLabel.text = "Network error: ${e.message}"
+        showErrorDialog(e)
+    } catch (Exception e) {
+        statusLabel.text = "Unexpected error occurred"
+        e.printStackTrace()
+    }
+})
+----
+
+== Application Lifecycle
+
+=== Initialization and Cleanup
+
+[source,groovy]
+----
+start { app ->
+    // Initialize resources
+    def dataService = new DataService()
+    dataService.connect()
+
+    stage(title: "My App", visible: true) {
+        scene {
+            // UI here...
+        }
+    }
+
+    // Cleanup on close
+    primaryStage.onCloseRequest = { event ->
+        println "Application closing..."
+        dataService.disconnect()
+        // Save preferences, close connections, etc.
+    }
+}
+----
+
+=== Multi-window Applications
+
+[source,groovy]
+----
+start {
+    // Main window
+    stage(title: "Main Window", visible: true) {
+        scene {
+            vbox(spacing: 10, padding: 10) {
+                button('Open Settings', onAction: {
+                    openSettingsWindow()
+                })
+            }
+        }
+    }
+
+    def openSettingsWindow = {
+        stage(title: "Settings") {
+            scene {
+                vbox(spacing: 10, padding: 10) {
+                    label('Settings')
+                    button('Close', onAction: { it.source.scene.window.hide() })
+                }
+            }
+        }.show()
+    }
+}
+----
+
+== Best Practices
+
+=== Organize by Feature
+
+For larger applications, organize code by feature rather than by type:
+
+----
+/src
+  /main
+    /groovy
+      /com/myapp
+        /user
+          UserModel.groovy
+          UserView.groovy
+          UserController.groovy
+        /dashboard
+          DashboardView.groovy
+          DashboardViewModel.groovy
+        /settings
+          SettingsView.groovy
+          SettingsModel.groovy
+        Main.groovy
+----
+
+=== Keep Views Declarative
+
+Views should focus on structure, not logic:
+
+[source,groovy]
+----
+// Good - declarative
+vbox {
+    label(text: bind(viewModel, 'title'))
+    button('Click', onAction: { controller.handleClick() })
+}
+
+// Bad - imperative logic in view
+vbox {
+    label(text: 'Title')
+    button('Click', onAction: {
+        // Complex business logic here... NO!
+    })
+}
+----
+
+=== Use Dependency Injection
+
+Pass dependencies explicitly rather than using globals:
+
+[source,groovy]
+----
+class UserView {
+    static build(SceneGraphBuilder sgb, UserViewModel viewModel) {
+        sgb.vbox {
+            label(text: bind(viewModel, 'username'))
+        }
+    }
+}
+----
+
+=== Test Your Components
+
+Separate logic from UI to enable testing:
+
+[source,groovy]
+----
+// Testable
+class Calculator {
+    int add(int a, int b) { a + b }
+}
+
+// Use in UI
+button('Calculate', onAction: {
+    result = calculator.add(num1, num2)
+})
+----
+
 == Using the Griffon Application Framework
+
+For very large applications requiring full-featured application framework support, consider using https://griffon-framework.org/[Griffon]. Griffon is a desktop application framework that integrates with GroovyFX and provides:
+
+* **MVC/MVP/MVVM architecture** - Built-in support for architectural patterns
+* **Dependency injection** - Automatic wiring with JSR-330
+* **Testing support** - Integration and unit testing frameworks
+* **Plugin system** - Extensive ecosystem of plugins
+* **Internationalization** - Built-in i18n support
+* **Threading** - Simplified background task management
+
+While GroovyFX is excellent for small to medium applications, Griffon adds enterprise-grade features for large-scale JavaFX development.
+
+== Summary
+
+Structuring GroovyFX applications properly involves:
+
+* **Separating concerns** - Model, View, Controller, Style
+* **Using patterns** - MVVM, component-based architecture
+* **Managing state** - Observable properties or Store pattern
+* **Proper styling** - CSS for visual concerns
+* **Error handling** - Validation and exception management
+* **Lifecycle management** - Initialization and cleanup
+* **Testing** - Separating testable logic from UI
+
+Start simple and add structure as your application grows. The patterns shown here scale from small utilities to large enterprise applications.
