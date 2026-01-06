@@ -1,20 +1,3 @@
-/*
- * SPDX-License-Identifier: Apache-2.0
- *
- * Copyright 2011-2021 the original author or authors.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package groovyx.javafx.binding;
 
 import groovy.lang.Binding;
@@ -30,84 +13,120 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Wraps a groovy script variable in a JavaFX Property
- * 
+ * Provides JavaFX {@link Property} wrappers for Groovy {@link Script} variables.
+ *
+ * <p>This class maintains a per-script cache of properties so that repeated requests
+ * for the same script variable return the same JavaFX property instance.</p>
+ *
+ * <p>The script's {@link Binding} variables map is wrapped in an {@link ObservableMap}
+ * so that changes to script variables can be observed and propagated to the cached
+ * JavaFX properties.</p>
+ *
  * @author jimclarke
  */
-public class ScriptVariableProperty implements MapChangeListener<String, Object>{
-    private static ScriptVariableProperty instance = new ScriptVariableProperty();
-    
+public class ScriptVariableProperty implements MapChangeListener<String, Object> {
+
+    private static final ScriptVariableProperty INSTANCE = new ScriptVariableProperty();
     private static final String SCRIPT_VAR = "__script__";
-    
-    // store the properties for each script instance
-    // so that we reuse the same property for each script varible.
-    private static Map<Script, Map<String, Property>> propertyMap =
-            new HashMap<Script, Map<String, Property>>();
-    
-    public static Property getProperty(Script script, String propertyName){
-        Map<String, Property> instanceMap = propertyMap.get(script);
-        if(instanceMap == null) {
-            // we have not seen this script before.
-            instanceMap = new HashMap<String, Property>();
+
+    /**
+     * Stores JavaFX properties for each script instance.
+     * Keyed first by script instance, then by variable name.
+     */
+    private static final Map<Script, Map<String, Property<?>>> propertyMap = new HashMap<>();
+
+    /**
+     * Returns a JavaFX {@link Property} that reflects the value of the given script variable.
+     *
+     * <p>If a property for the given script and variable already exists, it is returned.
+     * Otherwise, a new property is created, cached, and returned.</p>
+     *
+     * <p>On first access for a script, the script's binding variables map is wrapped in an
+     * {@link ObservableMap} and a listener is attached to propagate changes.</p>
+     *
+     * @param script       the Groovy script instance
+     * @param propertyName the name of the script variable
+     * @return a JavaFX property reflecting the script variable
+     */
+    public static Property<?> getProperty(Script script, String propertyName) {
+        Map<String, Property<?>> instanceMap = propertyMap.get(script);
+        if (instanceMap == null) {
+            instanceMap = new HashMap<>();
             propertyMap.put(script, instanceMap);
-            
-            // intercept the binding on the script so we can
-            // be notified of changes.
-            Map originalVMap = script.getBinding().getVariables(); 
+
+            // Binding.getVariables() is raw in Groovy; we wrap it carefully.
+            @SuppressWarnings({"unchecked", "rawtypes"})
+            Map<String, Object> originalVMap = (Map) script.getBinding().getVariables();
+
             originalVMap.put(SCRIPT_VAR, script);
-            ObservableMap obsVariables = FXCollections.observableMap(originalVMap);
-            obsVariables.addListener(instance);
+
+            ObservableMap<String, Object> obsVariables = FXCollections.observableMap(originalVMap);
+            obsVariables.addListener(INSTANCE);
+
             Binding newBinding = new Binding(obsVariables);
             script.setBinding(newBinding);
         }
-        Property property = instanceMap.get(propertyName);
-        if(property == null) {
-            // create a new Property
-            Class type = script.getProperty(propertyName).getClass();
-            if(type == Boolean.class || type == Boolean.TYPE) {
+
+        Property<?> property = instanceMap.get(propertyName);
+        if (property == null) {
+            Object value = script.getProperty(propertyName);
+            Class<?> type = (value != null) ? value.getClass() : Object.class;
+
+            // Script values are always boxed types (never primitives), so no *.TYPE checks needed.
+            if (type == Boolean.class) {
                 property = new ScriptVariableBooleanProperty(script, propertyName);
-            } else if(type == BigDecimal.class || type == Double.class || type == Double.TYPE) {
+            } else if (type == BigDecimal.class || type == Double.class) {
                 property = new ScriptVariableDoubleProperty(script, propertyName);
-            } else if(type == Float.class || type == Float.TYPE) {
+            } else if (type == Float.class) {
                 property = new ScriptVariableFloatProperty(script, propertyName);
-            } else if(type == Byte.class || type == Byte.TYPE ||
-                    type == Short.class || type == Short.TYPE ||
-                    type == Integer.class || type == Integer.TYPE  ) { 
+            } else if (type == Byte.class || type == Short.class || type == Integer.class) {
                 property = new ScriptVariableIntegerProperty(script, propertyName);
-            } else if(type == BigInteger.class || type == Long.class || type == Long.TYPE  ) { 
+            } else if (type == BigInteger.class || type == Long.class) {
                 property = new ScriptVariableLongProperty(script, propertyName);
-            } else if(type == String.class  ) { 
+            } else if (type == String.class) {
                 property = new ScriptVariableStringProperty(script, propertyName);
-            } else  { 
-                property = new ScriptVariableObjectProperty(script, propertyName);
+            } else {
+                property = new ScriptVariableObjectProperty<>(script, propertyName);
             }
+
             instanceMap.put(propertyName, property);
         }
+
         return property;
     }
 
+    /**
+     * Private constructor; this class is used as a singleton listener instance.
+     */
     private ScriptVariableProperty() {
-        
+        // singleton
     }
+
+    /**
+     * Called when a script binding variable changes.
+     *
+     * <p>If a JavaFX property exists for the changed variable, its value is updated to match
+     * the new value in the script variables map.</p>
+     *
+     * @param change the map change event
+     */
     @Override
     public void onChanged(Change<? extends String, ? extends Object> change) {
         ObservableMap<? extends String, ? extends Object> map = change.getMap();
-        // get the script instance
-        Script script = (Script)map.get(SCRIPT_VAR);
-        if(script != null) {
-            //get the instanceMap so we can locate the JavaFX Property, if it exists.
-            Map<String, Property> instanceMap = propertyMap.get(script);
-            if(instanceMap != null) {
-                String variable = change.getKey();
-                Property property = instanceMap.get(variable);
-                if(property != null) { 
-                    // we have a property installed for ths variable,
-                    // so set it's value from the script variable.
-                    property.setValue(map.get(variable));
-                }
-            }
-        }
-        
+
+        Script script = (Script) map.get(SCRIPT_VAR);
+        if (script == null) return;
+
+        Map<String, Property<?>> instanceMap = propertyMap.get(script);
+        if (instanceMap == null) return;
+
+        String variable = change.getKey();
+        Property<?> property = instanceMap.get(variable);
+        if (property == null) return;
+
+        // Script variables are dynamic (Object). Bridge wildcard capture via a single controlled cast.
+        @SuppressWarnings({"rawtypes", "unchecked"})
+        Property raw = (Property) property;
+        raw.setValue(map.get(variable));
     }
-    
 }

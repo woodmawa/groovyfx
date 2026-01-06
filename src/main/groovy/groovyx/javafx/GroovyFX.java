@@ -27,25 +27,48 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * General starter application that displays a stage.
- * Historically used JFXPanel to bootstrap JavaFX; this version uses Platform.startup
- * to avoid requiring the javafx.swing module.
+ * Entry point helper for launching a GroovyFX application.
+ *
+ * <p>This class is an {@link Application} that delegates its UI construction to a
+ * Groovy {@link Closure}. The closure is executed with a {@link SceneGraphBuilder}
+ * as its delegate, allowing GroovyFX DSL-style UI construction.</p>
+ *
+ * <p>Historically GroovyFX used Swing bootstrapping; this implementation uses
+ * {@link Platform#startup(Runnable)} when needed to initialize the JavaFX toolkit
+ * without requiring {@code javafx.swing}.</p>
  *
  * @author jimclarke
- * @author Dierk Koenig added the default delegate
+ * @author Dierk Koenig (default delegate)
  */
 public class GroovyFX extends Application {
 
-    // Published via start(buildMe); accessed on FX Application Thread.
+    /**
+     * The closure to execute on the JavaFX Application Thread during {@link #start(Stage)}.
+     *
+     * <p>This is published via {@link #start(Closure)} / {@link #start(Closure, String...)}
+     * before {@link Application#launch(Class, String...)} transfers control to JavaFX.</p>
+     */
     public static volatile Closure<Object> closure;
 
     private static final AtomicBoolean TOOLKIT_STARTED = new AtomicBoolean(false);
 
     /**
-     * Initializes the JavaFX toolkit (if not already initialized) without using Swing.
-     * Safe to call multiple times; subsequent calls are no-ops.
+     * Creates a GroovyFX application instance.
      *
-     * Note: This does NOT start an Application; it only ensures the toolkit is ready.
+     * <p>Instances are typically created by the JavaFX runtime, not directly by user code.</p>
+     */
+    public GroovyFX() {
+        // default constructor required by JavaFX runtime
+    }
+
+    /**
+     * Ensures that the JavaFX toolkit is initialized (without using Swing).
+     *
+     * <p>This method is safe to call multiple times. If the toolkit is already running
+     * then this method is effectively a no-op.</p>
+     *
+     * <p>Note: This does <em>not</em> launch an {@link Application}; it only ensures the
+     * toolkit is ready so that {@link Platform#runLater(Runnable)} can be used.</p>
      */
     public static void initJavaFX() {
         if (TOOLKIT_STARTED.get()) return;
@@ -69,6 +92,14 @@ public class GroovyFX extends Application {
         }
     }
 
+    /**
+     * JavaFX entry point invoked by the runtime after {@link Application#launch}.
+     *
+     * <p>Executes the user-provided {@link #closure} with a {@link SceneGraphBuilder}
+     * (delegated to the {@code primaryStage}).</p>
+     *
+     * @param primaryStage the primary stage supplied by the JavaFX runtime
+     */
     @Override
     public void start(Stage primaryStage) {
         Closure<Object> local = closure;
@@ -86,17 +117,29 @@ public class GroovyFX extends Application {
     }
 
     /**
-     * @param buildMe The code that is to be built in the context of a SceneGraphBuilder
-     *                for the primary stage and started.
+     * Launches the GroovyFX application using the supplied builder closure.
      *
-     * Note: Application.launch can only be called once per JVM.
+     * <p>The closure is executed on the JavaFX Application Thread and is expected to
+     * build the scene graph using a {@link SceneGraphBuilder} delegate.</p>
+     *
+     * <p>Note: {@link Application#launch} can only be called once per JVM.</p>
+     *
+     * @param buildMe the code that is built in the context of a {@link SceneGraphBuilder}
      */
     public static void start(Closure<Object> buildMe) {
         start(buildMe, new String[0]);
     }
 
     /**
-     * Variant that allows passing Application arguments.
+     * Launches the GroovyFX application using the supplied builder closure and arguments.
+     *
+     * <p>The closure is executed on the JavaFX Application Thread and is expected to
+     * build the scene graph using a {@link SceneGraphBuilder} delegate.</p>
+     *
+     * <p>Note: {@link Application#launch} can only be called once per JVM.</p>
+     *
+     * @param buildMe the code that is built in the context of a {@link SceneGraphBuilder}
+     * @param args   optional application arguments passed to {@link Application#launch}
      */
     public static void start(Closure<Object> buildMe, String... args) {
         closure = buildMe;
@@ -105,15 +148,22 @@ public class GroovyFX extends Application {
     }
 
     /**
-     * Convenience: run something on the JavaFX thread, starting the toolkit if needed.
-     * Useful for smoke tests and non-UI initialization checks.
+     * Runs the given {@link Runnable} on the JavaFX Application Thread.
+     *
+     * <p>If the JavaFX toolkit has not been started, this method initializes it via
+     * {@link #initJavaFX()} first. The runnable is executed synchronously: this method
+     * only returns after the runnable has completed.</p>
+     *
+     * @param r the runnable to execute on the JavaFX thread
      */
     public static void runOnFxThread(Runnable r) {
         initJavaFX();
+
         if (Platform.isFxApplicationThread()) {
             r.run();
             return;
         }
+
         CountDownLatch latch = new CountDownLatch(1);
         Platform.runLater(() -> {
             try {
@@ -122,6 +172,7 @@ public class GroovyFX extends Application {
                 latch.countDown();
             }
         });
+
         try {
             latch.await();
         } catch (InterruptedException ie) {

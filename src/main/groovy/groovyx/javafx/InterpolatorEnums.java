@@ -20,25 +20,40 @@ package groovyx.javafx;
 import javafx.animation.Interpolator;
 
 /**
+ * Convenience enum that exposes common JavaFX {@link Interpolator} instances.
+ *
+ * <p>This is primarily used to make interpolators easier to reference from GroovyFX DSL code.</p>
  *
  * @author jimclarke
  */
 public enum InterpolatorEnums {
+    /** Discrete interpolation (no in-between values). */
     DISCRETE(Interpolator.DISCRETE),
+
+    /** Linear interpolation. */
     LINEAR(Interpolator.LINEAR),
+
+    /** Ease-in/ease-out interpolation. */
     EASE_BOTH(Interpolator.EASE_BOTH),
+
+    /** Ease-in interpolation. */
     EASE_IN(Interpolator.EASE_IN),
+
+    /** Ease-out interpolation. */
     EASE_OUT(Interpolator.EASE_OUT);
 
-    private Interpolator interp;
+    private final Interpolator interpolator;
 
-
-    InterpolatorEnums(Interpolator interp) {
-        this.interp = interp;
+    InterpolatorEnums(Interpolator interpolator) {
+        this.interpolator = interpolator;
     }
 
-    public Interpolator interpolator() { return interp; }
-
-
-
+    /**
+     * Returns the underlying JavaFX {@link Interpolator} instance.
+     *
+     * @return the interpolator
+     */
+    public Interpolator interpolator() {
+        return interpolator;
+    }
 }

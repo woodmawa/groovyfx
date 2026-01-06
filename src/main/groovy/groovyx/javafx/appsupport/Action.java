@@ -1,20 +1,3 @@
-/*
- * SPDX-License-Identifier: Apache-2.0
- *
- * Copyright 2011-2021 the original author or authors.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package groovyx.javafx.appsupport;
 
 import javafx.beans.property.BooleanProperty;
@@ -28,143 +11,232 @@ import javafx.event.EventHandler;
 import javafx.scene.input.KeyCombination;
 
 /**
+ * Represents an executable UI action backed by JavaFX properties.
+ *
+ * <p>An {@code Action} encapsulates common UI action state such as name, description,
+ * enabled/selected state, icon identifier, keyboard accelerator, and an action handler.</p>
+ *
+ * <p>This class is designed to be bound to JavaFX controls such as {@code Button},
+ * {@code MenuItem}, {@code ToggleButton}, etc.</p>
+ *
  * @author Andres Almiray
  */
 public class Action {
-	// -- onAction
 
-	private ObjectProperty<EventHandler<ActionEvent>> onAction;
+	private final ObjectProperty<EventHandler<ActionEvent>> onAction =
+			new SimpleObjectProperty<>(this, "onAction");
 
+	private final StringProperty name =
+			new SimpleStringProperty(this, "name");
+
+	private final StringProperty description =
+			new SimpleStringProperty(this, "description");
+
+	private final BooleanProperty enabled =
+			new SimpleBooleanProperty(this, "enabled", true);
+
+	private final BooleanProperty selected =
+			new SimpleBooleanProperty(this, "selected", false);
+
+	private final StringProperty icon =
+			new SimpleStringProperty(this, "icon");
+
+	private final ObjectProperty<KeyCombination> accelerator =
+			new SimpleObjectProperty<>(this, "accelerator");
+
+	/**
+	 * Creates an empty {@code Action}.
+	 */
+	public Action() {
+		// default constructor
+	}
+
+	/**
+	 * Returns the JavaFX property holding the {@code onAction} handler.
+	 *
+	 * @return the onAction property
+	 */
 	public final ObjectProperty<EventHandler<ActionEvent>> onActionProperty() {
-		if (onAction == null) {
-			onAction = new SimpleObjectProperty<EventHandler<ActionEvent>>(this, "onAction");
-		}
 		return onAction;
 	}
 
-	public void setOnAction(EventHandler<ActionEvent> value) {
-		onActionProperty().set(value);
+	/**
+	 * Sets the action handler.
+	 *
+	 * @param value the action handler, or {@code null}
+	 */
+	public final void setOnAction(EventHandler<ActionEvent> value) {
+		onAction.set(value);
 	}
 
-	public EventHandler<ActionEvent> getOnAction() {
-		return onAction == null ? null : onActionProperty().get();
+	/**
+	 * Returns the current action handler.
+	 *
+	 * @return the action handler, or {@code null}
+	 */
+	public final EventHandler<ActionEvent> getOnAction() {
+		return onAction.get();
 	}
 
-	// -- name
-
-	private StringProperty name;
-
+	/**
+	 * Returns the JavaFX property holding the action name.
+	 *
+	 * @return the name property
+	 */
 	public final StringProperty nameProperty() {
-		if (name == null) {
-			name = new SimpleStringProperty(this, "name");
-		}
 		return name;
 	}
 
-	public void setName(String name) {
-		nameProperty().set(name);
+	/**
+	 * Sets the action name.
+	 *
+	 * @param value the action name
+	 */
+	public final void setName(String value) {
+		name.set(value);
 	}
 
-	public String getName() {
-		return name == null ? null : nameProperty().get();
+	/**
+	 * Returns the action name.
+	 *
+	 * @return the action name
+	 */
+	public final String getName() {
+		return name.get();
 	}
 
-	// -- description
-
-	private StringProperty description;
-
+	/**
+	 * Returns the JavaFX property holding the action description.
+	 *
+	 * @return the description property
+	 */
 	public final StringProperty descriptionProperty() {
-		if (description == null) {
-			description = new SimpleStringProperty(this, "description");
-		}
 		return description;
 	}
 
-	public void setDescription(String description) {
-		descriptionProperty().set(description);
+	/**
+	 * Sets the action description.
+	 *
+	 * @param value the action description
+	 */
+	public final void setDescription(String value) {
+		description.set(value);
 	}
 
-	public String getDescription() {
-		return description == null ? null : descriptionProperty().get();
+	/**
+	 * Returns the action description.
+	 *
+	 * @return the action description
+	 */
+	public final String getDescription() {
+		return description.get();
 	}
 
-	// -- enabled
-
-	private BooleanProperty enabled;
-
+	/**
+	 * Returns the JavaFX property indicating whether the action is enabled.
+	 *
+	 * @return the enabled property
+	 */
 	public final BooleanProperty enabledProperty() {
-		if (enabled == null) {
-			enabled = new SimpleBooleanProperty(this, "enabled", true);
-		}
 		return enabled;
 	}
 
-	public void setEnabled(boolean enabled) {
-		enabledProperty().set(enabled);
+	/**
+	 * Sets whether this action is enabled.
+	 *
+	 * @param value {@code true} if the action is enabled
+	 */
+	public final void setEnabled(boolean value) {
+		enabled.set(value);
 	}
 
-	public boolean getEnabled() {
-		return enabled != null && enabledProperty().get();
+	/**
+	 * Returns whether this action is enabled.
+	 *
+	 * @return {@code true} if the action is enabled
+	 */
+	public final boolean isEnabled() {
+		return enabled.get();
 	}
 
-	// -- accelerator
-
-	private ObjectProperty<KeyCombination> accelerator;
-
-	public void setAccelerator(String accelerator) {
-		setAccelerator(KeyCombination.keyCombination(accelerator));
-	}
-
-	public final void setAccelerator(KeyCombination value) {
-		acceleratorProperty().set(value);
-	}
-
-	public final KeyCombination getAccelerator() {
-		return accelerator == null ? null : accelerator.get();
-	}
-
-	public final ObjectProperty<KeyCombination> acceleratorProperty() {
-		if (accelerator == null) {
-			accelerator = new SimpleObjectProperty<KeyCombination>(this, "accelerator");
-		}
-		return accelerator;
-	}
-
-	// -- icon
-
-	private StringProperty icon;
-
-	public final StringProperty iconProperty() {
-		if (icon == null) {
-			icon = new SimpleStringProperty(this, "icon");
-		}
-		return icon;
-	}
-
-	public void setIcon(String icon) {
-		iconProperty().set(icon);
-	}
-
-	public String getIcon() {
-		return icon == null ? null : iconProperty().get();
-	}
-
-	// -- selected
-
-	private BooleanProperty selected;
-
+	/**
+	 * Returns the JavaFX property indicating whether the action is selected.
+	 *
+	 * @return the selected property
+	 */
 	public final BooleanProperty selectedProperty() {
-		if (selected == null) {
-			selected = new SimpleBooleanProperty(this, "selected");
-		}
 		return selected;
 	}
 
-	public void setSelected(boolean selected) {
-		selectedProperty().set(selected);
+	/**
+	 * Sets whether this action is selected.
+	 *
+	 * @param value {@code true} if the action is selected
+	 */
+	public final void setSelected(boolean value) {
+		selected.set(value);
 	}
 
-	public boolean getSelected() {
-		return selected != null && selectedProperty().get();
+	/**
+	 * Returns whether this action is selected.
+	 *
+	 * @return {@code true} if the action is selected
+	 */
+	public final boolean isSelected() {
+		return selected.get();
+	}
+
+	/**
+	 * Returns the JavaFX property holding the icon identifier.
+	 *
+	 * @return the icon property
+	 */
+	public final StringProperty iconProperty() {
+		return icon;
+	}
+
+	/**
+	 * Sets the icon identifier (typically a resource path or identifier).
+	 *
+	 * @param value icon identifier (e.g. resource path)
+	 */
+	public final void setIcon(String value) {
+		icon.set(value);
+	}
+
+	/**
+	 * Returns the icon identifier.
+	 *
+	 * @return the icon identifier
+	 */
+	public final String getIcon() {
+		return icon.get();
+	}
+
+	/**
+	 * Sets the keyboard accelerator.
+	 *
+	 * @param value key combination or {@code null}
+	 */
+	public final void setAccelerator(KeyCombination value) {
+		accelerator.set(value);
+	}
+
+	/**
+	 * Returns the JavaFX property holding the keyboard accelerator.
+	 *
+	 * @return the accelerator property
+	 */
+	public final ObjectProperty<KeyCombination> acceleratorProperty() {
+		return accelerator;
+	}
+
+	/**
+	 * Returns the keyboard accelerator.
+	 *
+	 * @return the keyboard accelerator, or {@code null}
+	 */
+	public final KeyCombination getAccelerator() {
+		return accelerator.get();
 	}
 }

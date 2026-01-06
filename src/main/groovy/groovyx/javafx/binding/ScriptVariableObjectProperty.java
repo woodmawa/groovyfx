@@ -21,20 +21,40 @@ import groovy.lang.Script;
 import javafx.beans.property.SimpleObjectProperty;
 
 /**
- * Wraps a groovy script variable in a JavaFX Property
- * 
+ * Wraps a Groovy {@link Script} variable in a JavaFX {@link SimpleObjectProperty}.
+ *
+ * <p>The underlying script property is updated whenever this JavaFX property is set.</p>
+ *
+ * @param <T> value type
  * @author jimclarke
  */
-public class ScriptVariableObjectProperty<T> extends SimpleObjectProperty<T>{
-    
-    ScriptVariableObjectProperty(Script script, String propertyName) {
-        super(script, propertyName, (T)script.getProperty(propertyName));
+public class ScriptVariableObjectProperty<T> extends SimpleObjectProperty<T> {
+
+    /**
+     * Creates a property bound to a variable on the given {@link Script}.
+     *
+     * @param script       the owning script (used as this property's bean)
+     * @param propertyName the script variable/property name (used as this property's name)
+     */
+    public ScriptVariableObjectProperty(Script script, String propertyName) {
+        super(script, propertyName, readScriptValue(script, propertyName));
     }
 
+    private static <T> T readScriptValue(Script script, String propertyName) {
+        @SuppressWarnings("unchecked")
+        T value = (T) script.getProperty(propertyName);
+        return value;
+    }
+
+    /**
+     * Sets the value of this JavaFX property and mirrors it onto the backing script variable.
+     *
+     * @param newValue the new value
+     */
     @Override
     public void set(T newValue) {
-        ((Script)getBean()).setProperty(getName(), newValue);
+        // Keep the script variable in sync with the JavaFX property.
+        ((Script) getBean()).setProperty(getName(), newValue);
         super.set(newValue);
-        
     }
 }
