@@ -1,5 +1,708 @@
 
 = Charts
 
+JavaFX provides a comprehensive charting library, and GroovyFX makes creating charts simple and declarative. This chapter covers all the built-in chart types and how to use them effectively.
+
+== Overview
+
+GroovyFX supports all standard JavaFX chart types:
+
+* **Pie Charts** - Show proportional data as slices of a circle
+* **Line Charts** - Display data points connected by lines
+* **Area Charts** - Like line charts but with filled areas
+* **Bar Charts** - Compare values using horizontal or vertical bars
+* **Scatter Charts** - Plot individual data points
+* **Bubble Charts** - Scatter charts with variable-sized bubbles
+
+All charts share common features like titles, legends, axes configuration, and animation.
+
 == Pie Charts
+
+Pie charts display data as proportional slices of a circle, ideal for showing percentages or parts of a whole.
+
+=== Basic Pie Chart
+
+[source,groovy]
+----
+import static groovyx.javafx.GroovyFX.start
+
+start {
+    stage(title: "Pie Chart Demo", visible: true) {
+        scene {
+            pieChart(data: [
+                'Apples': 0.35,
+                'Oranges': 0.25,
+                'Bananas': 0.20,
+                'Grapes': 0.15,
+                'Other': 0.05
+            ])
+        }
+    }
+}
+----
+
+=== Pie Chart with Map Data
+
+The simplest syntax uses a map where keys are labels and values are proportions:
+
+[source,groovy]
+----
+pieChart(data: [
+    first: 0.25,
+    second: 0.25,
+    third: 0.25,
+    fourth: 0.25
+])
+----
+
+=== Pie Chart with Observable Data
+
+For dynamic charts that update when data changes:
+
+[source,groovy]
+----
+import javafx.collections.FXCollections
+import javafx.scene.chart.PieChart
+
+def pieData = FXCollections.observableArrayList([
+    new PieChart.Data("Slice 1", 42),
+    new PieChart.Data("Slice 2", 58)
+])
+
+pieChart(data: pieData, animated: true)
+
+// Add new slice dynamically
+button('Add Slice') {
+    onAction {
+        pieData.add(new PieChart.Data('New Slice', 25))
+    }
+}
+----
+
+=== Pie Chart Options
+
+[source,groovy]
+----
+pieChart(
+    title: "Sales by Region",
+    data: [North: 250, South: 180, East: 220, West: 195],
+    clockwise: false,          // Draw slices counterclockwise
+    labelLineLength: 20,       // Length of label lines
+    labelsVisible: true,       // Show/hide labels
+    startAngle: 90,            // Starting angle in degrees
+    animated: true,            // Animate data changes
+    legendVisible: true,       // Show/hide legend
+    legendSide: 'RIGHT'        // Position: TOP, BOTTOM, LEFT, RIGHT
+)
+----
+
 == XY Charts
+
+XY charts plot data on two axes (X and Y). GroovyFX supports several XY chart types.
+
+=== Line Charts
+
+Line charts connect data points with lines, ideal for showing trends over time.
+
+==== Basic Line Chart
+
+[source,groovy]
+----
+lineChart(data: [
+    'Series 1': [0, 0.25, 0.5, 1.5, 2, 1.0],
+    'Series 2': [0.25, 0, 0.5, 0.5, 1.5, 0.75]
+])
+----
+
+==== Line Chart with Custom Axes
+
+[source,groovy]
+----
+lineChart(
+    title: "Temperature Over Time",
+    xAxis: categoryAxis(label: "Month"),
+    yAxis: numberAxis(label: "Temperature (°C)", lowerBound: -10, upperBound: 35)
+) {
+    series(name: '2024', data: [
+        'Jan', 5,
+        'Feb', 7,
+        'Mar', 12,
+        'Apr', 18,
+        'May', 23,
+        'Jun', 28
+    ])
+    series(name: '2025', data: [
+        'Jan', 6,
+        'Feb', 8,
+        'Mar', 13,
+        'Apr', 19,
+        'May', 24,
+        'Jun', 29
+    ])
+}
+----
+
+==== Line Chart with Specific Range
+
+[source,groovy]
+----
+def yAxis = numberAxis(
+    label: "Value",
+    lowerBound: -1.2,
+    upperBound: 1.2,
+    tickUnit: 0.2,
+    autoRanging: false  // Use specified bounds
+)
+
+lineChart(
+    title: "Sine Wave",
+    xAxis: categoryAxis(label: "X"),
+    yAxis: yAxis
+) {
+    series(name: 'sin(x)', data: ['A', 0, 'B', 1, 'C', 0, 'D', -1, 'E', 0])
+}
+----
+
+=== Area Charts
+
+Area charts are like line charts but with filled areas below the lines.
+
+[source,groovy]
+----
+areaChart(title: "Area Chart Example") {
+    series(name: 'First Series', data: [
+        0, 0,
+        0.5, 0.2,
+        1.5, 0.6,
+        2, 0.8
+    ])
+    series(name: 'Second Series', data: [
+        0, 0,
+        0.25, 0.2,
+        0.5, 0.6,
+        2.25, 0.4
+    ])
+}
+----
+
+=== Scatter Charts
+
+Scatter charts plot individual data points without connecting them.
+
+[source,groovy]
+----
+scatterChart(title: "Correlation Plot") {
+    series(name: 'Dataset 1', data: [
+        0, 0,
+        0.5, 0.2,
+        1.5, 0.6,
+        2, 0.8
+    ])
+    series(name: 'Dataset 2', data: [
+        0, 0,
+        0.25, 0.2,
+        0.5, 0.6,
+        2.25, 0.4
+    ])
+}
+----
+
+=== Bubble Charts
+
+Bubble charts are scatter charts where each point has a variable size (the "bubble").
+
+==== Basic Bubble Chart
+
+[source,groovy]
+----
+bubbleChart(title: "Bubble Chart Example") {
+    // Data format: [x, y, radius]
+    series(name: 'Series 1', data: [
+        [0, 0.2, 0.1],      // x=0, y=0.2, radius=0.1
+        [0.5, 0.2, 0.25],
+        [1.5, 0.1, 0.5]
+    ])
+    series(name: 'Series 2', data: [
+        [0, 0.1, 0.25],
+        [0.2, 0.5, 0.2]
+    ])
+}
+----
+
+=== Bar Charts
+
+Bar charts display data as rectangular bars.
+
+==== Vertical Bar Chart
+
+[source,groovy]
+----
+barChart(
+    title: "Quarterly Sales",
+    barGap: 0,          // Gap between bars in the same category
+    categoryGap: 0      // Gap between categories
+) {
+    series(name: '2023', data: [
+        'Q1', 1534,
+        'Q2', 2698,
+        'Q3', 1945,
+        'Q4', 3156
+    ])
+    series(name: '2024', data: [
+        'Q1', 2200,
+        'Q2', 2750,
+        'Q3', 2125,
+        'Q4', 3100
+    ])
+}
+----
+
+==== Horizontal Bar Chart
+
+[source,groovy]
+----
+barChart(
+    title: "Product Comparison",
+    xAxis: numberAxis(label: "Sales"),
+    yAxis: categoryAxis(label: "Product"),
+    orientation: 'HORIZONTAL'
+) {
+    series(name: 'Q1', data: ['Product A', 150, 'Product B', 200, 'Product C', 175])
+    series(name: 'Q2', data: ['Product A', 180, 'Product B', 220, 'Product C', 195])
+}
+----
+
+=== Stacked Bar Chart
+
+[source,groovy]
+----
+stackedBarChart(title: "Stacked Sales Data") {
+    series(name: 'Product A', data: ['Q1', 100, 'Q2', 120, 'Q3', 110, 'Q4', 130])
+    series(name: 'Product B', data: ['Q1', 80, 'Q2', 90, 'Q3', 95, 'Q4', 105])
+    series(name: 'Product C', data: ['Q1', 60, 'Q2', 70, 'Q3', 65, 'Q4', 75])
+}
+----
+
+=== Stacked Area Chart
+
+[source,groovy]
+----
+stackedAreaChart(title: "Market Share Over Time") {
+    series(name: 'Company A', data: [0, 25, 1, 28, 2, 30, 3, 35])
+    series(name: 'Company B', data: [0, 35, 1, 33, 2, 32, 3, 30])
+    series(name: 'Company C', data: [0, 40, 1, 39, 2, 38, 3, 35])
+}
+----
+
+== Axes
+
+Charts use axes to define scales and labels for data.
+
+=== Number Axis
+
+For numeric data:
+
+[source,groovy]
+----
+numberAxis(
+    label: "Y Axis",
+    lowerBound: 0,          // Minimum value
+    upperBound: 100,        // Maximum value
+    tickUnit: 10,           // Space between ticks
+    autoRanging: false,     // Use specified bounds
+    side: 'LEFT',           // Position: TOP, BOTTOM, LEFT, RIGHT
+    tickLabelsVisible: true,
+    minorTickVisible: true,
+    minorTickCount: 5
+)
+----
+
+=== Category Axis
+
+For categorical (non-numeric) data:
+
+[source,groovy]
+----
+categoryAxis(
+    label: "Categories",
+    categories: ['A', 'B', 'C', 'D'],  // Optional predefined categories
+    gapStartAndEnd: true,               // Add gaps at start/end
+    startMargin: 10,                    // Margin at start
+    endMargin: 10                       // Margin at end
+)
+----
+
+=== Automatic Axes
+
+If you don't specify axes, GroovyFX creates appropriate defaults:
+
+[source,groovy]
+----
+// Creates NumberAxis for both X and Y
+lineChart(data: [Series: [0, 1, 1, 2, 2, 3]])
+
+// Creates CategoryAxis for X, NumberAxis for Y
+barChart {
+    series(name: 'Data', data: ['A', 10, 'B', 20, 'C', 15])
+}
+----
+
+== Series Data Formats
+
+Charts support multiple data input formats for flexibility.
+
+=== Flat Array Format
+
+Alternating X and Y values:
+
+[source,groovy]
+----
+series(name: 'Data', data: [
+    0, 10,      // Point 1: x=0, y=10
+    1, 20,      // Point 2: x=1, y=20
+    2, 15       // Point 3: x=2, y=15
+])
+----
+
+=== Nested Array Format
+
+Arrays of [x, y] pairs:
+
+[source,groovy]
+----
+series(name: 'Data', data: [
+    [0, 10],
+    [1, 20],
+    [2, 15]
+])
+----
+
+=== Bubble Chart Format
+
+Arrays of [x, y, radius] triplets:
+
+[source,groovy]
+----
+series(name: 'Bubbles', data: [
+    [0, 10, 5],    // x=0, y=10, radius=5
+    [1, 20, 8],
+    [2, 15, 3]
+])
+----
+
+=== Map Format (Chart Level)
+
+Define multiple series with a map:
+
+[source,groovy]
+----
+lineChart(data: [
+    'Series A': [0, 10, 1, 20, 2, 15],
+    'Series B': [0, 5, 1, 15, 2, 25]
+])
+----
+
+== Chart Customization
+
+=== Titles and Labels
+
+[source,groovy]
+----
+lineChart(
+    title: "My Chart",
+    titleSide: 'TOP',           // Position of title
+    xAxis: numberAxis(label: "X Values"),
+    yAxis: numberAxis(label: "Y Values")
+)
+----
+
+=== Legend
+
+[source,groovy]
+----
+lineChart(
+    legendVisible: true,         // Show/hide legend
+    legendSide: 'RIGHT'          // TOP, BOTTOM, LEFT, RIGHT
+) {
+    // Chart content
+}
+----
+
+=== Animation
+
+[source,groovy]
+----
+pieChart(
+    data: [A: 25, B: 35, C: 40],
+    animated: true               // Animate data changes
+)
+----
+
+=== Alternative Column Visibility
+
+Toggle visibility of alternating column fills:
+
+[source,groovy]
+----
+barChart(
+    alternativeColumnFillVisible: true,
+    alternativeRowFillVisible: false
+) {
+    // Chart content
+}
+----
+
+=== Styling with CSS
+
+Charts can be styled with CSS:
+
+[source,groovy]
+----
+lineChart(styleClass: 'custom-chart') {
+    series(name: 'Data', data: [0, 10, 1, 20, 2, 15])
+}
+----
+
+[source,css]
+----
+/* Custom chart styling */
+.custom-chart {
+    -fx-background-color: #f0f0f0;
+}
+
+.custom-chart .chart-series-line {
+    -fx-stroke: #2196F3;
+    -fx-stroke-width: 3px;
+}
+
+.custom-chart .chart-line-symbol {
+    -fx-background-color: #2196F3;
+}
+----
+
+== Dynamic Charts
+
+=== Updating Data
+
+Use observable collections to create charts that update when data changes:
+
+[source,groovy]
+----
+import javafx.collections.FXCollections
+import javafx.scene.chart.XYChart
+
+start {
+    // Create observable data
+    def series1Data = FXCollections.observableArrayList()
+    series1Data.add(new XYChart.Data(0, 10))
+    series1Data.add(new XYChart.Data(1, 20))
+    series1Data.add(new XYChart.Data(2, 15))
+
+    def series1 = new XYChart.Series('Dynamic Data', series1Data)
+
+    stage(title: "Dynamic Chart", visible: true) {
+        scene {
+            vbox {
+                lineChart(animated: true) {
+                    series(series1)
+                }
+
+                button('Add Point') {
+                    onAction {
+                        def lastX = series1Data.last().XValue
+                        series1Data.add(new XYChart.Data(lastX + 1, Math.random() * 30))
+                    }
+                }
+
+                button('Remove Point') {
+                    onAction {
+                        if (series1Data.size() > 0) {
+                            series1Data.remove(0)
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+----
+
+=== Live Data Updates
+
+Create a chart that updates in real-time:
+
+[source,groovy]
+----
+import javafx.animation.AnimationTimer
+
+def data = FXCollections.observableArrayList()
+def maxDataPoints = 50
+def time = 0
+
+lineChart(animated: false, createSymbols: false) {
+    series(name: 'Live Data', data: data)
+}
+
+// Update data continuously
+new AnimationTimer() {
+    void handle(long now) {
+        time++
+        data.add(new XYChart.Data(time, Math.sin(time * 0.1) * 10 + 20))
+
+        // Keep only last N points
+        if (data.size() > maxDataPoints) {
+            data.remove(0)
+        }
+    }
+}.start()
+----
+
+== Complete Example
+
+Here's a comprehensive example showing multiple chart types:
+
+[source,groovy]
+----
+import javafx.collections.FXCollections
+import javafx.scene.chart.PieChart
+import static groovyx.javafx.GroovyFX.start
+
+start {
+    stage(title: 'GroovyFX Chart Demo', width: 1024, height: 960, visible: true) {
+        scene {
+            scrollPane {
+                tilePane(padding: 10, prefTileWidth: 480, prefColumns: 2) {
+
+                    // Pie Chart
+                    pieChart(
+                        title: "Market Share",
+                        data: [first: 0.25, second: 0.25, third: 0.25, fourth: 0.25]
+                    )
+
+                    // Dynamic Pie Chart
+                    def pieData = FXCollections.observableArrayList([
+                        new PieChart.Data("Product A", 42),
+                        new PieChart.Data("Product B", 58)
+                    ])
+
+                    stackPane(alignment: 'TOP_RIGHT') {
+                        pieChart(data: pieData, animated: true)
+                        button('Add Slice') {
+                            onAction {
+                                pieData.add(new PieChart.Data('Other', 25))
+                            }
+                        }
+                    }
+
+                    // Line Chart
+                    lineChart(
+                        title: "Trends",
+                        data: [
+                            First: [0, 0.25, 0.5, 1.5, 2, 1.0],
+                            Second: [0.25, 0, 0.5, 0.5, 1.5, 0.75]
+                        ]
+                    )
+
+                    // Line Chart with Category Axis
+                    def yAxis = numberAxis(
+                        label: "Y Axis",
+                        lowerBound: -1.2,
+                        upperBound: 1.2,
+                        tickUnit: 0.2,
+                        autoRanging: false
+                    )
+
+                    lineChart(
+                        title: "Categorical Data",
+                        xAxis: categoryAxis(label: "X Axis"),
+                        yAxis: yAxis
+                    ) {
+                        series(name: 'First', data: ["A", 0, "B", 1, "C", -1])
+                        series(name: 'Second', data: [["A", 0], ["B", -1], ["C", 1], ["D", 0]])
+                    }
+
+                    // Area Chart
+                    areaChart(title: "Area Comparison") {
+                        series(name: 'First', data: [0, 0, 0.5, 0.2, 1.5, 0.6, 2, 0.8])
+                        series(name: 'Second', data: [0, 0, 0.25, 0.2, 0.5, 0.6, 2.25, 0.4])
+                    }
+
+                    // Bubble Chart
+                    bubbleChart(title: "Bubble Sizes") {
+                        series(name: 'Series 1', data: [
+                            [0, 0.2, 0.1],
+                            [0.5, 0.2, 0.25],
+                            [1.5, 0.1, 0.5]
+                        ])
+                        series(name: 'Series 2', data: [
+                            [0, 0.1, 0.25],
+                            [0.2, 0.5, 0.2]
+                        ])
+                    }
+
+                    // Scatter Chart
+                    scatterChart(title: "Scatter Plot") {
+                        series(name: 'First', data: [0, 0, 0.5, 0.2, 1.5, 0.6, 2, 0.8])
+                        series(name: 'Second', data: [0, 0, 0.25, 0.2, 0.5, 0.6, 2.25, 0.4])
+                    }
+
+                    // Bar Chart
+                    barChart(
+                        title: "Quarterly Comparison",
+                        barGap: 0,
+                        categoryGap: 0
+                    ) {
+                        series(name: '2023', data: ['Q1', 1534, 'Q2', 2698, 'Q3', 1945, 'Q4', 3156])
+                        series(name: '2024', data: ['Q1', 2200, 'Q2', 2750, 'Q3', 2125, 'Q4', 3100])
+                    }
+                }
+            }
+        }
+    }
+}
+----
+
+== Best Practices
+
+=== Choose the Right Chart Type
+
+* **Pie Charts** - Best for showing proportions of a whole (5-7 slices maximum)
+* **Line Charts** - Ideal for showing trends over time
+* **Bar Charts** - Great for comparing discrete values
+* **Area Charts** - Show cumulative totals and trends
+* **Scatter/Bubble** - Reveal correlations and relationships
+* **Stacked Charts** - Display composition and total simultaneously
+
+=== Data Considerations
+
+1. **Limit data points**: Too many points can make charts cluttered and slow
+2. **Use appropriate scales**: Choose axis bounds that show your data clearly
+3. **Observable collections**: Use `FXCollections.observableArrayList()` for dynamic charts
+4. **Animation**: Enable for data updates, disable for real-time performance
+
+=== Visual Design
+
+1. **Clear labels**: Always label axes and provide a title
+2. **Legend placement**: Position legends where they don't obscure data
+3. **Color choice**: Use distinguishable colors for different series
+4. **Consistent styling**: Use CSS for cohesive chart appearance
+
+=== Performance
+
+1. **Disable symbols**: For line charts with many points, use `createSymbols: false`
+2. **Reduce animation**: Disable animation for frequently updated charts
+3. **Data windowing**: For live data, keep only recent points
+4. **Batch updates**: Update data in batches rather than point-by-point
+
+== Summary
+
+GroovyFX provides comprehensive charting support:
+
+* **Multiple chart types** - Pie, line, area, bar, scatter, and bubble charts
+* **Flexible data formats** - Arrays, maps, and observable collections
+* **Customizable axes** - Number and category axes with full configuration
+* **Dynamic updates** - Observable data for real-time charts
+* **CSS styling** - Full control over visual appearance
+* **Declarative syntax** - Clean, readable chart definitions
+
+The declarative DSL makes creating professional charts straightforward and maintainable.

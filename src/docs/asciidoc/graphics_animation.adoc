@@ -1,8 +1,816 @@
 
 = Graphics and Animation
 
+GroovyFX provides a rich DSL for creating graphics, applying visual effects, and animating elements. This chapter covers the declarative syntax for shapes, colors, gradients, effects, and animations.
+
 == Shapes and Paths
+
+JavaFX provides a comprehensive set of 2D shapes that GroovyFX makes easy to create and configure.
+
+=== Basic Shapes
+
+All standard JavaFX shapes are supported with concise syntax:
+
+[source,groovy]
+----
+import static groovyx.javafx.GroovyFX.start
+
+start {
+    stage(title: "Shapes Demo", visible: true) {
+        scene(width: 600, height: 400) {
+            group {
+                // Rectangle
+                rectangle(x: 20, y: 20, width: 100, height: 50, fill: BLUE)
+
+                // Circle
+                circle(centerX: 200, centerY: 50, radius: 30, fill: RED)
+
+                // Ellipse
+                ellipse(centerX: 320, centerY: 50, radiusX: 50, radiusY: 30, fill: GREEN)
+
+                // Line
+                line(startX: 400, startY: 20, endX: 500, endY: 80, stroke: BLACK, strokeWidth: 2)
+
+                // Polygon
+                polygon(points: [20, 100, 50, 150, 80, 100], fill: ORANGE)
+
+                // Polyline
+                polyline(points: [120, 100, 150, 150, 180, 100, 210, 150],
+                         stroke: PURPLE, strokeWidth: 3, fill: null)
+
+                // Arc
+                arc(centerX: 300, centerY: 130, radiusX: 40, radiusY: 40,
+                    startAngle: 45, length: 270, fill: CYAN, type: 'ROUND')
+
+                // Text as shape
+                text(x: 400, y: 130, text: "Text Shape", font: "bold 24pt Arial", fill: DARKBLUE)
+            }
+        }
+    }
+}
+----
+
+=== Stroke Properties
+
+Control the appearance of shape outlines:
+
+[source,groovy]
+----
+rectangle(x: 20, y: 20, width: 100, height: 50) {
+    fill LIGHTBLUE
+    stroke BLACK
+    strokeWidth 3
+    strokeType 'CENTERED'  // or 'INSIDE', 'OUTSIDE'
+    strokeLineJoin 'ROUND'  // or 'BEVEL', 'MITER'
+    strokeLineCap 'ROUND'   // or 'SQUARE', 'BUTT'
+    strokeDashArray([10, 5, 5, 5])  // Dash pattern
+}
+----
+
+=== Paths
+
+Create complex shapes using SVG-style path commands:
+
+[source,groovy]
+----
+path(fill: GOLD, stroke: BLACK, strokeWidth: 2) {
+    moveTo(x: 50, y: 50)
+    lineTo(x: 100, y: 100)
+    quadCurveTo(controlX: 150, controlY: 50, x: 200, y: 100)
+    cubicCurveTo(controlX1: 250, controlY1: 150,
+                 controlX2: 300, controlY2: 50,
+                 x: 350, y: 100)
+    arcTo(radiusX: 50, radiusY: 50, x: 400, y: 50)
+    closePath()
+}
+----
+
+Or use the compact SVG path string:
+
+[source,groovy]
+----
+svgPath(content: "M 50 50 L 100 100 Q 150 50 200 100 Z", fill: YELLOW)
+----
+
 == Colors
+
+GroovyFX provides multiple ways to specify colors, making color definition natural and flexible.
+
+=== Named Colors
+
+JavaFX provides over 140 named colors accessible as constants:
+
+[source,groovy]
+----
+rectangle(fill: RED)
+rectangle(fill: CORNFLOWERBLUE)
+rectangle(fill: DARKGOLDENROD)
+rectangle(fill: MEDIUMSEAGREEN)
+----
+
+=== RGB Colors
+
+Define colors using RGB values:
+
+[source,groovy]
+----
+// RGB with integers (0-255)
+rectangle(fill: rgb(255, 0, 0))  // Red
+
+// RGBA with opacity
+rectangle(fill: rgba(0, 255, 0, 0.5))  // Semi-transparent green
+----
+
+=== Hexadecimal Colors
+
+Use web-style hex colors:
+
+[source,groovy]
+----
+rectangle(fill: "#FF0000")  // Red
+rectangle(fill: "#00FF00")  // Green
+rectangle(fill: "#0000FF")  // Blue
+rectangle(fill: "#FF00FF80")  // Magenta with 50% opacity
+----
+
+=== HSB Colors
+
+Use Hue-Saturation-Brightness color model:
+
+[source,groovy]
+----
+// HSB values: hue (0-360), saturation (0-1), brightness (0-1)
+rectangle(fill: hsb(120, 0.8, 0.9))  // Bright green
+
+// With opacity
+rectangle(fill: hsb(240, 0.5, 0.7, 0.5))  // Semi-transparent blue
+----
+
+=== Color Manipulation
+
+[source,groovy]
+----
+def baseColor = BLUE
+
+rectangle(fill: baseColor.brighter())
+rectangle(fill: baseColor.darker())
+rectangle(fill: baseColor.desaturate())
+rectangle(fill: baseColor.saturate())
+rectangle(fill: color(baseColor, 0.5))  // Set opacity
+----
+
 == Gradients
+
+Gradients provide smooth color transitions for fills and strokes.
+
+=== Linear Gradients
+
+Linear gradients transition colors along a straight line:
+
+[source,groovy]
+----
+// Simple two-color gradient (top to bottom)
+rectangle(width: 200, height: 100,
+          fill: linearGradient(stops: [GREEN, BLACK]))
+
+// With explicit color stops (0.0 to 1.0)
+rectangle(width: 200, height: 100,
+          fill: linearGradient(stops: [0: RED, 0.5: YELLOW, 1: GREEN]))
+
+// Control gradient direction
+rectangle(width: 200, height: 100,
+          fill: linearGradient(
+              startX: 0, startY: 0,    // Start point (proportional: 0-1)
+              endX: 1, endY: 0,        // End point (horizontal)
+              stops: [BLUE, WHITE, BLUE]
+          ))
+
+// Diagonal gradient
+rectangle(width: 200, height: 100,
+          fill: linearGradient(
+              start: [0, 0],    // Top-left
+              end: [1, 1],      // Bottom-right
+              stops: [PURPLE, ORANGE]
+          ))
+
+// Using proportional coordinates vs absolute
+rectangle(width: 200, height: 100,
+          fill: linearGradient(
+              endY: 0,  // Reverse direction (bottom to top)
+              proportional: true,  // Use proportional coordinates
+              stops: [RED, YELLOW, GREEN, CYAN, BLUE]
+          ))
+----
+
+=== Radial Gradients
+
+Radial gradients radiate from a center point:
+
+[source,groovy]
+----
+// Simple radial gradient (center to edge)
+circle(radius: 80,
+       fill: radialGradient(stops: [WHITE, BLUE, DARKBLUE]))
+
+// Control center point and radius
+circle(radius: 80,
+       fill: radialGradient(
+           centerX: 0.5,   // Center horizontally
+           centerY: 0.5,   // Center vertically
+           radius: 0.8,    // Radius (proportional to shape size)
+           stops: [YELLOW, ORANGE, RED, DARKRED]
+       ))
+
+// Offset focus point for lighting effects
+circle(radius: 80,
+       fill: radialGradient(
+           center: [0.5, 0.5],      // Gradient center
+           focusDistance: 0.6,       // Distance to focus point
+           focusAngle: -65,          // Angle to focus point
+           radius: 0.9,
+           stops: [0: GOLD, 0.3: DARKGOLDENROD, 1: BLACK]
+       ))
+
+// Using stop builder syntax
+circle(radius: 80) {
+    fill radialGradient(center: [0.3, 0.3], radius: 1) {
+        stop(offset: 0.0, color: WHITE)
+        stop(offset: 0.5, color: LIGHTBLUE)
+        stop(offset: 1.0, color: DARKBLUE)
+    }
+}
+----
+
+=== Gradient Stops
+
+Fine-tune color transitions with explicit stops:
+
+[source,groovy]
+----
+// Map syntax
+linearGradient(stops: [
+    0.0: RED,
+    0.25: YELLOW,
+    0.5: GREEN,
+    0.75: CYAN,
+    1.0: BLUE
+])
+
+// List syntax (evenly distributed)
+linearGradient(stops: [RED, ORANGE, YELLOW, GREEN, BLUE])
+
+// Builder syntax (most control)
+linearGradient {
+    stop(offset: 0.0, color: "#FF0000")
+    stop(offset: 0.33, color: "#00FF00")
+    stop(offset: 0.67, color: "#0000FF")
+    stop(offset: 1.0, color: "#000000")
+}
+----
+
+=== Using Gradients for Strokes
+
+Gradients can also be applied to shape strokes:
+
+[source,groovy]
+----
+rectangle(width: 200, height: 100, strokeWidth: 10) {
+    fill linearGradient(stops: [RED, BLACK])
+    stroke linearGradient(stops: [BLACK, RED])
+}
+
+circle(radius: 80, strokeWidth: 8) {
+    fill linearGradient(stops: [ORANGE, BLACK])
+    stroke radialGradient(center: [0.5, 0.5], stops: [BLACK, ORANGE])
+}
+----
+
 == Effects
+
+JavaFX provides a rich set of visual effects that can be applied to any node. GroovyFX makes these effects easy to use with declarative syntax.
+
+=== Drop Shadow
+
+Add depth with shadows:
+
+[source,groovy]
+----
+text(text: "Drop Shadow", font: "bold 36pt Arial", fill: RED) {
+    effect dropShadow(offsetX: 3, offsetY: 3, color: rgba(0, 0, 0, 0.5))
+}
+
+// With blur radius and spread
+rectangle(width: 100, height: 50, fill: BLUE) {
+    effect dropShadow(
+        offsetX: 5,
+        offsetY: 5,
+        radius: 10,      // Blur radius
+        spread: 0.3,     // Shadow spread
+        color: BLACK
+    )
+}
+----
+
+=== Inner Shadow
+
+Create inset shadow effects:
+
+[source,groovy]
+----
+text(text: "Inner Shadow", font: "bold 60pt Arial", fill: YELLOW) {
+    effect innerShadow(offsetX: 4, offsetY: 4, color: BLACK)
+}
+----
+
+=== Blur Effects
+
+==== Gaussian Blur
+
+[source,groovy]
+----
+text(text: "Blurred!", font: "bold 36pt Arial", fill: RED) {
+    effect gaussianBlur(radius: 10)
+}
+----
+
+==== Box Blur
+
+[source,groovy]
+----
+text(text: "Box Blur", font: "bold 36pt Arial", fill: BLUE) {
+    effect boxBlur(width: 10, height: 10, iterations: 3)
+}
+----
+
+==== Motion Blur
+
+[source,groovy]
+----
+text(text: "Motion!", font: "bold 48pt Arial", fill: RED) {
+    effect motionBlur(radius: 20, angle: -30)
+}
+----
+
+=== Glow and Bloom
+
+[source,groovy]
+----
+// Glow effect
+text(text: "Glowing", font: "bold 36pt Arial", fill: YELLOW) {
+    effect glow(level: 0.9)
+}
+
+// Bloom effect
+rectangle(width: 150, height: 80, fill: DARKBLUE) {
+    effect bloom(threshold: 0.3)
+}
+----
+
+=== Reflection
+
+[source,groovy]
+----
+text(text: "Reflected Text", font: "bold 36pt Arial", fill: BLUE) {
+    effect reflection(
+        fraction: 0.7,      // Height of reflection (0-1)
+        topOpacity: 0.5,    // Opacity at top of reflection
+        bottomOpacity: 0.0  // Opacity at bottom
+    )
+}
+----
+
+=== Color Adjust
+
+Modify hue, saturation, brightness, and contrast:
+
+[source,groovy]
+----
+imageView(image: image("photo.jpg")) {
+    effect colorAdjust(
+        hue: 0.2,          // -1 to 1
+        saturation: 0.5,   // -1 to 1
+        brightness: -0.2,  // -1 to 1
+        contrast: 1.5      // -1 to 1
+    )
+}
+----
+
+=== Lighting Effects
+
+Simulate 3D lighting:
+
+[source,groovy]
+----
+text(text: "3D Lighting", font: "bold 60pt Arial", fill: RED) {
+    effect lighting(surfaceScale: 5.0) {
+        distant(azimuth: -135.0, elevation: 30.0)
+    }
+}
+
+// With point light
+rectangle(width: 200, height: 150, fill: BLUE) {
+    effect lighting(surfaceScale: 5.0) {
+        point(x: 100, y: 75, z: 50, color: WHITE)
+    }
+}
+
+// With spot light
+rectangle(width: 200, height: 150, fill: GREEN) {
+    effect lighting {
+        spot(x: 100, y: 75, z: 100, pointsAtX: 100, pointsAtY: 75, pointsAtZ: 0)
+    }
+}
+----
+
+=== Perspective Transform
+
+Create 3D perspective effects:
+
+[source,groovy]
+----
+rectangle(width: 200, height: 100, fill: BLUE) {
+    effect perspectiveTransform(
+        ulx: 10,  uly: 10,   // Upper-left corner
+        urx: 210, ury: 40,   // Upper-right corner
+        lrx: 210, lry: 90,   // Lower-right corner
+        llx: 10,  lly: 70    // Lower-left corner
+    )
+}
+----
+
+=== Chaining Effects
+
+Combine multiple effects:
+
+[source,groovy]
+----
+text(text: "Chained", font: "bold 48pt Arial", fill: YELLOW) {
+    effect dropShadow(offsetY: 3) {
+        input bloom(threshold: 0.5)
+    }
+}
+
+// Alternative syntax
+text(text: "Multi-Effect", font: "bold 36pt Arial", fill: RED) {
+    effect dropShadow(offsetX: 3, offsetY: 3) {
+        input glow(level: 0.8) {
+            input reflection(fraction: 0.5)
+        }
+    }
+}
+----
+
 == Animation
+
+GroovyFX provides a declarative DSL for JavaFX animations, making it easy to animate properties over time.
+
+=== Timeline Animation
+
+Timeline is the most flexible animation system, allowing you to animate any property:
+
+[source,groovy]
+----
+import static groovyx.javafx.GroovyFX.start
+
+start {
+    stage(title: "Timeline Demo", visible: true) {
+        scene(width: 500, height: 300, fill: GROOVYBLUE) {
+            rect1 = rectangle(x: 25, y: 40, width: 100, height: 50, fill: RED)
+            rect2 = rectangle(x: 25, y: 100, width: 100, height: 50, fill: GREEN)
+        }
+    }
+
+    // Create and start timeline
+    timeline(cycleCount: 'indefinite', autoReverse: true) {
+        at(1000.ms) {
+            change(rect1, 'x') to 300
+            change(rect2, 'y') to 200
+        }
+    }.play()
+}
+----
+
+=== Timeline Features
+
+[source,groovy]
+----
+timeline(
+    cycleCount: 5,              // Number of cycles (or 'indefinite')
+    autoReverse: true,           // Play backward after each cycle
+    delay: 500.ms                // Delay before starting
+) {
+    // Event handlers
+    onFinished { println "Animation complete!" }
+
+    // Keyframe at 500ms
+    at(500.ms) {
+        change(rect1, 'opacity') to 0.5
+    }
+
+    // Keyframe at 1 second
+    at(1.s, onFinished: { println "Keyframe reached" }) {
+        change(rect1, 'x') to 200 tween EASE_BOTH
+        change(rect1, 'y') to 150 tween LINEAR
+        change(rect1, 'width') to 150
+    }
+}
+----
+
+=== Interpolators (Tweening)
+
+Control animation easing with interpolators:
+
+[source,groovy]
+----
+at(1.s) {
+    change(rect, 'x') to 300 tween LINEAR        // Constant speed
+    change(rect, 'y') to 200 tween EASE_IN       // Slow start
+    change(rect, 'width') to 200 tween EASE_OUT  // Slow end
+    change(rect, 'height') to 150 tween EASE_BOTH // Slow start and end
+}
+----
+
+Available interpolators:
+* `LINEAR` - Constant speed
+* `EASE_IN` - Slow start, fast end
+* `EASE_OUT` - Fast start, slow end
+* `EASE_BOTH` - Slow start and end
+* `DISCRETE` - No interpolation (instant change)
+
+=== Property Changes
+
+Animate any property:
+
+[source,groovy]
+----
+timeline(cycleCount: 'indefinite', autoReverse: true) {
+    at(2.s) {
+        // Node properties
+        change(node, 'opacity') to 0.0
+        change(node, 'rotate') to 360
+        change(node, 'scaleX') to 2.0
+        change(node, 'scaleY') to 2.0
+        change(node, 'translateX') to 100
+        change(node, 'translateY') to 50
+
+        // Use property object directly
+        change(node.opacityProperty()) to 0.5
+
+        // Custom object properties (with @FXBindable)
+        change(model, 'counter') to 100
+    }
+}
+----
+
+=== Transitions
+
+JavaFX provides pre-built transitions for common animations:
+
+==== Fade Transition
+
+[source,groovy]
+----
+rectangle(x: 20, y: 20, width: 100, height: 50, fill: BLUE) {
+    fadeTransition(
+        duration: 2.s,
+        from: 1.0,
+        to: 0.0,
+        delay: 500.ms,
+        onFinished: { println "Faded out" }
+    ).play()
+}
+----
+
+==== Translate Transition
+
+[source,groovy]
+----
+circle(centerX: 50, centerY: 50, radius: 20, fill: RED) {
+    translateTransition(
+        duration: 2.s,
+        toX: 300,
+        toY: 200,
+        interpolator: EASE_BOTH
+    ).play()
+}
+----
+
+==== Rotate Transition
+
+[source,groovy]
+----
+rectangle(x: 100, y: 100, width: 50, height: 50, fill: GREEN) {
+    rotateTransition(
+        duration: 3.s,
+        fromAngle: 0,
+        toAngle: 360,
+        cycleCount: 'indefinite'
+    ).play()
+}
+----
+
+==== Scale Transition
+
+[source,groovy]
+----
+circle(centerX: 150, centerY: 150, radius: 30, fill: ORANGE) {
+    scaleTransition(
+        duration: 1.s,
+        toX: 2.0,
+        toY: 2.0,
+        autoReverse: true,
+        cycleCount: 'indefinite'
+    ).play()
+}
+----
+
+==== Fill Transition
+
+[source,groovy]
+----
+rectangle(width: 100, height: 50, fill: BLUE) {
+    fillTransition(
+        duration: 2.s,
+        from: BLUE,
+        to: RED,
+        autoReverse: true,
+        cycleCount: 'indefinite'
+    ).play()
+}
+----
+
+==== Stroke Transition
+
+[source,groovy]
+----
+circle(radius: 40, stroke: BLACK, strokeWidth: 5, fill: null) {
+    strokeTransition(
+        duration: 1.5.s,
+        from: BLACK,
+        to: RED,
+        autoReverse: true,
+        cycleCount: 'indefinite'
+    ).play()
+}
+----
+
+==== Path Transition
+
+Animate along a path:
+
+[source,groovy]
+----
+scene {
+    def pathShape = path {
+        moveTo(x: 50, y: 50)
+        lineTo(x: 300, y: 50)
+        quadCurveTo(controlX: 400, controlY: 200, x: 300, y: 300)
+        lineTo(x: 50, y: 300)
+        closePath()
+    }
+
+    circle(radius: 10, fill: RED) {
+        pathTransition(
+            duration: 5.s,
+            path: pathShape,
+            orientation: 'ORTHOGONAL_TO_TANGENT',
+            cycleCount: 'indefinite'
+        ).play()
+    }
+}
+----
+
+=== Sequential Transitions
+
+Play transitions one after another:
+
+[source,groovy]
+----
+rectangle(x: 20, y: 20, width: 50, height: 50, fill: BLUE) {
+    sequentialTransition {
+        translateTransition(2.s, toX: 200)
+        pauseTransition(500.ms)
+        rotateTransition(1.s, toAngle: 180)
+        scaleTransition(1.s, toX: 2, toY: 2)
+        fillTransition(1.s, to: RED)
+    }.play()
+}
+----
+
+=== Parallel Transitions
+
+Play multiple transitions simultaneously:
+
+[source,groovy]
+----
+rectangle(x: 50, y: 50, width: 100, height: 50, fill: BLUE) {
+    parallelTransition {
+        translateTransition(2.s, toX: 300)
+        rotateTransition(2.s, toAngle: 360)
+        fillTransition(2.s, to: RED)
+        scaleTransition(2.s, toX: 2, toY: 2)
+    }.play()
+}
+----
+
+=== Controlling Animations
+
+[source,groovy]
+----
+def anim = timeline(cycleCount: 'indefinite') {
+    at(1.s) {
+        change(rect, 'x') to 300
+    }
+}
+
+// Control playback
+anim.play()
+anim.pause()
+anim.stop()
+anim.playFromStart()
+
+// Query state
+if (anim.status == 'RUNNING') {
+    println "Animation is playing"
+}
+
+// Jump to specific time
+anim.jumpTo(500.ms)
+anim.jumpTo("my-keyframe")
+
+// Control rate
+anim.rate = 2.0  // Play at double speed
+anim.rate = 0.5  // Play at half speed
+----
+
+=== Animation Events
+
+[source,groovy]
+----
+timeline {
+    onFinished { println "Timeline finished" }
+
+    at(500.ms, onFinished: { println "Halfway there" }) {
+        change(rect, 'x') to 150
+    }
+
+    at(1.s, onFinished: { println "Complete!" }) {
+        change(rect, 'x') to 300
+    }
+}
+----
+
+=== Time Units
+
+GroovyFX provides convenient time unit syntax:
+
+[source,groovy]
+----
+at(500.ms)     // 500 milliseconds
+at(2.s)        // 2 seconds
+at(1.5.s)      // 1.5 seconds
+at(100.ms)     // 100 milliseconds
+
+// Duration objects
+duration: 2.s
+delay: 500.ms
+----
+
+== Best Practices
+
+=== Performance Tips
+
+1. **Cache complex graphics**: Enable caching for nodes with effects or gradients:
++
+[source,groovy]
+----
+group(cache: true) {
+    // Complex graphics here
+}
+----
+
+2. **Limit active animations**: Too many simultaneous animations can impact performance.
+
+3. **Use appropriate effect combinations**: Some effects are more computationally expensive than others.
+
+=== Design Tips
+
+1. **Consistent animation timing**: Use similar durations for related animations.
+
+2. **Appropriate easing**: Use `EASE_BOTH` for most natural-feeling animations.
+
+3. **Subtle effects**: Less is often more - don't overuse visual effects.
+
+4. **Color harmony**: Use color theory when creating gradients and palettes.
+
+== Summary
+
+GroovyFX provides comprehensive support for:
+
+* **Shapes** - Rectangle, circle, ellipse, polygon, arc, path, and more
+* **Colors** - Named colors, RGB, HSB, hex, with full manipulation
+* **Gradients** - Linear and radial gradients with fine-tuned control
+* **Effects** - Drop shadow, blur, glow, reflection, lighting, and more
+* **Animation** - Timeline-based and transition-based animations with declarative syntax
+
+The declarative DSL makes creating rich, animated graphics straightforward and maintainable.
