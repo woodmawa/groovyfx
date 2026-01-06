@@ -18,7 +18,7 @@
 import javafx.geometry.Point2D
 import javafx.scene.image.Image
 
-import javax.xml.bind.DatatypeConverter
+import jakarta.xml.bind.DatatypeConverter
 
 import static groovyx.javafx.GroovyFX.start
 

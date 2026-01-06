@@ -87,30 +87,29 @@ java {
 sourceSets {
     ast {
         groovy.srcDirs = ['src/ast/groovy', 'src/ast/java']
-        java.srcDirs   = [] // avoid compileAstJava task / potential cycles
+        java.srcDirs = []                  // avoid compileAstJava task / potential cycles
         resources.srcDirs = ['src/ast/resources']
+    }
+
+    main {
+        // main must see AST outputs (FXBindable annotation + transform)
+        compileClasspath += sourceSets.ast.output
+        runtimeClasspath += sourceSets.ast.output
+    }
+
+    test {
+        // tests must see AST outputs (FXBindable used in tests)
+        compileClasspath += sourceSets.ast.output
+        runtimeClasspath += sourceSets.ast.output
     }
 
     demo {
         groovy.srcDirs = ['src/demo/groovy']
         resources.srcDirs = ['src/demo/resources']
-    }
 
-    // MAIN must see the compiled AST output (so imports like groovyx.javafx.beans.FXBindable resolve)
-    main {
-        compileClasspath += sourceSets.ast.output
-        runtimeClasspath += sourceSets.ast.output
-    }
-
-    // Demo should see main output (your demos use the library)
-    demo {
-        compileClasspath += sourceSets.main.output
-        runtimeClasspath += sourceSets.main.output
-    }
-
-    test {
-        compileClasspath += sourceSets.ast.output
-        runtimeClasspath += sourceSets.ast.output
+        // demos must see BOTH main + ast outputs
+        compileClasspath += sourceSets.main.output + sourceSets.ast.output
+        runtimeClasspath += sourceSets.main.output + sourceSets.ast.output
     }
 }
 
@@ -148,6 +147,7 @@ dependencies {
     testRuntimeOnly "org.junit.platform:junit-platform-launcher"
 
     // Demo runtime add-on (you had this)
+    demoImplementation 'jakarta.xml.bind:jakarta.xml.bind-api:4.0.2'
     demoRuntimeOnly 'com.sun.xml.bind:jaxb-impl:4.0.5'
 }
 
@@ -193,6 +193,10 @@ tasks.withType(Test).configureEach {
     jvmArgs += [
             '--enable-native-access=ALL-UNNAMED',
     ]
+}
+
+tasks.named('compileDemoGroovy').configure {
+    dependsOn tasks.named(sourceSets.ast.classesTaskName)
 }
 
 tasks.withType(JavaExec).configureEach {

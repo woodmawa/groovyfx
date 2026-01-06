@@ -1,162 +1,108 @@
+= Getting Started with GroovyFX
+:toc:
+:toclevels: 3
+:icons: font
 
-= Getting Started
+GroovyFX is a Groovy-based DSL and framework for building JavaFX applications.
+This guide explains how to create, build, and run GroovyFX applications on
+modern Java versions using Gradle and IntelliJ IDEA.
 
-== What's New in Version 25
-GroovyFX has been significantly modernized for JavaFX 25 and Groovy 5.
+This document reflects the current GroovyFX setup using:
 
-=== Key Enhancements:
+* Groovy 5
+* JavaFX 25
+* Java 21+ (tested with Java 25)
+* Gradle 8/9+
 
-* **JavaFX 25 Support**: Full compatibility with the latest JavaFX features.
-* **Modern Component Pack**: New high-level components including `Card`, `Badge`, `ToggleSwitch`, `Icon`, and `ResponsivePane`.
-* **Reactive State Management**: New `Store` API for predictable state updates, inspired by Vuex/Pinia.
-* **Advanced Table DSL**: `autoColumns` support in `TableView` for rapid prototyping.
-* **JavaFX 25 Subscription API**: Integrated for cleaner, memory-safe listener management.
-* **Modern Events**: DSL support for Zoom, Rotate, Swipe, and Scroll events.
-* **Form Layout & Validation**: New `formLayout` for automated label alignment and declarative validation.
+== Prerequisites
 
-== Installation Requirements
-Before installing GroovyFX you will need to install the Java Development Kit
-(JDK) version 23 or above (required for JavaFX 25).
+* A recent JDK (Java 21 or newer recommended)
+* Gradle (or use the Gradle Wrapper)
+* IntelliJ IDEA (recommended IDE for GroovyFX development)
 
-http://java.com/en/download/manual.jsp[Download the appropriate JDK] for your
-operating system, run the installer, and then set up an environment
-variable named JAVA_HOME pointing to the location of this installation.
+NOTE: JavaFX is no longer bundled with the JDK. It must be added explicitly as a dependency.
 
-== Using the GroovyFX Library
-There are several ways in which you can include GroovyFx in your projects.
+---
 
-=== Maven Central
+== Creating a GroovyFX Project with Gradle
 
-Having GroovyFX in Maven Central (thanks to Sonatype's OSS hosting!) makes it
-simple to use GroovyFX in everything from simple test scripts to larger
-projects.  The Maven coordinates are as follows
-
-* _groupId_: org.groovyfx
-* _artifactId_: groovyfx
-* _version_: {groovyfx-version}
-
-GroovyFX is simple to include in Groovy scripts thanks to Groovy's Grab
-annotation, a part of the Grape system.  Just include the following line at the
-top of your script
+The recommended way to use GroovyFX is via Gradle.
 
 [source,groovy]
-[subs="attributes"]
-----
-Testing.groovy
-@Grab('org.groovyfx:groovyfx:{groovyfx-version}')
-----
-
-=== Creating a GroovyFX-Based Project with Gradle
-
-It is also simple to set up your own GroovyFX-based project using Gradle as the
-build system.  This sample build.gradle script will get you started.
-
-[source,groovy]
-[subs="attributes"]
 ----
 plugins {
     id 'groovy'
+    id 'application'
     id 'org.openjfx.javafxplugin' version '0.1.0'
 }
 
-repositories { mavenCentral() }
+repositories {
+    mavenCentral()
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(25) // 21+ also supported
+    }
+}
 
 dependencies {
-    implementation 'org.apache.groovy:groovy:{groovy-version}'
-    implementation 'org.groovyfx:groovyfx:{groovyfx-version}'
+    // Keep Groovy modules aligned
+    implementation platform("org.apache.groovy:groovy-bom:5.0.3")
+    implementation "org.apache.groovy:groovy"
+
+    implementation "org.groovyfx:groovyfx-ng:<VERSION>"
 }
 
 javafx {
-    version = "{javafx-version}"
-    modules = [ 'javafx.controls', 'javafx.fxml', 'javafx.web', 'javafx.media' ]
+    version = "25.0.1"
+    modules = [
+        'javafx.base',
+        'javafx.graphics',
+        'javafx.controls',
+        'javafx.fxml',
+        'javafx.web',
+        'javafx.media',
+        'javafx.swing'
+    ]
+}
+
+application {
+    // Replace with your application's main class
+    mainClass = "com.example.Main"
+}
+
+// Required on Java 21+ because JavaFX loads native libraries
+tasks.withType(JavaExec).configureEach {
+    jvmArgs += [ "--enable-native-access=ALL-UNNAMED" ]
 }
 ----
 
-Just create a new directory for your project and place the gradle script into
-it.  Then simply call
+With this setup you can run your application using:
 
-[source,groovy]
-gradle makeDirs
-
-to set up the rest of your project's directory structure.  You will
-automatically have a dependency on both Groovy and GroovyFX.
-
-== Building from Source
-
-The project's source code is located on
-https://github.com/groovyfx-project/groovyfx[GitHub].  You can clone the
-GroovyFX repository using the following http://git-scm.com/[Git] command
-
-[source]
-git clone https://github.com/groovyfx-project/groovyfx.git
-
-=== Installation Requirements
-
-Once you have downloaded and installed a Java 23+ SDK.
-
-=== Building with Gradle
-GroovyFX uses http://www.gradle.org[Gradle] as its primary build system.
-Building the project with Gradle requires only the following simple steps
-
-[source]
-cd groovyfx
-gradlew build
-
-The Gradle build script is also capable of running any of the project's demo.
-To run any specific demo, e.g.the AccordionDemo, you can just use
-
-[source]
-gradlew AccordionDemo
-
-To see an executable overview of all build tasks including all demos
-
-[source]
-gradlew --gui
-
-=== Building with Intellij IDEA
-
-GroovyFX's build script is capable of generating all of the project files
-neccessary to build the project with Intellij IDEA.  Just run the following
-command from the project's root directory
-
-[source]
-gradlew idea
-
-This will generate a groovyfx.ipr file.  From IDEA, select File -> Open Project
-and navigate to the directory containing the groovyfx.ipr file and open it.  You
-should now be able to build the library and run the demos with IDEA.
-
-=== Building with NetBeans
-
-The NetBeans project files are included in the code repository.  You may have to
-set up a Java Platform that includes the JavaFX SDK directory, if one does not
-already exist.
-
-Once you have created the JavaFX enabled Java platform, then choose the GroovyFX project,
-right click and pick "Properties". Choose the "Libraries" entry, then choose the
-JavaFX enabled Java Platform. You should now be able to build the library and run the demos with NetBeans.
-Also, you may have to fix the location for the groovy-all jar file.
-
-== Hello GroovyFX: Your First GroovyFX Program
-Once you have everything set up, try the following Groovy script to test that your setup is functioning as it should.
-
-[source,groovy]
-[subs="attributes"]
 ----
-@Grab('org.groovyfx:groovyfx:{groovyfx-version}')
+./gradlew run
+----
 
-import static groovyx.javafx.GroovyFX.start
+---
 
-start {
-    stage(title: 'GroovyFX Hello World', visible: true) {
-        scene(fill: BLACK, width: 500, height: 250) {
-            hbox(padding: 60) {
-                text(text: 'Groovy', font: '80pt sanserif') {
-                    fill linearGradient(endX: 0, stops: [PALEGREEN, SEAGREEN])
-                }
-                text(text: 'FX', font: '80pt sanserif') {
-                    fill linearGradient(endX: 0, stops: [CYAN, DODGERBLUE])
-                    effect dropShadow(color: DODGERBLUE, radius: 25, spread: 0.25)
+== Writing a GroovyFX Application
+
+A GroovyFX application is written as a normal Groovy class.
+Groovy scripts are compiled to JVM classes and executed like Java applications.
+
+[source,groovy]
+----
+package com.example
+
+import groovyx.javafx.GroovyFX
+
+class Main {
+    static void main(String[] args) {
+        GroovyFX.start {
+            stage(title: 'Hello GroovyFX', visible: true) {
+                scene {
+                    label("Hello GroovyFX!")
                 }
             }
         }
@@ -164,6 +110,154 @@ start {
 }
 ----
 
-If everything runs correctly you should see the following screen appear.
+---
 
-image:helloWorld.png[]
+== Running GroovyFX Applications
+
+=== Recommended: Run via Gradle
+
+Running via Gradle ensures:
+* correct Groovy + JavaFX classpath
+* correct JVM arguments
+* consistent behavior across IDE and CI
+
+----
+./gradlew run
+----
+
+---
+
+=== Using IntelliJ IDEA
+
+==== Importing the project
+
+* Open IntelliJ IDEA
+* *File → Open…* → select the project directory
+* Import as a *Gradle* project
+* Use the Gradle wrapper when prompted
+
+==== Configure IntelliJ to use Gradle
+
+This avoids classpath mismatches.
+
+*Settings → Build, Execution, Deployment → Build Tools → Gradle*
+
+* *Build and run using:* Gradle
+* *Run tests using:* Gradle
+* *Gradle JVM:* your JDK (21+ / 25)
+
+Reload the Gradle project after changing these settings.
+
+---
+
+=== Running your application from IntelliJ
+
+IMPORTANT: Do **not** run JavaFX applications using IntelliJ’s
+“Groovy Script” runner (right-click `.groovy` → Run).
+That mode often lacks the correct JavaFX and Groovy runtime configuration.
+
+Instead, use one of the following.
+
+==== Option 1: Run using a Gradle task (recommended)
+
+* Open the *Gradle* tool window
+* Run the appropriate task (`run`, or demo tasks if provided)
+* Optionally create a Run Configuration from the Gradle task
+
+This is the most reliable approach.
+
+==== Option 2: Application Run Configuration
+
+You may also run the compiled class directly.
+
+*Run → Edit Configurations… → + → Application*
+
+* *Main class:* your compiled class
+(e.g. `com.example.Main`)
+* *Use classpath of module:* your main module
+* *JRE:* Project SDK
+* *VM options:*
+----
+--enable-native-access=ALL-UNNAMED
+----
+
+This runs the compiled Groovy class and avoids the Groovy Script runner entirely.
+
+---
+
+== JavaFX Warnings on Modern JDKs
+
+=== Native access warning (Java 21+)
+
+JavaFX loads native libraries and may trigger warnings on modern JDKs.
+This is expected.
+
+Add the following JVM option when running applications:
+
+----
+--enable-native-access=ALL-UNNAMED
+----
+
+---
+
+=== JavaFX “unnamed module” warning
+
+When running JavaFX on the classpath you may see:
+
+----
+Unsupported JavaFX configuration: classes were loaded from 'unnamed module ...'
+----
+
+This warning is harmless and does not affect application behavior.
+
+If you wish to suppress it in IntelliJ runs, you can configure logging.
+
+==== Optional: suppress JavaFX startup noise
+
+1. Create a file at:
+----
+config/logging.properties
+----
+
+2. Contents:
+----
+handlers= java.util.logging.ConsoleHandler
+.level= INFO
+
+com.sun.javafx.application.PlatformImpl.level = OFF
+javafx.level = OFF
+----
+
+3. Add this JVM option to your run configuration:
+----
+-Djava.util.logging.config.file=./config/logging.properties
+----
+
+---
+
+== Notes for the GroovyFX Repository
+
+The GroovyFX repository itself contains additional source sets:
+
+* `ast` – AST transformations (e.g. `@FXBindable`)
+* `demo` – example applications
+
+To run repository demos:
+
+* Use the provided Gradle tasks (recommended), or
+* Create an IntelliJ *Application* run configuration using:
+* Main class: `examples.ModernDashboard` (or similar)
+* Classpath module: `groovyfx.demo`
+* VM option: `--enable-native-access=ALL-UNNAMED`
+
+---
+
+== Summary
+
+* Use Gradle to build and run GroovyFX applications
+* Run compiled classes, not Groovy scripts
+* Add native-access JVM options on Java 21+
+* Ignore or suppress benign JavaFX warnings if desired
+
+Following these guidelines avoids the most common issues when using GroovyFX
+on modern Java platforms.
