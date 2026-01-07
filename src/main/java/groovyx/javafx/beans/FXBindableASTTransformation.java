@@ -54,6 +54,7 @@ import org.codehaus.groovy.ast.stmt.Statement;
 import org.codehaus.groovy.control.CompilePhase;
 import org.codehaus.groovy.control.SourceUnit;
 import org.codehaus.groovy.control.messages.SyntaxErrorMessage;
+import org.codehaus.groovy.control.messages.WarningMessage;
 import org.codehaus.groovy.syntax.SyntaxException;
 import org.codehaus.groovy.syntax.Token;
 import org.codehaus.groovy.syntax.Types;
@@ -181,26 +182,74 @@ public class FXBindableASTTransformation implements ASTTransformation {
      */
     @Override
     public void visit(ASTNode[] nodes, SourceUnit sourceUnit) {
+
+        // Groovy may invoke transforms with incomplete node arrays
+        // (observed during test compilation / Spock / CI).
+        if (nodes == null || nodes.length < 2) {
+            // Optional diagnostic (safe)
+            if (sourceUnit != null) {
+                sourceUnit.getErrorCollector().addWarning(
+                        WarningMessage.POSSIBLE_ERRORS,
+                        "@FXBindable invoked with insufficient AST nodes; ignoring",
+                        null,
+                        null
+                );
+            }
+            return;
+        }
+
         if (!(nodes[0] instanceof AnnotationNode) || !(nodes[1] instanceof AnnotatedNode)) {
-            throw new IllegalArgumentException("Internal error: wrong types: "
-                + nodes[0].getClass().getName() + " / " + nodes[1].getClass().getName());
+            // Optional diagnostic (safe)
+            if (sourceUnit != null) {
+                sourceUnit.getErrorCollector().addWarning(
+                        WarningMessage.POSSIBLE_ERRORS,
+                        "@FXBindable invoked with unexpected AST node types: "
+                                + nodes[0].getClass().getName() + " / "
+                                + nodes[1].getClass().getName(),
+                        null,
+                        null
+                );
+            }
+            return;
         }
 
         AnnotationNode node = (AnnotationNode) nodes[0];
         AnnotatedNode parent = (AnnotatedNode) nodes[1];
-        ClassNode declaringClass = parent.getDeclaringClass();
 
+        // Field-level annotation
         if (parent instanceof FieldNode) {
-            int modifiers = ((FieldNode) parent).getModifiers();
+            FieldNode field = (FieldNode) parent;
+            ClassNode declaringClass = field.getDeclaringClass();
+
+            int modifiers = field.getModifiers();
             if ((modifiers & Modifier.FINAL) != 0) {
                 String msg = "@griffon.transform.FXBindable cannot annotate a final property.";
                 generateSyntaxErrorMessage(sourceUnit, node, msg);
+                return;
             }
-            addJavaFXProperty(sourceUnit, node, declaringClass, (FieldNode) parent);
-        } else {
-            addJavaFXPropertyToClass(sourceUnit, node, (ClassNode) parent);
+
+            addJavaFXProperty(sourceUnit, node, declaringClass, field);
+            return;
         }
+
+        // Class-level annotation
+        if (!(parent instanceof ClassNode)) {
+            // Optional diagnostic (safe)
+            if (sourceUnit != null) {
+                sourceUnit.getErrorCollector().addWarning(
+                        WarningMessage.POSSIBLE_ERRORS,
+                        "@FXBindable applied to unsupported element: "
+                                + parent.getClass().getName(),
+                        null,
+                        null
+                );
+            }
+            return;
+        }
+
+        addJavaFXPropertyToClass(sourceUnit, node, (ClassNode) parent);
     }
+
 
     /**
      * Adds a JavaFX property to the class in place of the original Groovy property.  A pair of synthetic
