@@ -23,8 +23,8 @@ import javafx.scene.control.CustomMenuItem
 import javafx.scene.control.Menu
 import javafx.scene.control.MenuItem
 
-import static groovyx.javafx.factory.ActionFactory.applyAction
-import static groovyx.javafx.factory.ActionFactory.extractActionParams
+import static ActionFactory.applyAction
+import static ActionFactory.extractActionParams
 
 /**
 *

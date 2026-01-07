@@ -1,7 +1,6 @@
 package groovyx.javafx
 
 import groovyx.javafx.components.ToggleSwitch
-import javafx.application.Platform
 import spock.lang.Specification
 
 class FinalPolishSpec extends Specification {

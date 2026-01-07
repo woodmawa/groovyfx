@@ -24,7 +24,7 @@ You can annotate specific properties in a class:
 
 [source,groovy]
 ----
-import groovyx.javafx.beans.FXBindable
+import beans.groovyfx.javafx.FXBindable
 
 class Person {
     @FXBindable String firstName
@@ -45,7 +45,7 @@ You can annotate the class itself to make all properties bindable:
 
 [source,groovy]
 ----
-import groovyx.javafx.beans.FXBindable
+import beans.groovyfx.javafx.FXBindable
 
 @FXBindable
 class Person {
@@ -63,7 +63,7 @@ All properties in the class become JavaFX properties automatically.
 
 [source,groovy]
 ----
-import groovyx.javafx.beans.FXBindable
+import beans.groovyfx.javafx.FXBindable
 import javafx.collections.ObservableList
 import javafx.collections.ObservableMap
 import javafx.collections.ObservableSet
@@ -112,7 +112,7 @@ The `bind()` method can be used in several ways:
 
 [source,groovy]
 ----
-import static groovyx.javafx.GroovyFX.start
+import static groovyfx.javafx.GroovyFX.start
 
 start {
     stage(title: "Binding Demo", visible: true) {
@@ -270,8 +270,8 @@ When binding to properties created with `@FXBindable`, you can use any of the bi
 
 [source,groovy]
 ----
-import groovyx.javafx.beans.FXBindable
-import static groovyx.javafx.GroovyFX.start
+import beans.groovyfx.javafx.FXBindable
+import static groovyfx.javafx.GroovyFX.start
 
 class ViewModel {
     @FXBindable String message = "Hello"
@@ -309,8 +309,8 @@ Here's a complete example showing various binding techniques:
 
 [source,groovy]
 ----
-import groovyx.javafx.beans.FXBindable
-import static groovyx.javafx.GroovyFX.start
+import beans.groovyfx.javafx.FXBindable
+import static groovyfx.javafx.GroovyFX.start
 
 @FXBindable
 class Email {

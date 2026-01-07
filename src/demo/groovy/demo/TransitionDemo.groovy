@@ -17,7 +17,7 @@
  */
 import javafx.animation.Transition
 
-import static groovyx.javafx.GroovyFX.start
+import static groovyfx.javafx.GroovyFX.start
 
 start {
     Transition rectTransition = null

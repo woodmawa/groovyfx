@@ -15,12 +15,12 @@ class AccordionFactory extends AbstractFXBeanFactory {
             parent.panes.add((TitledPane) child)
             return
         }
-        super.setChild(builder, parent, child)
+        Object.setChild(builder, parent, child)
     }
 
     @Override
     void onNodeCompleted(FactoryBuilderSupport builder, Object parent, Object node) {
         // Apply expandedPane/expandedIndex here if you support it
-        super.onNodeCompleted(builder, parent, node)
+        Object.onNodeCompleted(builder, parent, node)
     }
 }

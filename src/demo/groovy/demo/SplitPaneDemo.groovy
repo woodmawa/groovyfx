@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import static groovyx.javafx.GroovyFX.start
+import static groovyfx.javafx.GroovyFX.start
 
 start {
     stage(title: "GroovyfX, SplitPane Demo", x: 100, y: 100, width: 800, height: 400, visible: true) {

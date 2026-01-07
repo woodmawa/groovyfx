@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import static groovyx.javafx.GroovyFX.start
+import static groovyfx.javafx.GroovyFX.start
 
 start {
     stage(title: "GroovyFX Fill & Stroke Demo", width: 600, height: 700, visible: true) {

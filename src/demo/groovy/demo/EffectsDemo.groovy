@@ -18,7 +18,7 @@
 import javafx.scene.effect.DisplacementMap
 import javafx.scene.effect.FloatMap
 
-import static groovyx.javafx.GroovyFX.start
+import static groovyfx.javafx.GroovyFX.start
 
 DisplacementMap displacementMap(int w, int h) {
     FloatMap map = new FloatMap()

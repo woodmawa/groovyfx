@@ -54,7 +54,7 @@ class FXBindableTest {
     void "Observable primitive properties"() {
         given:
         String script = '''
-        @groovyx.javafx.beans.FXBindable
+        @FXBindable
         class Bean {
             boolean theBoolean
             byte theByte
@@ -84,7 +84,7 @@ class FXBindableTest {
     void "Observable wrapper properties"() {
         given:
         String script = '''
-        @groovyx.javafx.beans.FXBindable
+        @FXBindable
         class Bean {
             Boolean theBoolean
             byte theByte
@@ -120,7 +120,7 @@ class FXBindableTest {
     void "Observable collection properties"() {
         given:
         String script = '''
-        @groovyx.javafx.beans.FXBindable
+        @FXBindable
         class Bean {
             List<String> theList
             Map<String,String> theMap

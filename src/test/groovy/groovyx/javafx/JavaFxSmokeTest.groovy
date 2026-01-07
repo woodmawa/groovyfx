@@ -1,7 +1,6 @@
 package groovyx.javafx
 
 import spock.lang.Specification
-import javafx.application.Platform
 import javafx.scene.Group
 import javafx.scene.Scene
 

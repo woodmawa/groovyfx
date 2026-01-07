@@ -34,7 +34,7 @@ class TabFactory extends AbstractFXBeanFactory {
         super(beanClass);
     }
     public Object newInstance(FactoryBuilderSupport builder, Object name, Object value, Map attributes) throws InstantiationException, IllegalAccessException {
-        Tab tab = super.newInstance(builder, name, value, attributes);
+        Tab tab = Object.newInstance(builder, name, value, attributes);
         switch(value) {
             case GString:
                 tab.text = value as String

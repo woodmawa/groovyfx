@@ -36,7 +36,7 @@ class ActionFactory extends AbstractFXBeanFactory {
     @Override
     boolean onHandleNodeAttributes(FactoryBuilderSupport builder, Object node, Map attributes) {
         attributes.remove('id')
-        return super.onHandleNodeAttributes(builder, node, attributes)
+        return Object.onHandleNodeAttributes(builder, node, attributes)
     }
 
     static Map extractActionParams(Map attributes) {

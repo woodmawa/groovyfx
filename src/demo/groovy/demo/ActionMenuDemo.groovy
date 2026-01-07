@@ -20,7 +20,7 @@
  * @author Andres Almiray
  */
 
-import static groovyx.javafx.GroovyFX.start
+import static groovyfx.javafx.GroovyFX.start
 
 start {
 

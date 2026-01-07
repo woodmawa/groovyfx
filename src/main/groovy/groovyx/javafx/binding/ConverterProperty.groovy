@@ -18,7 +18,8 @@
 package groovyx.javafx.binding;
 
 import groovy.lang.Closure;
-import groovy.lang.GString;
+import groovy.lang.GString
+import groovy.transform.CompileStatic;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
 import javafx.beans.value.ChangeListener;
@@ -39,6 +40,7 @@ import java.util.List;
  *
  * @author jimclarke
  */
+@CompileStatic
 public class ConverterProperty implements ObservableValue<Object>,
         ChangeListener<Object>,
         InvalidationListener {

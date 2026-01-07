@@ -17,31 +17,25 @@
  */
 package groovyx.javafx.binding;
 
-import groovy.lang.Script;
-import javafx.beans.property.SimpleLongProperty;
+import groovy.lang.Script
+import groovy.transform.CompileStatic;
+import javafx.beans.property.SimpleBooleanProperty;
 
 /**
  * Wraps a groovy script variable in a JavaFX Property
- *
+ * 
  * @author jimclarke
  */
-public class ScriptVariableLongProperty extends SimpleLongProperty{
-
-    ScriptVariableLongProperty(Script script, String propertyName) {
-        super(script, propertyName, ((Number)script.getProperty(propertyName)).longValue());
+@CompileStatic
+public class ScriptVariableBooleanProperty extends SimpleBooleanProperty{
+    
+    ScriptVariableBooleanProperty(Script script, String propertyName) {
+        super(script, propertyName, (Boolean)script.getProperty(propertyName));
     }
 
     @Override
-    public void set(long newValue) {
+    public void set(boolean newValue) {
         ((Script)getBean()).setProperty(getName(), newValue);
         super.set(newValue);
-    }
-
-    /**
-     * Handle BigDecimal/BigInteger and other numbers from Groovy
-     * @param newValue The new value.
-     */
-    public void set(Number newValue) {
-        this.set(newValue.longValue());
     }
 }

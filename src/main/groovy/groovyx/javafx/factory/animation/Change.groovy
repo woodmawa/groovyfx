@@ -24,7 +24,7 @@ import javafx.animation.Interpolator;
  * @author jimclarke
  */
 class Change {
-    Binding  binding;
+    groovy.lang.Binding binding;
     def to
     Interpolator interpolator
 

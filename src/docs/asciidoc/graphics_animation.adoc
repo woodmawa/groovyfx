@@ -13,7 +13,7 @@ All standard JavaFX shapes are supported with concise syntax:
 
 [source,groovy]
 ----
-import static groovyx.javafx.GroovyFX.start
+import static groovyfx.javafx.GroovyFX.start
 
 start {
     stage(title: "Shapes Demo", visible: true) {
@@ -470,7 +470,7 @@ Timeline is the most flexible animation system, allowing you to animate any prop
 
 [source,groovy]
 ----
-import static groovyx.javafx.GroovyFX.start
+import static groovyfx.javafx.GroovyFX.start
 
 start {
     stage(title: "Timeline Demo", visible: true) {

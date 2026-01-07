@@ -20,7 +20,7 @@
  * @author jimclarke
  */
 
-import static groovyx.javafx.GroovyFX.start
+import static groovyfx.javafx.GroovyFX.start
 
 start {
     stage(title: "GroovyFX Menu Demo", width: 650, height: 450, visible: true) {

@@ -17,7 +17,7 @@
  */
 import javafx.beans.property.SimpleStringProperty
 
-import static groovyx.javafx.GroovyFX.start
+import static groovyfx.javafx.GroovyFX.start
 
 def selectedProperty = new SimpleStringProperty("");
 start {

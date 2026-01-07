@@ -17,7 +17,7 @@
  */
 import javafx.scene.control.TextField
 
-import static groovyx.javafx.GroovyFX.start
+import static groovyfx.javafx.GroovyFX.start
 
 /**
  Demo of including a custom text field that rejects invalid characters giving

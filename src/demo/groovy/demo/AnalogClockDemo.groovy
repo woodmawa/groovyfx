@@ -17,7 +17,7 @@
  */
 import groovyx.javafx.beans.FXBindable
 
-import static groovyx.javafx.GroovyFX.start
+import static groovyfx.javafx.GroovyFX.start
 
 /**
  *

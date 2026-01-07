@@ -17,7 +17,8 @@
  */
 package groovyx.javafx.binding;
 
-import groovy.lang.Script;
+import groovy.lang.Script
+import groovy.transform.CompileStatic;
 import javafx.beans.property.SimpleDoubleProperty;
 
 /**
@@ -25,6 +26,7 @@ import javafx.beans.property.SimpleDoubleProperty;
  *
  * @author jimclarke
  */
+@CompileStatic
 public class ScriptVariableDoubleProperty extends SimpleDoubleProperty{
 
     ScriptVariableDoubleProperty(Script script, String propertyName) {

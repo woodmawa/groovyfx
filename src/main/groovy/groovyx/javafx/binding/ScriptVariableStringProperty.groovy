@@ -17,31 +17,25 @@
  */
 package groovyx.javafx.binding;
 
-import groovy.lang.Script;
-import javafx.beans.property.SimpleIntegerProperty;
+import groovy.lang.Script
+import groovy.transform.CompileStatic;
+import javafx.beans.property.SimpleStringProperty;
 
 /**
  * Wraps a groovy script variable in a JavaFX Property
- *
+ * 
  * @author jimclarke
  */
-public class ScriptVariableIntegerProperty extends SimpleIntegerProperty{
-
-    ScriptVariableIntegerProperty(Script script, String propertyName) {
-        super(script, propertyName, ((Number)script.getProperty(propertyName)).intValue());
+@CompileStatic
+public class ScriptVariableStringProperty extends SimpleStringProperty{
+    
+    ScriptVariableStringProperty(Script script, String propertyName) {
+        super(script, propertyName, (String)script.getProperty(propertyName));
     }
 
     @Override
-    public void set(int newValue) {
+    public void set(String newValue) {
         ((Script)getBean()).setProperty(getName(), newValue);
         super.set(newValue);
-    }
-
-    /**
-     * Handle BigDecimal/BigInteger and other numbers from Groovy
-     * @param newValue  The new value.
-     */
-    public void set(Number newValue) {
-        this.set(newValue.intValue());
     }
 }

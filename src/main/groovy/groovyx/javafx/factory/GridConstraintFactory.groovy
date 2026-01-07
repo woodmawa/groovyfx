@@ -33,7 +33,7 @@ class GridConstraintFactory extends AbstractFXBeanFactory {
     @Override
     public Object newInstance(FactoryBuilderSupport builder, Object name, Object value, Map attributes)
     throws InstantiationException, IllegalAccessException {
-        def gc = super.newInstance(builder, name, value, attributes)
+        def gc = Object.newInstance(builder, name, value, attributes)
         FXHelper.fxAttributes(gc, attributes)
         gc;
     }

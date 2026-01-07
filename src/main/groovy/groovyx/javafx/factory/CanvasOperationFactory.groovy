@@ -36,7 +36,7 @@ class CanvasOperationFactory extends AbstractFXBeanFactory {
     
      public Object newInstance(FactoryBuilderSupport builder, Object name, Object value, Map attributes)
             throws InstantiationException, IllegalAccessException {
-         Object result = super.newInstance(builder, name, value, attributes);
+         Object result = Object.newInstance(builder, name, value, attributes);
          if(value != null) {
              result.initParams(value);
          }

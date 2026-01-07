@@ -17,7 +17,8 @@
  */
 package groovyx.javafx.binding;
 
-import groovy.lang.Script;
+import groovy.lang.Script
+import groovy.transform.CompileStatic;
 import javafx.beans.property.SimpleObjectProperty;
 
 /**
@@ -28,6 +29,7 @@ import javafx.beans.property.SimpleObjectProperty;
  * @param <T> value type
  * @author jimclarke
  */
+@CompileStatic
 public class ScriptVariableObjectProperty<T> extends SimpleObjectProperty<T> {
 
     /**

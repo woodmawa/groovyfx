@@ -25,8 +25,8 @@ import javafx.scene.control.MenuButton
 import javafx.scene.control.MenuItem
 import javafx.scene.control.SplitMenuButton
 
-import static groovyx.javafx.factory.ActionFactory.applyAction
-import static groovyx.javafx.factory.ActionFactory.extractActionParams
+import static ActionFactory.applyAction
+import static ActionFactory.extractActionParams
 
 /**
 *

@@ -1,5 +1,6 @@
-package groovyx.javafx.appsupport;
+package groovyx.javafx.appsupport
 
+import groovy.transform.CompileStatic;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -21,6 +22,7 @@ import javafx.scene.input.KeyCombination;
  *
  * @author Andres Almiray
  */
+@CompileStatic
 public class Action {
 
 	private final ObjectProperty<EventHandler<ActionEvent>> onAction =

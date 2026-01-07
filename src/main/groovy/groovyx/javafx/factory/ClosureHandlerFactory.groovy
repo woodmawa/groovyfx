@@ -31,7 +31,7 @@ class ClosureHandlerFactory extends AbstractFXBeanFactory {
     }
 
     public Object newInstance(FactoryBuilderSupport builder, Object name, Object value, Map attributes) throws InstantiationException, IllegalAccessException {
-        GroovyEventHandler eh = super.newInstance(builder, name, value, attributes);
+        GroovyEventHandler eh = Object.newInstance(builder, name, value, attributes);
         eh.property = name.toString();
         if(value instanceof Closure) {
              eh.closure = value;

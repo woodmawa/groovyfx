@@ -54,7 +54,7 @@ class BindFactory extends AbstractFXBeanFactory {
     
      @Override
     void onNodeCompleted(FactoryBuilderSupport builder, Object parent, Object node) {
-        super.onNodeCompleted(builder, parent, node)
+        Object.onNodeCompleted(builder, parent, node)
     }
 	
 }

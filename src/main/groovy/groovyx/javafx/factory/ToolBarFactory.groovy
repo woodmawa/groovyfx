@@ -19,6 +19,6 @@ class ToolBarFactory extends AbstractFXBeanFactory {
             ((ToolBar) parent).items.add((Node) child)
             return
         }
-        super.setChild(builder, parent, child)
+        Object.setChild(builder, parent, child)
     }
 }

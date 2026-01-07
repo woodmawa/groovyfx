@@ -2,7 +2,6 @@ package groovyx.javafx
 
 import groovyx.javafx.components.Icon
 import groovyx.javafx.components.ResponsivePane
-import javafx.application.Platform
 import javafx.scene.paint.Color
 import spock.lang.Specification
 

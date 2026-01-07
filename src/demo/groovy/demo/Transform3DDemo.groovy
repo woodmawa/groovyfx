@@ -19,7 +19,7 @@ import javafx.application.ConditionalFeature
 import javafx.application.Platform
 import javafx.scene.PerspectiveCamera
 
-import static groovyx.javafx.GroovyFX.start
+import static groovyfx.javafx.GroovyFX.start
 
 start {
     if (!Platform.isSupported(ConditionalFeature.SCENE3D)) {

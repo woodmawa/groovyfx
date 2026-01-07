@@ -68,7 +68,7 @@ static +start+ method of the GroovyFX class as shown here.
 
 [source,groovy]
 ----
-import static groovyx.javafx.GroovyFX.start
+import static groovyfx.javafx.GroovyFX.start
 
 start {
     stage(title: 'GroovyFX', show: true) {

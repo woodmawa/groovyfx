@@ -95,7 +95,7 @@ Groovy scripts are compiled to JVM classes and executed like Java applications.
 ----
 package com.example
 
-import groovyx.javafx.GroovyFX
+import groovyfx.javafx.GroovyFX
 
 class Main {
     static void main(String[] args) {

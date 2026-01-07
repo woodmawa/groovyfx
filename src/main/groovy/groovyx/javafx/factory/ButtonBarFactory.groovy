@@ -18,6 +18,6 @@ class ButtonBarFactory extends AbstractFXBeanFactory {
             ((ButtonBar) parent).buttons.add((Node) child)
             return
         }
-        super.setChild(builder, parent, child)
+        Object.setChild(builder, parent, child)
     }
 }

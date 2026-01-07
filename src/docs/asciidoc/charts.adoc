@@ -24,7 +24,7 @@ Pie charts display data as proportional slices of a circle, ideal for showing pe
 
 [source,groovy]
 ----
-import static groovyx.javafx.GroovyFX.start
+import static groovyfx.javafx.GroovyFX.start
 
 start {
     stage(title: "Pie Chart Demo", visible: true) {
@@ -565,7 +565,7 @@ Here's a comprehensive example showing multiple chart types:
 ----
 import javafx.collections.FXCollections
 import javafx.scene.chart.PieChart
-import static groovyx.javafx.GroovyFX.start
+import static groovyfx.javafx.GroovyFX.start
 
 start {
     stage(title: 'GroovyFX Chart Demo', width: 1024, height: 960, visible: true) {

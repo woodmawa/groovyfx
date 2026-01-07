@@ -17,7 +17,8 @@
  */
 package groovyx.javafx;
 
-import groovy.lang.Closure;
+import groovy.lang.Closure
+import groovy.transform.CompileStatic;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.stage.Stage;
@@ -40,6 +41,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * @author jimclarke
  * @author Dierk Koenig (default delegate)
  */
+@CompileStatic
 public class GroovyFX extends Application {
 
     /**

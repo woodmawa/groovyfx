@@ -15,10 +15,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import javafx.scene.control.ButtonBar
+
 import javafx.scene.control.SpinnerValueFactory
 
-import static groovyx.javafx.GroovyFX.start
+import static groovyfx.javafx.GroovyFX.start
 
 start {
     stage(title: "Spinner", show: true) {

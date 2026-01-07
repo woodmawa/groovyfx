@@ -85,31 +85,19 @@ java {
  * - demo contains runnable demos/examples
  */
 sourceSets {
-    ast {
-        groovy.srcDirs = ['src/ast/groovy', 'src/ast/java']
-        java.srcDirs = []                  // avoid compileAstJava task / potential cycles
-        resources.srcDirs = ['src/ast/resources']
-    }
-
     main {
-        // main must see AST outputs (FXBindable annotation + transform)
-        compileClasspath += sourceSets.ast.output
-        runtimeClasspath += sourceSets.ast.output
+        java.srcDirs = ['src/main/java']
+        groovy.srcDirs = ['src/main/groovy']
+        resources.srcDirs = ['src/main/resources']
     }
 
-    test {
-        // tests must see AST outputs (FXBindable used in tests)
-        compileClasspath += sourceSets.ast.output
-        runtimeClasspath += sourceSets.ast.output
-    }
-
-    demo {
+   demo {
         groovy.srcDirs = ['src/demo/groovy']
         resources.srcDirs = ['src/demo/resources']
 
-        // demos must see BOTH main + ast outputs
-        compileClasspath += sourceSets.main.output + sourceSets.ast.output
-        runtimeClasspath += sourceSets.main.output + sourceSets.ast.output
+        // demos must see main outputs
+        compileClasspath += sourceSets.main.output
+        runtimeClasspath += sourceSets.main.output
     }
 }
 
@@ -126,10 +114,6 @@ configurations {
  * Dependencies
  */
 dependencies {
-    // AST source set needs Groovy too (separate classpath)
-    astImplementation platform("org.apache.groovy:groovy-bom:$groovyVersion")
-    astImplementation "org.apache.groovy:groovy"
-
     // Main Groovy alignment via BOM
     api platform("org.apache.groovy:groovy-bom:$groovyVersion")
     api "org.apache.groovy:groovy"
@@ -147,8 +131,8 @@ dependencies {
     testRuntimeOnly "org.junit.platform:junit-platform-launcher"
 
     // Demo runtime add-on (you had this)
-    demoImplementation 'jakarta.xml.bind:jakarta.xml.bind-api:4.0.2'
-    demoRuntimeOnly 'com.sun.xml.bind:jaxb-impl:4.0.5'
+    //demoImplementation 'jakarta.xml.bind:jakarta.xml.bind-api:4.0.2'
+    //demoRuntimeOnly 'com.sun.xml.bind:jaxb-impl:4.0.5'
 }
 
 /**
@@ -172,17 +156,61 @@ javafx {
     configurations = [
             'implementation',
             'testImplementation',
-            'demoImplementation',
-            'astImplementation'
+            'demoImplementation'
     ]
 }
 
 /**
- * Ensure AST classes exist before compiling main Groovy.
- * DO NOT hardcode 'astClasses' — use the sourceSet generated task name.
+ * JPMS: compile module-info *after* Groovy has produced classes, so exports/opens resolve.
  */
-tasks.named('compileGroovy').configure {
-    dependsOn(tasks.named(sourceSets.ast.classesTaskName))
+tasks.named('compileJava', JavaCompile).configure {
+    // definitive: compileJava will never see module-info.java
+    source = sourceSets.main.java.matching {
+        exclude('**/module-info.java')
+    }
+}
+
+/*
+tasks.named('compileJava').configure {
+    exclude('module-info.java')
+}
+*/
+
+tasks.withType(JavaCompile).configureEach {
+    modularity.inferModulePath = true
+}
+
+tasks.withType(GroovyCompile).configureEach {
+    // no patch-module here
+}
+
+/**
+ * Dedicated module-info compilation step (after classes exist)
+ */
+def moduleName = 'org.groovyfx'
+def moduleInfoDir = file('src/module-info/java')
+
+tasks.register('compileModuleInfo', JavaCompile) {
+    dependsOn tasks.named('classes')
+
+    source = fileTree(moduleInfoDir) { include 'module-info.java' }
+    destinationDirectory = layout.buildDirectory.dir('classes/java/module-info')
+
+    def mp = sourceSets.main.compileClasspath
+    classpath = files()
+
+    options.release = 25
+    options.compilerArgs += [
+            '--module-path', mp.asPath,
+            '--patch-module', "org.groovyfx=${sourceSets.main.output.classesDirs.asPath}"
+    ]
+}
+
+tasks.named('jar').configure {
+    dependsOn tasks.named('compileModuleInfo')
+    from(tasks.named('compileModuleInfo')) {
+        include 'module-info.class'
+    }
 }
 
 /**
@@ -195,25 +223,27 @@ tasks.withType(Test).configureEach {
     ]
 }
 
-tasks.named('compileDemoGroovy').configure {
-    dependsOn tasks.named(sourceSets.ast.classesTaskName)
-}
 
+//configure the demo runners to use the MOdule system
 tasks.withType(JavaExec).configureEach {
+    // This forces Gradle to use --module-path instead of -classpath
+    modularity.inferModulePath = true
+
+    // Set the main module name defined in your module-info.java
+    mainModule = "org.groovyfx"
+
     jvmArgs += [
-            '--enable-native-access=ALL-UNNAMED',
+            "--patch-module", "org.groovyfx=${sourceSets.demo.output.classesDirs.asPath}"
     ]
 }
-//include ast transformations into test scope
-tasks.named('compileTestGroovy').configure {
-    dependsOn tasks.named(sourceSets.ast.classesTaskName)
-}
+
 /**
  * Demo runners (Gradle 9 style)
  */
 tasks.register('ModernDashboard', JavaExec) {
     group = "Examples"
     description = "Runs the ModernDashboard example"
+    // Gradle now correctly assigns this to the module-path
     classpath = sourceSets.demo.runtimeClasspath
     mainClass.set('examples.ModernDashboard')
 }

@@ -17,7 +17,7 @@
  */
 import groovyx.javafx.SceneGraphBuilder
 
-import static groovyx.javafx.GroovyFX.start
+import static groovyfx.javafx.GroovyFX.start
 
 /**
  * Dynamic painting and animation of the GroovyFX Logo. Adapts to available size.

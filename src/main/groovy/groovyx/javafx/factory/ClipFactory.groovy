@@ -34,7 +34,7 @@ public class ClipFactory extends AbstractFXBeanFactory {
     }
     
     public Object newInstance(FactoryBuilderSupport builder, Object name, Object value, Map attributes) {
-        ClipHolder ch = super.newInstance(builder, name, value, attributes);
+        ClipHolder ch = Object.newInstance(builder, name, value, attributes);
         if(value instanceof Node)
             ch.node = value;
         return ch;

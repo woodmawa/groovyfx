@@ -107,7 +107,7 @@ public abstract class AbstractNodeFactory extends AbstractFXBeanFactory {
         }
         def parent = builder.context.get(FactoryBuilderSupport.CURRENT_NODE)
         handleLayoutConstraints(parent, node, attributes)
-        return super.onHandleNodeAttributes(builder, node, attributes)
+        return Object.onHandleNodeAttributes(builder, node, attributes)
     }
 
     public void setChild(FactoryBuilderSupport builder, Object parent, Object child) {
@@ -134,7 +134,7 @@ public abstract class AbstractNodeFactory extends AbstractFXBeanFactory {
                 }
                 break
             default:
-                super.setChild(builder, parent, child)
+                Object.setChild(builder, parent, child)
         }
     }
 

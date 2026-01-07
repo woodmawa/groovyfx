@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import groovyx.javafx.GroovyFX;
+import groovyfx.javafx.GroovyFX;
 
 GroovyFX.start {
     stage(x: 100, y: 100, onShown: { println "Stage 1" }, visible: true, style: 'UTILITY') {

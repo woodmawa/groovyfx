@@ -20,7 +20,7 @@ import javafx.scene.image.Image
 
 import jakarta.xml.bind.DatatypeConverter
 
-import static groovyx.javafx.GroovyFX.start
+import static groovyfx.javafx.GroovyFX.start
 
 /**
  * Inspired by Dirk Weber, "An experiment: Canvas vs. SVG vs. Flash"

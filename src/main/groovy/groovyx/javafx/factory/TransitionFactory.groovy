@@ -74,7 +74,7 @@ class TransitionFactory extends AbstractFXBeanFactory {
         }else if(child instanceof GroovyEventHandler) {
             parent."${child.property}" = child;
         }else {
-            super.setChild(build, parent, child);
+            Object.setChild(build, parent, child);
         }
     }
     
@@ -186,7 +186,7 @@ class TransitionFactory extends AbstractFXBeanFactory {
                 }
             }
         }
-        return super.onHandleNodeAttributes(builder, node, attributes);
+        return Object.onHandleNodeAttributes(builder, node, attributes);
     }
     
     @Override

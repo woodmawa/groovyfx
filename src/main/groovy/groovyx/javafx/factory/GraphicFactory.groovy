@@ -34,7 +34,7 @@ class GraphicFactory extends AbstractFXBeanFactory {
     }
     
     public Object newInstance(FactoryBuilderSupport builder, Object name, Object value, Map attributes) throws InstantiationException, IllegalAccessException {
-       Graphic graphic = super.newInstance(builder, name, value, attributes)
+       Graphic graphic = Object.newInstance(builder, name, value, attributes)
        if(value instanceof Node)
                graphic.node = value;
         graphic;

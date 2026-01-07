@@ -87,7 +87,7 @@ class ComponentClassFactory extends AbstractFXBeanFactory {
                  parent.children.add(child)
              }
         } else {
-            super.setChild(builder, parent, child)
+            Object.setChild(builder, parent, child)
         }
     }
 

@@ -1,7 +1,8 @@
 package groovyx.javafx.binding;
 
 import groovy.lang.Binding;
-import groovy.lang.Script;
+import groovy.lang.Script
+import groovy.transform.CompileStatic;
 import javafx.beans.property.Property;
 import javafx.collections.FXCollections;
 import javafx.collections.MapChangeListener;
@@ -24,6 +25,7 @@ import java.util.Map;
  *
  * @author jimclarke
  */
+@CompileStatic
 public class ScriptVariableProperty implements MapChangeListener<String, Object> {
 
     private static final ScriptVariableProperty INSTANCE = new ScriptVariableProperty();
@@ -55,7 +57,7 @@ public class ScriptVariableProperty implements MapChangeListener<String, Object>
             propertyMap.put(script, instanceMap);
 
             // Binding.getVariables() is raw in Groovy; we wrap it carefully.
-            @SuppressWarnings({"unchecked", "rawtypes"})
+            @SuppressWarnings(["unchecked", "rawtypes"])
             Map<String, Object> originalVMap = (Map) script.getBinding().getVariables();
 
             originalVMap.put(SCRIPT_VAR, script);
@@ -125,7 +127,7 @@ public class ScriptVariableProperty implements MapChangeListener<String, Object>
         if (property == null) return;
 
         // Script variables are dynamic (Object). Bridge wildcard capture via a single controlled cast.
-        @SuppressWarnings({"rawtypes", "unchecked"})
+        @SuppressWarnings(["rawtypes", "unchecked"])
         Property raw = (Property) property;
         raw.setValue(map.get(variable));
     }

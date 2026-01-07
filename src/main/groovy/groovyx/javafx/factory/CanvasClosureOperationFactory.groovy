@@ -34,7 +34,7 @@ class CanvasClosureOperationFactory extends AbstractFXBeanFactory {
     
     public Object newInstance(FactoryBuilderSupport builder, Object name, Object value, Map attributes)
             throws InstantiationException, IllegalAccessException {
-         Object instance = super.newInstance(builder,name,value, attributes);
+         Object instance = Object.newInstance(builder,name,value, attributes);
          if(value != null && value instanceof Closure)
             instance.closure = value;
          instance;

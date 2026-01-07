@@ -3,8 +3,8 @@
  */
 package examples
 
-import groovyx.javafx.SceneGraphBuilder
-import static groovyx.javafx.GroovyFX.start
+
+import static groovyfx.javafx.GroovyFX.start
 import javafx.scene.paint.Color
 
 /**

@@ -17,31 +17,33 @@
  */
 package groovyx.javafx.binding;
 
-import groovy.lang.Script;
-import javafx.beans.property.SimpleFloatProperty;
+import groovy.lang.Script
+import groovy.transform.CompileStatic;
+import javafx.beans.property.SimpleLongProperty;
 
 /**
  * Wraps a groovy script variable in a JavaFX Property
  *
  * @author jimclarke
  */
-public class ScriptVariableFloatProperty extends SimpleFloatProperty{
+@CompileStatic
+public class ScriptVariableLongProperty extends SimpleLongProperty{
 
-    ScriptVariableFloatProperty(Script script, String propertyName) {
-        super(script, propertyName, ((Number)script.getProperty(propertyName)).floatValue());
+    ScriptVariableLongProperty(Script script, String propertyName) {
+        super(script, propertyName, ((Number)script.getProperty(propertyName)).longValue());
     }
 
     @Override
-    public void set(float newValue) {
+    public void set(long newValue) {
         ((Script)getBean()).setProperty(getName(), newValue);
         super.set(newValue);
     }
 
     /**
      * Handle BigDecimal/BigInteger and other numbers from Groovy
-     * @param newValue  The new value.
+     * @param newValue The new value.
      */
     public void set(Number newValue) {
-        this.set(newValue.floatValue());
+        this.set(newValue.longValue());
     }
 }

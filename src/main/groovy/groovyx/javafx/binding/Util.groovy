@@ -19,7 +19,8 @@ package groovyx.javafx.binding;
 
 import groovy.lang.MetaClass;
 import groovy.lang.MetaProperty;
-import groovy.lang.Script;
+import groovy.lang.Script
+import groovy.transform.CompileStatic;
 import javafx.beans.property.Property;
 import javafx.beans.property.ReadOnlyProperty;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -54,6 +55,7 @@ import org.codehaus.groovy.runtime.InvokerHelper;
  *
  * @author jimclarke
  */
+@CompileStatic
 public final class Util {
 
     private Util() {

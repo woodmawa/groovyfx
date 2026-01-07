@@ -25,6 +25,6 @@ class ScrollPaneFactory extends AbstractFXBeanFactory {
             sp.content = (Node) child
             return
         }
-        super.setChild(builder, parent, child)
+        Object.setChild(builder, parent, child)
     }
 }

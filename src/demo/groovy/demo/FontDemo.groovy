@@ -17,7 +17,7 @@
  */
 import javafx.scene.text.Font
 
-import static groovyx.javafx.GroovyFX.start
+import static groovyfx.javafx.GroovyFX.start
 
 start {
     stage(show: true) {

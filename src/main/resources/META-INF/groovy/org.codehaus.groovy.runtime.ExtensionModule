@@ -1,0 +1,16 @@
+moduleName=groovyfx
+moduleVersion=@groovyfx.version@
+extensionClasses=groovyfx.javafx.extension.NumberExtension,\
+groovyfx.javafx.extension.ReadOnlyDoublePropertyExtension,\
+groovyfx.javafx.extension.ReadOnlyFloatPropertyExtension,\
+groovyfx.javafx.extension.ReadOnlyIntegerPropertyExtension,\
+groovyfx.javafx.extension.ReadOnlyLongPropertyExtension,\
+groovyfx.javafx.extension.ReadOnlyBooleanPropertyExtension,\
+groovyfx.javafx.extension.BooleanBindingExtension,\
+groovyfx.javafx.extension.NumberBindingExtension,\
+groovyfx.javafx.extension.ReadOnlyObjectPropertyExtension,\
+groovyfx.javafx.extension.ReadOnlyListPropertyExtension,\
+groovyfx.javafx.extension.ReadOnlyMapPropertyExtension,\
+groovyfx.javafx.extension.NodeExtension,\
+groovyfx.javafx.extension.ControlsExtension
+staticExtensionClasses=

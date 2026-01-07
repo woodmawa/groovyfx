@@ -20,7 +20,8 @@ package groovyx.javafx.binding;
 import groovy.lang.Closure;
 import groovy.lang.GroovyObjectSupport;
 import groovy.lang.MetaClass;
-import groovy.lang.Reference;
+import groovy.lang.Reference
+import groovy.transform.CompileStatic;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
 import javafx.beans.property.ReadOnlyProperty;
@@ -49,6 +50,7 @@ import java.util.Map;
  *
  * @author jimclarke
  */
+@CompileStatic
 public class GroovyClosureProperty implements ReadOnlyProperty<Object>,
         ChangeListener<Object>,
         InvalidationListener {

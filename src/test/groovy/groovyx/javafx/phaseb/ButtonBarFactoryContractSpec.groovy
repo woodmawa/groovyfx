@@ -1,5 +1,6 @@
-package groovyx.javafx.factory
+package groovyx.javafx.phaseb
 
+import groovyx.javafx.factory.ButtonBarFactory
 import groovyx.javafx.test.FxTestSupport
 import javafx.scene.control.Button
 import javafx.scene.control.ButtonBar

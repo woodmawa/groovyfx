@@ -26,7 +26,7 @@ package structure
 import groovyx.javafx.beans.FXBindable
 import javafx.scene.layout.GridPane
 
-import static groovyx.javafx.GroovyFX.start
+import static groovyfx.javafx.GroovyFX.start
 
 class Email1 {
     @FXBindable String name, address, feedback

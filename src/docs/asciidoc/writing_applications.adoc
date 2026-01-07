@@ -13,8 +13,8 @@ The simplest approach puts all code in a single file. This is fine for demos, pr
 
 [source,groovy]
 ----
-import groovyx.javafx.beans.FXBindable
-import static groovyx.javafx.GroovyFX.start
+import beans.groovyfx.javafx.FXBindable
+import static groovyfx.javafx.GroovyFX.start
 
 @FXBindable
 class Email {
@@ -83,7 +83,7 @@ Here's an improved version that separates the main concerns:
 [source,groovy]
 ----
 // Model.groovy
-import groovyx.javafx.beans.FXBindable
+import beans.groovyfx.javafx.FXBindable
 
 @FXBindable
 class Email {
@@ -185,7 +185,7 @@ class EmailFormController {
 }
 
 // Main.groovy - Application entry point
-import static groovyx.javafx.GroovyFX.start
+import static groovyfx.javafx.GroovyFX.start
 
 start { app ->
     def builder = delegate
@@ -224,7 +224,7 @@ class User {
 }
 
 // ViewModel - Presentation logic and state
-import groovyx.javafx.beans.FXBindable
+import beans.groovyfx.javafx.FXBindable
 
 @FXBindable
 class UserProfileViewModel {
@@ -260,7 +260,7 @@ class UserProfileViewModel {
 }
 
 // View - UI layout
-import static groovyx.javafx.GroovyFX.start
+import static groovyfx.javafx.GroovyFX.start
 
 start {
     def user = new User(username: 'jdoe', email: 'jdoe@example.com', premium: false)
