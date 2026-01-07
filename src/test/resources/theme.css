@@ -1,0 +1,5 @@
+@import "app.css";
+
+.titled-pane > .title {
+    -fx-font-weight: bold;
+}

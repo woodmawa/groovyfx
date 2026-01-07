@@ -16,7 +16,7 @@ class SplitPaneFactory extends AbstractFXBeanFactory {
             parent.items.add((Node) child)
             return
         }
-        Object.setChild(builder, parent, child)
+        super.setChild(builder, parent, child)
     }
 
     @Override
@@ -24,6 +24,6 @@ class SplitPaneFactory extends AbstractFXBeanFactory {
         // If you support dividerPositions attribute, apply here after items exist:
         // e.g. attributes consumed earlier into builder context, then:
         // node.setDividerPositions(...)
-        Object.onNodeCompleted(builder, parent, node)
+        super.onNodeCompleted(builder, parent, node)
     }
 }

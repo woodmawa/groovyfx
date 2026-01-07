@@ -13,7 +13,7 @@ class TabPaneFactory extends AbstractFXBeanFactory {
     @Override
     Object newInstance(FactoryBuilderSupport builder, Object name, Object value, Map attributes)
             throws InstantiationException, IllegalAccessException {
-        return Object.newInstance(builder, name, value, attributes)
+        return super.newInstance(builder, name, value, attributes)
     }
 
     @Override
@@ -29,16 +29,15 @@ class TabPaneFactory extends AbstractFXBeanFactory {
             def tab = new Tab()
             tab.content = (Node) child
             parent.tabs.add(tab)
-            return
         }
 
-        Object.setChild(builder, parent, child)
+        super.setChild(builder, parent, child)
     }
 
     // Optional: handle selectedIndex after tabs added (see below)
     @Override
     void onNodeCompleted(FactoryBuilderSupport builder, Object parent, Object node) {
         // if you support selectedIndex attribute, apply it here (after children)
-        Object.onNodeCompleted(builder, parent, node)
+        super.onNodeCompleted(builder, parent, node)
     }
 }

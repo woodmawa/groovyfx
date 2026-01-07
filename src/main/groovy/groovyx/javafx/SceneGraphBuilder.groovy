@@ -262,6 +262,8 @@ import java.util.logging.Logger
 import java.util.function.Consumer
 import javafx.util.Duration
 
+import static groovyx.javafx.GroovyFXEnhancer.*
+
 /**
  *
  * @author jimclarke
@@ -284,9 +286,12 @@ class SceneGraphBuilder extends FactoryBuilderSupport {
 
     private Scene currentScene;
 
+    // Prevent re-registering factories if initialize() is called more than once
+    private boolean factoriesRegistered = false
+
     static {
-        GroovyFXEnhancer.enhanceClasses()
-    }
+        enhanceClasses()
+     }
 
     SceneGraphBuilder(boolean init = true) {
         super(init)
@@ -997,7 +1002,8 @@ class SceneGraphBuilder extends FactoryBuilderSupport {
      * @param c run this closure in the builder
      */
     public Object build(Closure c) {
-        c.setDelegate(this)
+        c = c.rehydrate(this, c.owner, c.thisObject)
+        c.resolveStrategy = Closure.DELEGATE_FIRST
         return c.call()
     }
 
@@ -1016,21 +1022,51 @@ class SceneGraphBuilder extends FactoryBuilderSupport {
     }
 
     private void initialize() {
+
+        if (factoriesRegistered) return
+            factoriesRegistered = true
+
         this[DELEGATE_PROPERTY_OBJECT_ID] = DEFAULT_DELEGATE_PROPERTY_OBJECT_ID
+        this[DELEGATE_PROPERTY_OBJECT_FILL] = DEFAULT_DELEGATE_PROPERTY_OBJECT_FILL
+        this[DELEGATE_PROPERTY_OBJECT_STROKE] = DEFAULT_DELEGATE_PROPERTY_OBJECT_STROKE
 
         addPostNodeCompletionDelegate(postCompletionDelegate)
         addAttributeDelegate(NodeFactory.attributeDelegate)
         addAttributeDelegate(idDelegate)
 
-        // Public API only: define any special/legacy colors you want as variables
+        // register DSL factories (PER INSTANCE)
+        def registrations = [
+                this.&registerStages,
+                this.&registerNodes,
+                this.&registerContainers,
+                this.&registerShapes,
+                this.&registerTransforms,
+                this.&registerEffects,
+                this.&registerCharts,
+                this.&registerControls,
+                this.&registerMenus,
+                this.&registerMedia,
+                this.&registerWeb,
+                this.&registerEventHandlers,
+                this.&registerBinding,
+                this.&registerThreading,
+                this.&registerCanvas,
+                this.&registerTransition
+        ]
+
+        registrations.each { Closure c ->
+            //assert this.metaClass.respondsTo(this, name) : "Missing method: $name()"
+            c.call()
+        }
+
+        // Public API: define any special/legacy colors as variables
         setVariable("groovyblue", Color.rgb(99, 152, 170))
         setVariable("GROOVYBLUE", Color.rgb(99, 152, 170))
 
-        // Optional: a small compatibility set of common CSS color names
-        // (JavaFX Color.web supports standard CSS color names.)
+        // Optional: common CSS color names
         def commonColorNames = [
-                "black","white","red","green","blue","yellow","cyan","magenta",
-                "gray","grey","lightgray","darkgray","orange","pink","purple","brown",
+                "black", "white", "red", "green", "blue", "yellow", "cyan", "magenta",
+                "gray", "grey", "lightgray", "darkgray", "orange", "pink", "purple", "brown",
                 "transparent"
         ]
         commonColorNames.each { n ->
@@ -1039,7 +1075,7 @@ class SceneGraphBuilder extends FactoryBuilderSupport {
                 setVariable(n, c)
                 setVariable(n.toUpperCase(), c)
             } catch (ignored) {
-                // ignore if a name isn't recognized in a given JavaFX version
+                // ignore if not recognized in this JavaFX version
             }
         }
 
@@ -1047,9 +1083,8 @@ class SceneGraphBuilder extends FactoryBuilderSupport {
             setVariable(name, value)
         }
 
-        // NEW: discover external component libraries
+        // Discover external component libraries (SPI)
         loadAddons()
     }
-
 }
 

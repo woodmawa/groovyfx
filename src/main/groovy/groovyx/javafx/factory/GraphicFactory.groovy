@@ -17,35 +17,51 @@
  */
 package groovyx.javafx.factory
 
-import javafx.scene.Node;
+import groovy.util.FactoryBuilderSupport
+import javafx.scene.Node
 
 /**
- *
- * @author jimclarke
+ * graphic { <node> } wrapper:
+ * - captures one Node child
+ * - assigns it to parent.graphic when completed
  */
 class GraphicFactory extends AbstractFXBeanFactory {
-    
+
+    static class GraphicWrapper {
+        Node node
+    }
+
     GraphicFactory() {
-        super(Graphic)
+        super(GraphicWrapper)
     }
-    
-    GraphicFactory(Class<Graphic> beanClass) {
-        super(beanClass)
+
+    /** Backward-compat: SceneGraphBuilder.registerControls calls new GraphicFactory(Class). */
+    GraphicFactory(Class ignored) {
+        this()
     }
-    
-    public Object newInstance(FactoryBuilderSupport builder, Object name, Object value, Map attributes) throws InstantiationException, IllegalAccessException {
-       Graphic graphic = Object.newInstance(builder, name, value, attributes)
-       if(value instanceof Node)
-               graphic.node = value;
-        graphic;
+
+    @Override
+    Object newInstance(FactoryBuilderSupport builder, Object name, Object value, Map attributes) {
+        return new GraphicWrapper()
     }
-    
-     public void setChild( FactoryBuilderSupport builder, Object parent, Object child ) {
-         parent.node = child;
-     }
-    
-    public void onNodeCompleted(FactoryBuilderSupport builder, Object parent, Object node) {
-        parent.graphic = node.node;
+
+    @Override
+    void setChild(FactoryBuilderSupport builder, Object parent, Object child) {
+        if (child instanceof Node) {
+            parent.node = (Node) child
+            return
+        }
+        super.setChild(builder, parent, child)
+    }
+
+    @Override
+    void onNodeCompleted(FactoryBuilderSupport builder, Object parent, Object node) {
+        if (node instanceof GraphicWrapper && node.node != null) {
+            if (parent?.metaClass?.hasProperty(parent, "graphic")) {
+                parent.graphic = node.node
+                return
+            }
+        }
+        super.onNodeCompleted(builder, parent, node)
     }
 }
-

@@ -1,0 +1,6 @@
+.root {
+    -fx-font-size: 12px;
+}
+.label {
+    -fx-padding: 2 4 2 4;
+}

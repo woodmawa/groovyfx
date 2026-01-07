@@ -67,10 +67,6 @@ ext {
     jansiVersion  = providers.gradleProperty('groovyfx_jansiVersion').orElse('2.4.1').get()
 }
 
-repositories {
-    mavenCentral()
-}
-
 java {
     toolchain {
         languageVersion = JavaLanguageVersion.of(25)
@@ -182,6 +178,15 @@ tasks.withType(JavaCompile).configureEach {
 
 tasks.withType(GroovyCompile).configureEach {
     // no patch-module here
+}
+
+import org.gradle.api.tasks.compile.AbstractCompile
+
+tasks.withType(AbstractCompile).configureEach {
+    doFirst {
+        // DirectoryProperty -> File
+        destinationDirectory.getAsFile().get().mkdirs()
+    }
 }
 
 /**
