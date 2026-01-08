@@ -1022,7 +1022,10 @@ class SceneGraphBuilder extends FactoryBuilderSupport {
      *
      * @param c run this closure in the builder
      */
-    public Object build(Closure c) {
+    public Object build(
+            @DelegatesTo(value = SceneGraphBuilder, strategy = Closure.DELEGATE_FIRST)
+                    Closure c
+    ) {
         c = c.rehydrate(this, c.owner, c.thisObject)
         c.resolveStrategy = Closure.DELEGATE_FIRST
         return c.call()

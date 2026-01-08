@@ -38,7 +38,7 @@ contributor(sgbContext) {
 def sgbClosureBody = context(scope: closureScope())
 
 contributor(sgbClosureBody) {
-    if (enclosingCall('stage')) {
+    if (enclosingCall('start') || enclosingCall('stage') || enclosingCall('build')) {
         contributeColors(delegate)
         contributeWindows(delegate)
         contributeContainers(delegate)

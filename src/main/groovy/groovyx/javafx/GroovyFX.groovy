@@ -126,9 +126,13 @@ public class GroovyFX extends Application {
      *
      * @param buildMe the code that is built in the context of a {@link SceneGraphBuilder}
      */
-    public static void start(Closure<Object> buildMe) {
-        start(buildMe, new String[0]);
+    public static void start(
+            @DelegatesTo(value = SceneGraphBuilder, strategy = Closure.DELEGATE_FIRST)
+                    Closure<Object> buildMe
+    ) {
+        start(buildMe, new String[0])
     }
+
 
     /**
      * Launches the GroovyFX application using the supplied builder closure and arguments.
@@ -141,10 +145,15 @@ public class GroovyFX extends Application {
      * @param buildMe the code that is built in the context of a {@link SceneGraphBuilder}
      * @param args   optional application arguments passed to {@link Application#launch}
      */
-    public static void start(Closure<Object> buildMe, String... args) {
-        closure = buildMe;
-        // No need to call initJavaFX(); Application.launch will initialize the toolkit.
-        Application.launch(GroovyFX.class, args);
+
+
+    public static void start(
+            @DelegatesTo(value = SceneGraphBuilder, strategy = Closure.DELEGATE_FIRST)
+                    Closure<Object> buildMe,
+            String... args
+    ) {
+        closure = buildMe
+        Application.launch(GroovyFX.class, args)
     }
 
     /**
