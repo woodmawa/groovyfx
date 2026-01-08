@@ -27,15 +27,17 @@ import javafx.scene.text.Font
  * @author jimclarke
  */
 @FXBindable
-class SetFontOperation implements CanvasOperation {
+class SetFontOperation implements CanvasOperation, OpParamCoercion  {
     Font f
     
-    public void initParams(Object val) {
-        f = FontFactory.get(val);
+    void initParams(Object params) {
+        def raw = pick(params, ['font','f','value'])
+        font = coerce(raw, Font)
     }
 
     public void execute(GraphicsContext gc) {
-        gc.setFont(f);
+        gc.setFont(f)
     }
 }
+
 

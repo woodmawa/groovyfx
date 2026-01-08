@@ -27,21 +27,17 @@ import javafx.scene.canvas.GraphicsContext
  * @author jimclarke
  */
 @FXBindable
-class SetTextBaselineOperation implements CanvasOperation {
+class SetTextBaselineOperation implements CanvasOperation, OpParamCoercion {
     VPos baseline
-    
-    public void initParams(Object val) {
-        if(val instanceof VPos) {
-            baseline = val;
-        }else if(val instanceof Pos) {
-            baseline = value.Vpos
-        }else {
-            baseline = Enum.valueOf(VPos,val.toString().trim().toUpperCase())
-        }
+
+    void initParams(Object params) {
+        def raw = pick(params, ['textBaseline','baseline','value'])
+        textBaseline = coerce(raw, VPos)
     }
 
     public void execute(GraphicsContext gc) {
         gc.setTextBaseline(baseline);
     }
 }
+
 

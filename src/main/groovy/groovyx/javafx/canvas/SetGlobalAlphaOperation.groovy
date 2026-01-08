@@ -25,15 +25,19 @@ import javafx.scene.canvas.GraphicsContext;
  * @author jimclarke
  */
 @FXBindable
-class SetGlobalAlphaOperation implements CanvasOperation {
+class SetGlobalAlphaOperation implements CanvasOperation, OpParamCoercion {
     double alpha
     
-    public void initParams(Object val) {
-        alpha = val
+    // TODO(groovyfx-refactor): use OpParamCoercion pick()/unwrap()/coerce() to accept Map + BindingHolder params
+
+    void initParams(Object params) {
+        def raw = pick(params, ['alpha', 'a', 'value'])
+        globalAlpha = coerce(raw, Double)
     }
 
     public void execute(GraphicsContext gc) {
-        gc.setGlobalAlpha(alpha);
+        gc.setGlobalAlpha(alpha)
     }
 }
+
 

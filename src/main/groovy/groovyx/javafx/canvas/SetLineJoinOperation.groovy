@@ -26,19 +26,17 @@ import javafx.scene.shape.StrokeLineJoin
  * @author jimclarke
  */
 @FXBindable
-class SetLineJoinOperation implements CanvasOperation {
+class SetLineJoinOperation implements CanvasOperation, OpParamCoercion {
     StrokeLineJoin join
-    
-    public void initParams(Object val) {
-        if(val instanceof StrokeLineJoin) {
-            join = val;
-        }else {
-            join = Enum.valueOf(StrokeLineJoin,val.toString().trim().toUpperCase())
-        }
+
+    void initParams(Object params) {
+        def raw = pick(params, ['lineJoin','join','value'])
+        lineJoin = coerce(raw, StrokeLineJoin)
     }
 
     public void execute(GraphicsContext gc) {
-        gc.setLineJoin(join);
+        gc.setLineJoin(join)
     }
 }
+
 

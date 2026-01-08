@@ -517,11 +517,29 @@ class SceneGraphBuilder extends FactoryBuilderSupport {
     ];
 
     def propertyMissing(String name) {
-        if (name.startsWith("#")) {
-            return Color.web(name);
+        // 1) Hex colors like "#336699"
+        if (name?.startsWith("#")) {
+            return Color.web(name)
         }
 
-        throw new MissingPropertyException("Unrecognized property: ${name}", name, this.class);
+        // 2) If someone already defined it as a variable (your existing behavior elsewhere)
+        if (variables != null && variables.containsKey(name)) {
+            return variables[name]
+        }
+
+        // 3) Try CSS color names ("navy", "rebeccapurple", "darkslategray", etc.)
+        //    Cache both lower + upper to match existing style in the builder.
+        try {
+            def c = Color.web(name)
+            setVariable(name, c)
+            setVariable(name.toUpperCase(), c)
+            return c
+        } catch (Throwable ignored) {
+            // fall through
+        }
+
+        throw new MissingPropertyException("Unrecognized property: ${name}", name, this.class)
+
     }
 
     Color rgb(int r, int g, int b) {

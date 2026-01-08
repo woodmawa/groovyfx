@@ -27,15 +27,19 @@ import javafx.scene.paint.Paint
  * @author jimclarke
  */
 @FXBindable
-class SetFillOperation implements CanvasOperation {
-    Paint p;
-    
-    public void initParams(Object val) {
-        p = ColorFactory.get(val);
+class SetFillOperation implements CanvasOperation, OpParamCoercion {
+    Paint fill
+
+    // Alias: some builder paths apparently send [stroke: ...] even for the 'fill' node
+    void setStroke(Paint p) { this.fill = p }
+    Paint getStroke() { return this.fill }   // optional, but helps introspection
+
+    void initParams(Object params) {
+        def raw = pick(params, ['fill', 'paint', 'stroke', 'value'])
+        fill = coerce(raw, Paint)
     }
 
-    public void execute(GraphicsContext gc) {
-        gc.setFill(p);
+    void execute(GraphicsContext gc) {
+        gc.setFill(fill)
     }
 }
-

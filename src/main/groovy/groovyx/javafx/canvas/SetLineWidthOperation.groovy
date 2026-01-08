@@ -1,39 +1,30 @@
 /*
  * SPDX-License-Identifier: Apache-2.0
  *
- * Copyright 2011-2021 the original author or authors.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright ...
  */
 package groovyx.javafx.canvas
 
 import groovyx.javafx.beans.FXBindable
-import javafx.scene.canvas.GraphicsContext;
+import javafx.scene.canvas.GraphicsContext
 
-/**
- *
- * @author jimclarke
- */
 @FXBindable
-class SetLineWidthOperation implements CanvasOperation {
-    double lw 
-    
-    public void initParams(Object val) {
-        lw = val
+class SetLineWidthOperation implements CanvasOperation, OpParamCoercion {
+
+    double lw
+
+    // TODO(groovyfx-refactor): use OpParamCoercion pick()/unwrap()/coerce() to accept Map + BindingHolder params
+
+    void initParams(Object params) {
+        def raw = pick(params, ['lw','lineWidth','width','value'])
+        def v = coerce(raw, Double)
+        if (v == null) throw new IllegalArgumentException("lineWidth requires a value (got null)")
+        lw = v
+    }
+    void execute(GraphicsContext gc) {
+        gc.setLineWidth(lw)
     }
 
-    public void execute(GraphicsContext gc) {
-        gc.setLineWidth(lw);
-    }
+
 }
 

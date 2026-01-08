@@ -25,17 +25,28 @@ import javafx.scene.canvas.GraphicsContext;
  * @author jimclarke
  */
 @FXBindable
-class TranslateOperation implements CanvasOperation {
+class TranslateOperation implements CanvasOperation, OpParamCoercion {
     double x
     double y
-    
-    public void initParams(Object val) {
-        x = val[0]
-        y = val[1]
+
+    void initParams(Object params) {
+        if (params instanceof Map) {
+            tx = coerce(pick(params, ['x','tx','dx']), Double)
+            ty = coerce(pick(params, ['y','ty','dy']), Double)
+            return
+        }
+        def list = asListish(unwrap(params))
+        if (list && list.size() >= 2) {
+            tx = coerce(list[0], Double)
+            ty = coerce(list[1], Double)
+            return
+        }
+        throw new IllegalArgumentException("translate expects (x,y) or map {x:,y:}, got: $params")
     }
 
     public void execute(GraphicsContext gc) {
-        gc.translate(x, y);
+        gc.translate(x, y)
     }
 }
+
 

@@ -26,19 +26,19 @@ import javafx.scene.text.TextAlignment
  * @author jimclarke
  */
 @FXBindable
-class SetTextAlignOperation implements CanvasOperation {
+class SetTextAlignOperation implements CanvasOperation, OpParamCoercion {
     TextAlignment align
     
-    public void initParams(Object val) {
-        if(val instanceof TextAlignment) {
-            align = val;
-        }else {
-            align = Enum.valueOf(TextAlignment,val.toString().trim().toUpperCase())
-        }
+    // TODO(groovyfx-refactor): use OpParamCoercion pick()/unwrap()/coerce() to accept Map + BindingHolder params
+
+    void initParams(Object params) {
+        def raw = pick(params, ['textAlign','align','value'])
+        textAlign = coerce(raw, TextAlignment)
     }
 
     public void execute(GraphicsContext gc) {
-        gc.setTextAlign(align);
+        gc.setTextAlign(align)
     }
 }
+
 

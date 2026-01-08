@@ -26,15 +26,17 @@ import javafx.scene.effect.Effect
  * @author jimclarke
  */
 @FXBindable
-class SetEffectOperation implements CanvasOperation {
+class SetEffectOperation implements CanvasOperation, OpParamCoercion {
     Effect effect
-    
-    public void initParams(Object val) {
-        effect = val;
+
+    public void initParams(Object params) {
+        def raw = pick(params, ['effect', 'fx', 'value'])
+        effect = coerce(raw, Effect)
     }
 
     public void execute(GraphicsContext gc) {
         gc.setEffect(effect);
     }
 }
+
 

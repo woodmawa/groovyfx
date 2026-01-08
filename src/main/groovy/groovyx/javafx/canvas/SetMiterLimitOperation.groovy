@@ -25,15 +25,18 @@ import javafx.scene.canvas.GraphicsContext;
  * @author jimclarke
  */
 @FXBindable
-class SetMiterLimitOperation implements CanvasOperation {
+class SetMiterLimitOperation implements CanvasOperation, OpParamCoercion {
     double ml
     
-    public void initParams(Object val) {
-        ml = val
+
+    void initParams(Object params) {
+        def raw = pick(params, ['miterLimit','limit','ml','value'])
+        miterLimit = coerce(raw, Double)
     }
 
     public void execute(GraphicsContext gc) {
         gc.setMiterLimit(ml);
     }
 }
+
 

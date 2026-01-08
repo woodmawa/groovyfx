@@ -25,15 +25,17 @@ import javafx.scene.canvas.GraphicsContext;
  * @author jimclarke
  */
 @FXBindable
-class RotateOperation implements CanvasOperation {
+class RotateOperation implements CanvasOperation, OpParamCoercion {
     double degrees
-    
-    public void initParams(Object val) {
-        degrees = val
+
+    void initParams(Object params) {
+        def raw = pick(params, ['angle','theta','deg','value'])
+        angle = coerce(raw, Double)
     }
 
     public void execute(GraphicsContext gc) {
         gc.rotate(degrees);
     }
 }
+
 

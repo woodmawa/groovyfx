@@ -22,25 +22,54 @@
 
 package groovyx.javafx.factory
 
+import groovy.util.FactoryBuilderSupport
 import groovyx.javafx.canvas.CanvasOperation
 
 /**
+ * Factory for CanvasOperation leaf nodes (fill, stroke, lineTo, etc).
  *
- * @author jimclarke
+ * Fixes JavaFX/Groovy refactor regression where Object.newInstance(...) was used,
+ * which incorrectly attempts to instantiate java.lang.Object(builder,name,value,attrs).
  */
 class CanvasOperationFactory extends AbstractFXBeanFactory {
-    
-    CanvasOperationFactory(Class<CanvasOperation> beanClass) {
-        super(beanClass);
-    }
-    
-     public Object newInstance(FactoryBuilderSupport builder, Object name, Object value, Map attributes)
-            throws InstantiationException, IllegalAccessException {
-         Object result = Object.newInstance(builder, name, value, attributes);
-         if(value != null) {
-             result.initParams(value);
-         }
-         result
-     }
-}
 
+    CanvasOperationFactory(Class<? extends CanvasOperation> beanClass) {
+        super(beanClass)
+    }
+
+    @Override
+    Object newInstance(FactoryBuilderSupport builder, Object name, Object value, Map attributes)
+            throws InstantiationException, IllegalAccessException {
+
+        // IMPORTANT: construct the actual beanClass (CanvasOperation impl)
+        def result = super.newInstance(builder, name, value, attributes)
+
+        if (result instanceof CanvasOperation) {
+            Map params = null
+
+            // Support:
+            //   fill(Color.NAVY)
+            //   fill(color: Color.NAVY)
+            //   fill([color: Color.NAVY])
+            if (value instanceof Map) {
+                params = new LinkedHashMap(value as Map)
+            } else if (value != null) {
+                params = [value: value]
+            }
+
+            if (attributes != null && !attributes.isEmpty()) {
+                if (params == null) params = new LinkedHashMap()
+                params.putAll(attributes)
+
+                // consume attrs so they won't be treated as bean properties
+                attributes.clear()
+            }
+
+            if (params != null && !params.isEmpty()) {
+                result.initParams(params)
+            }
+        }
+
+        return result
+    }
+}

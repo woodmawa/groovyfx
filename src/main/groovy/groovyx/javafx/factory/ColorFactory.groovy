@@ -17,344 +17,217 @@
  */
 package groovyx.javafx.factory
 
+import groovy.transform.CompileStatic
+import groovyx.javafx.binding.BindingHolder
+import javafx.beans.value.ObservableValue
 import javafx.css.CssParser
 import javafx.css.Stylesheet
 import javafx.scene.paint.Color
 import javafx.scene.paint.CycleMethod
 import javafx.scene.paint.LinearGradient
-//import javafx.scene.paint.LinearGradientBuilder
 import javafx.scene.paint.Paint
 import javafx.scene.paint.RadialGradient
-//import javafx.scene.paint.RadialGradientBuilder
 import javafx.scene.paint.Stop
 
 import java.util.regex.Matcher
 import java.util.regex.Pattern
 
-// import javafx.css.ParsedValue // package change between jdk versions but we want to support both
 /**
  *
  * @author jimclarke
  * minor adaptions by hackergarten
+ *
+ * Patched for JavaFX 25+:
+ * - unwrap groovyx.javafx.binding.BindingHolder so canvas operations (fill/stroke/etc)
+ *   can accept bind { ... } expressions without feeding BindingHolder.toString() into CssParser.
+ *   Key fix: unwrap Map / BindingHolder / ObservableValue so canvas ops like:
+ *   fill(p: bind(...)) or fill(p: someBindingHolder)
+ * don't stringify to "[p:BindingHolder@...]" and blow up parsing.
  */
-public class ColorFactory {
+class ColorFactory {
 
-    private static Map <String, Paint> colorCacheMap = new HashMap<String, Paint>();
+    // Accept: "#RRGGBB", "#AARRGGBB", "0xRRGGBB", "0xAARRGGBB", "red", "cornflowerblue", etc.
+    // Also supports "rgb(r,g,b)" and "rgba(r,g,b,a)" (a as 0..1 or 0..255).
+    private static final Pattern RGB_FUNC = Pattern.compile(/(?i)^\s*rgba?\s*\(\s*([^)]+)\s*\)\s*$/)
 
-    public static Paint get(Object value) {
-        if(value instanceof Paint) {
-            return (Paint)value;
-        } /*else if(value instanceof RadialGradientBuilder || value instanceof LinearGradientBuilder) {
-            return value.build();
-        }*/else if(value instanceof List || value instanceof Object[]) {
-            Object[]args;
-            if(value instanceof List) {
-                List list = (List)value;
-                args = list.toArray();
-            }else {
-                args = (Object[])value;
-            }
-            if(args[0] instanceof String) {
-                String cmd = (String)args[0];
-                if(cmd.equalsIgnoreCase("rgb")) {
-                    int r = 0;
-                    int g = 0;
-                    int b = 0;
-                    float a = 1.0F;
-                    switch(args.length) {
-                        // fall through
-                        case 5:
-                            a = toFloat(args[5]);
-                        case 4:
-                            b = toInt(args[3]);
-                        case 3:
-                            g = toInt(args[2]);
-                        case 2:
-                            r = toInt(args[1]);
-                    }
-                    return Color.rgb(r, g, b, a);
+    static Paint get(Object value) {
+        // ---- Unwrap the common wrapper shapes FIRST ----
+        value = unwrap(value)
 
-                }else if(cmd.equalsIgnoreCase("hsb")) {
-                    int h = 0;
-                    float s = 0.0F;
-                    float b = 0.0F;
-                    float a = 1.0F;
-                    switch(args.length) {
-                        // fall through
-                        case 5:
-                            a = toFloat(args[4]);
-                        case 4:
-                            b = toFloat(args[3]);
-                        case 3:
-                            s = toFloat(args[2]);
-                        case 2:
-                            h = toInt(args[1]);
-                    }
-                    return Color.hsb(h, s, b, a);
-                }else {
-                    int r = 0;
-                    int g = 0;
-                    int b = 0;
-                    float a = 1.0F;
-                    switch(args.length) {
-                        // fall through
-                        case 4:
-                            a = toFloat(args[3]);
-                        case 3:
-                            b = toInt(args[2]);
-                        case 2:
-                            g = toInt(args[1]);
-                        case 1:
-                            r = toInt(args[0]);
-                    }
-                    return Color.color(r, g, b, a);
-                }
-            }else {
-                int r = 0;
-                int g = 0;
-                int b = 0;
-                float a = 1.0F;
-                switch(args.length) {
-                    // fall through
-                    case 4:
-                        a = toFloat(args[3]);
-                    case 3:
-                        b = toInt(args[2]);
-                    case 2:
-                        g = toInt(args[1]);
-                    case 1:
-                        r = toInt(args[0]);
-                }
-                return Color.rgb(r, g, b, a);
-            }
-        }else if(value != null) {
-            String color = value.toString().trim();
+        if (value == null) return null
 
-            if (color.startsWith('#')) {
-                return Color.web(color)
-            }
-
-            if(color.endsWith(";")) {
-                color = color.substring(0, color.length()-1);
-            }
-
-            Paint paint = colorCacheMap[color];
-            if(paint == null) {
-                Stylesheet p = new CssParser().parse("* { -fx-fill: " + color + "; }");
-                List declarations = p.getRules().get(0).getDeclarations();
-
-                if (!declarations)
-                    throw new IllegalArgumentException("Invalid fill syntax: '$color'")
-
-                def v = declarations.get(0).getParsedValue();
-                if(v.getConverter() == null)
-                    paint = (Paint)v.value;
-                else
-                    paint = (Paint)v.getConverter().convert(v, null);
-
-                colorCacheMap[color] = paint
-            }
-            return paint;
-        }else {
-            return null;
+        if (value instanceof Paint) {
+            return (Paint) value
         }
 
-    }
-    private static String numberPattern = "(\\d*\\.\\d+|\\d+\\.?)"
-    private static String sizePattern = "((?:\\d*\\.\\d+|\\d+\\.?)%?)"
-    private static String stopPattern = "(?:\\s+\\(${numberPattern}\\s*,\\s*([^\\)]+)\\))"
-    private static String cyclePattern = "(?:\\s+(repeat|reflect))?";
-    private static String linearPatternString = "linear\\s+\\(${sizePattern},${sizePattern}\\)\\s+to\\s+\\(${sizePattern},${sizePattern}\\)\\s+stops${stopPattern}${stopPattern}?${stopPattern}?${stopPattern}?${stopPattern}?${cyclePattern}";
-    private static Pattern linearPattern = Pattern.compile(linearPatternString);
-
-    private static String radialPatternString = "radial\\s+(?:\\(${sizePattern}\\s*,\\s*${sizePattern}\\)\\s*,\\s*)?${sizePattern}\\s+(?:focus\\s*\\(${sizePattern}\\s*,\\s*${sizePattern}\\)\\s*)?stops${stopPattern}${stopPattern}?${stopPattern}?${stopPattern}?${stopPattern}?${cyclePattern}";
-    private static Pattern radialPattern = Pattern.compile(radialPatternString);
-
-
-    static Paint getLinearPaint(String style) {
-        Matcher m = linearPattern.matcher(style);
-        if(!m.matches()) {
-            throw new RuntimeException("Failed to parse: ${style}")
-        }
-        float startX = getSize(m.group(1));
-        float startY = getSize(m.group(2));
-        float endX = getSize(m.group(3));
-        float endY = getSize(m.group(4));
-        String[] stopFrac = new String[5];
-        String[] stopColor = new String[5];
-        for(int i = 0; i < 5; i++) {
-            stopFrac[i] = m.group(5+i*2);
-            stopColor[i] = m.group(6+i*2);
-        }
-        String cycleMethod = m.group(15);
-
-        def stops = [];
-        for(int i = 0; i < 5; i++) {
-            if(stopFrac[i] != null) {
-                Stop stop = new Stop(getSize(stopFrac[i]), get(stopColor[i]));
-                stops << stop;
-            }else {
-                break;
+        if (value instanceof List || value instanceof Object[]) {
+            Object[] args
+            if (value instanceof List) {
+                args = ((List) value).toArray()
+            } else {
+                args = (Object[]) value
             }
+            return fromArgs(args)
         }
-        def method = CycleMethod.NO_CYCLE;
-        if(cycleMethod != "repeat")
-            method = CycleMethod.REPEAT
-        else if(cycleMethod == "reflect")
-            method == CycleMethod.REFLECT;
-        boolean proportional = m.group(1).endsWith("%");
-        return new LinearGradient(startX, startY, endX, endY,
-            proportional, method, (Stop[])stops.toArray());
 
-    }
-    static Paint getRadialPaint(String style) {
-        Matcher m = radialPattern.matcher(style);
-        if(!m.matches()) {
-            throw new RuntimeException("Failed to parse: ${style}")
-        }
-        boolean proportional = true;
-        float centerX = 0.5;
-        float centerY = 0.5;
-        float focusX = 0.5;
-        float focusY = 0.5;
-        String tmp = m.group(1);
-        if(tmp != null)
-            centerX = getSize(tmp);
-        tmp = m.group(2);
-        if(tmp != null)
-            centerY = getSize(tmp);
-        tmp = m.group(3);
-        float radius = getSize(tmp);
-        proportional = tmp.endsWith("%");
-        tmp = m.group(4);
-        if(tmp != null)
-            focusX = getSize(tmp);
-        tmp = m.group(5);
-        if(tmp != null)
-            focusY = getSize(tmp);
-
-
-        String[] stopFrac = new String[5];
-        String[] stopColor = new String[5];
-        for(int i = 0; i < 5; i++) {
-            stopFrac[i] = m.group(6+i*2);
-            stopColor[i] = m.group(7+i*2);
-        }
-        String cycleMethod = m.group(16);
-
-        def stops = [];
-        for(int i = 0; i < 5; i++) {
-            if(stopFrac[i] != null) {
-                Stop stop = new Stop(getSize(stopFrac[i]), get(stopColor[i]));
-                stops << stop;
-            }else {
-                break;
-            }
-        }
-        def method = CycleMethod.NO_CYCLE;
-        if(cycleMethod != "repeat")
-            method = CycleMethod.REPEAT
-        else if(cycleMethod == "reflect")
-            method == CycleMethod.REFLECT;
-
-        return new RadialGradient(focusX, focusY, centerX, centerY,
-            radius, proportional, method, (Stop[])stops.toArray());
+        // Anything else: treat as string (named color, web color, rgb(...), etc.)
+        return fromString(String.valueOf(value))
     }
 
-    static Paint getRGBPaint(String cmd) {
-        //TODO getRGBPaint
-        String[] splitCmd = cmd.split("[()]");
-        String[] args = splitCmd[1].split("[, ]+")
-        int r = 0;
-        int g = 0;
-        int b = 0;
-        float a = 1.0F;
-        switch(args.length) {
-            // fall through
-            case 4:
-                a = toFloat(args[3]);
-            case 3:
-                b = toInt(args[2]);
-            case 2:
-                g = toInt(args[1]);
-            case 1:
-                r = toInt(args[0]);
+    /**
+     * Unwraps Map / BindingHolder / ObservableValue recursively.
+     */
+    private static Object unwrap(Object v) {
+        if (v == null) return null
+
+        // Map forms coming from builder attributes, e.g. [p: BindingHolder(...)]
+        if (v instanceof Map) {
+            Map m = (Map) v
+            if (m.containsKey('p')) return unwrap(m.get('p'))
+            if (m.containsKey('paint')) return unwrap(m.get('paint'))
+            if (m.containsKey('color')) return unwrap(m.get('color'))
+            if (m.containsKey('value')) return unwrap(m.get('value'))
+            // fall back: if it’s a single-entry map, unwrap the only value
+            if (m.size() == 1) return unwrap(m.values().iterator().next())
+            return v
         }
-        return Color.rgb(r, g, b, a);
-    }
-    static Paint getHSBPaint(String cmd) {
-        String[] splitCmd = cmd.split("[()]");
-        String[] args = splitCmd[1].split("[, ]+");
-        int h = 0;
-        float s = 0.0F;
-        float b = 0.0F;
-        float a = 1.0F;
-        switch(args.length) {
-            // fall through
-            case 4:
-                a = toFloat(args[3]);
-            case 3:
-                b = toFloat(args[2]);
-            case 2:
-                s = toFloat(args[1]);
-            case 1:
-                h = toInt(args[0]);
+
+        // BindingHolder from groovyx.javafx.binding
+        if (v instanceof BindingHolder) {
+            BindingHolder bh = (BindingHolder) v
+            // Common shapes: bh.value, bh.binding, bh.observable, etc. (varies across forks)
+            // We try a few safe unwrapping options without assuming one exact API.
+            def candidate = null
+            try { candidate = bh.hasProperty('value') ? bh.getProperty('value') : null } catch (ignored) {}
+            if (candidate != null) return unwrap(candidate)
+
+            try { candidate = bh.hasProperty('binding') ? bh.getProperty('binding') : null } catch (ignored) {}
+            if (candidate != null) return unwrap(candidate)
+
+            try { candidate = bh.hasProperty('observable') ? bh.getProperty('observable') : null } catch (ignored) {}
+            if (candidate != null) return unwrap(candidate)
+
+            // last resort: leave as-is (caller may handle)
+            return v
         }
-        return Color.hsb(h, s, b, a);
+
+        // ObservableValue (JavaFX property/binding)
+        if (v instanceof ObservableValue) {
+            return unwrap(((ObservableValue) v).value)
+        }
+
+        return v
     }
-    static float getSize(Object val) {
-        if(val == null)
-            return 0;
-        if(val instanceof Number) {
-            return ((Number)val).floatValue();
-        }else {
-            String s =  val.toString();
-            if(s.endsWith("%")) {
-                float per = Float.parseFloat(s.substring(0,s.length()-1));
-                return per/100.0F;
-            }else {
-                return Float.parseFloat(s);
+
+    private static Paint fromArgs(Object[] args) {
+        if (args == null || args.length == 0) return null
+
+        // Common: ["rgb", r, g, b] or ["rgba", r, g, b, a]
+        if (args[0] instanceof String) {
+            String cmd = ((String) args[0]).trim()
+            if (cmd.equalsIgnoreCase("rgb")) {
+                if (args.length < 4) throw new IllegalArgumentException("rgb requires 3 components")
+                int r = toInt(args[1])
+                int g = toInt(args[2])
+                int b = toInt(args[3])
+                return Color.rgb(clamp255(r), clamp255(g), clamp255(b))
+            }
+            if (cmd.equalsIgnoreCase("rgba")) {
+                if (args.length < 5) throw new IllegalArgumentException("rgba requires 4 components")
+                int r = toInt(args[1])
+                int g = toInt(args[2])
+                int b = toInt(args[3])
+                double a = toAlpha(args[4])
+                return Color.rgb(clamp255(r), clamp255(g), clamp255(b), clamp01(a))
             }
         }
 
+        // Also allow: [r,g,b] or [r,g,b,a]
+        if (args.length == 3 || args.length == 4) {
+            int r = toInt(args[0])
+            int g = toInt(args[1])
+            int b = toInt(args[2])
+            if (args.length == 3) {
+                return Color.rgb(clamp255(r), clamp255(g), clamp255(b))
+            } else {
+                double a = toAlpha(args[3])
+                return Color.rgb(clamp255(r), clamp255(g), clamp255(b), clamp01(a))
+            }
+        }
 
+        // Fallback: if it’s a single thing, try parse it
+        if (args.length == 1) {
+            return get(args[0])
+        }
+
+        throw new IllegalArgumentException("Invalid color args: ${args.toList()}")
     }
-    static float toFloat(Object val) {
-        if(val == null)
-            return 0;
-        if(val instanceof Number) {
-            return ((Number)val).floatValue();
-        }else {
-            String s =  val.toString();
-            if(s.endsWith("%")) {
-                float per = Float.parseFloat(s.substring(0,s.length()-1));
-                return 255.0F * per/100.0F;
-            }else if(s.startsWith("#")) {
-                return Integer.parseInt(s.substring(1).toUpperCase(), 16);
-            }else if(s.startsWith("0x")) {
-                return Integer.parseInt(s.substring(2).toUpperCase(), 16);
-            }else {
-                return Float.parseFloat(s);
+
+    private static Paint fromString(String s) {
+        if (s == null) return null
+        String str = s.trim()
+        if (str.isEmpty()) return null
+
+        // rgb(...) / rgba(...)
+        def m = RGB_FUNC.matcher(str)
+        if (m.matches()) {
+            String inner = m.group(1)
+            List<String> parts = inner.split(/\s*,\s*/).toList()
+            boolean rgba = str.toLowerCase().startsWith("rgba")
+            if ((!rgba && parts.size() != 3) || (rgba && parts.size() != 4)) {
+                throw new IllegalArgumentException("Invalid rgb/rgba syntax: '${str}'")
+            }
+            int r = toInt(parts[0])
+            int g = toInt(parts[1])
+            int b = toInt(parts[2])
+            if (!rgba) {
+                return Color.rgb(clamp255(r), clamp255(g), clamp255(b))
+            } else {
+                double a = toAlpha(parts[3])
+                return Color.rgb(clamp255(r), clamp255(g), clamp255(b), clamp01(a))
             }
         }
-    }
-    static int toInt(Object val) {
-         if(val == null)
-            return 0;
-        if(val instanceof Number) {
-            return ((Number)val).intValue();
-        }else {
-            String s =  val.toString();
-            if(s.endsWith("%")) {
-                float per = Float.parseFloat(s.substring(0,s.length()-1));
-                return (int)(255.0F * per/100.0F);
-            }else if(s.startsWith("#")) {
-                return Integer.parseInt(s.substring(1).toUpperCase(), 16);
-            }else if(s.startsWith("0x")) {
-                return Integer.parseInt(s.substring(2).toUpperCase(), 16);
-            }else {
-                return Integer.parseInt(s);
-            }
+
+        // JavaFX handles named colors, #hex, 0xhex, etc.
+        try {
+            return Color.web(str)
+        } catch (Exception ex) {
+            throw new IllegalArgumentException("Invalid fill syntax: '${str}'", ex)
         }
+    }
+
+    private static int toInt(Object o) {
+        if (o == null) return 0
+        if (o instanceof Number) return ((Number) o).intValue()
+        return Integer.parseInt(String.valueOf(o).trim())
+    }
+
+    /**
+     * Accept alpha as:
+     * - 0..1 (float/double)
+     * - 0..255 (int)
+     * - string forms
+     */
+    private static double toAlpha(Object o) {
+        if (o == null) return 1.0d
+        if (o instanceof Number) {
+            double d = ((Number) o).doubleValue()
+            // Heuristic: if > 1 treat as 0..255
+            if (d > 1.0d) return d / 255.0d
+            return d
+        }
+        String s = String.valueOf(o).trim()
+        if (s.isEmpty()) return 1.0d
+        double d = Double.parseDouble(s)
+        if (d > 1.0d) return d / 255.0d
+        return d
+    }
+
+    private static int clamp255(int v) {
+        return Math.max(0, Math.min(255, v))
+    }
+
+    private static double clamp01(double v) {
+        return Math.max(0.0d, Math.min(1.0d, v))
     }
 }

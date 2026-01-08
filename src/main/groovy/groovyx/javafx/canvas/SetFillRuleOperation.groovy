@@ -26,20 +26,18 @@ import javafx.scene.shape.FillRule
  * @author jimclarke
  */
 @FXBindable
-class SetFillRuleOperation implements CanvasOperation {
+class SetFillRuleOperation implements CanvasOperation, OpParamCoercion {
     FillRule fillRule
-    
-    public void initParams(Object val) {
-        if(val instanceof FillRule) {
-            fillRule = val;
-        }else {
-            fillRule = Enum.valueOf(FillRule,val.toString().trim().toUpperCase())
-        }
-            
+
+
+    void initParams(Object params) {
+        def raw = pick(params, ['fillRule','rule','value'])
+        fillRule = coerce(raw, FillRule)
     }
 
     public void execute(GraphicsContext gc) {
         gc.setFillRule(fillRule);
     }
 }
+
 

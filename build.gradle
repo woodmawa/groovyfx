@@ -26,6 +26,9 @@
  * - ast + demo sourceSets
  * - Asciidoctor docs + Jacoco
  * - Publishing + signing + nexus publish plugin
+ *
+ * Refactored and reworked the original build and classes
+ * @author Will Woodman
  */
 
 import org.asciidoctor.gradle.jvm.AsciidoctorTask

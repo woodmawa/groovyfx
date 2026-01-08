@@ -19,39 +19,57 @@ package groovyx.javafx.factory
 
 import javafx.geometry.Insets
 import javafx.geometry.Pos
-import javafx.scene.Group
 import javafx.scene.Node
 import javafx.scene.layout.BorderPane
 
 /**
- * Wrapper passed as a child of BorderPane; ContainerFactory consumes it.
+ * Holder for a BorderPane child + its constraints (alignment/margin) for a given region.
+ *
+ * Back-compat: supports old GroovyFX demos that do:
+ *   top(align:CENTER, margin:10) { label("Top") }
  */
 class BorderPanePosition {
+
     String region
     Node node
 
+    /** Optional alignment constraint for the node in this region */
+    Pos align
+
+    /** Optional margin constraint for the node in this region */
+    Insets margin
+
+    BorderPanePosition() {}
+
+    BorderPanePosition(String region, Node node) {
+        this.region = region
+        this.node = node
+    }
+
     void applyTo(BorderPane pane) {
-        if (pane == null || node == null) return
-        switch ((region ?: "").toLowerCase()) {
-            case "top":
-                pane.top = node
-                break
-            case "bottom":
-                pane.bottom = node
-                break
-            case "left":
-                pane.left = node
-                break
-            case "right":
-                pane.right = node
-                break
-            case "center":
-                pane.center = node
-                break
+        if (pane == null || node == null || region == null) return
+
+        switch (region) {
+            case 'top':    pane.top = node; break
+            case 'bottom': pane.bottom = node; break
+            case 'left':   pane.left = node; break
+            case 'right':  pane.right = node; break
+            case 'center': pane.center = node; break
             default:
-                // Unknown region -> default to center for compatibility
-                pane.center = node
-                break
+                // ignore unknown region to avoid hard-failing
+                return
         }
+
+        if (align != null) {
+            BorderPane.setAlignment(node, align)
+        }
+        if (margin != null) {
+            BorderPane.setMargin(node, margin)
+        }
+    }
+
+    @Override
+    String toString() {
+        "BorderPanePosition(region=$region, node=$node, align=$align, margin=$margin)"
     }
 }

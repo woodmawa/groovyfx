@@ -25,17 +25,37 @@ import javafx.scene.canvas.GraphicsContext;
  * @author jimclarke
  */
 @FXBindable
-class ScaleOperation implements CanvasOperation {
+class ScaleOperation implements CanvasOperation, OpParamCoercion {
     double x
     double y
-    
-    public void initParams(Object val) {
-        x = val[0]
-        y = val[1]
+
+    void initParams(Object params) {
+        if (params instanceof Map) {
+            def mx = pick(params, ['x','sx','scaleX'])
+            def my = pick(params, ['y','sy','scaleY'])
+            def xVal = coerce(mx, Double)
+            def yVal = coerce(my, Double)
+            if (xVal != null && yVal == null) yVal = xVal
+            scaleX = xVal
+            scaleY = yVal
+            return
+        }
+
+        def list = asListish(unwrap(params))
+        if (list && list.size() >= 2) {
+            scaleX = coerce(list[0], Double)
+            scaleY = coerce(list[1], Double)
+            return
+        }
+
+        def v = coerce(params, Double)
+        scaleX = v
+        scaleY = v
     }
 
     public void execute(GraphicsContext gc) {
         gc.scale(x, y);
     }
 }
+
 

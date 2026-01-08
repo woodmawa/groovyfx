@@ -38,37 +38,44 @@ class SceneFactory extends AbstractNodeFactory {
     }
 
     @Override
-    Object newInstance(FactoryBuilderSupport builder, Object name, Object value, Map attributes)
-            throws InstantiationException, IllegalAccessException {
+    Object newInstance(FactoryBuilderSupport builder, Object name, Object value, Map attributes) {
 
-        // If the caller passes a Parent/Node as value, use it as root
-        Parent root = null
-        if (value instanceof Parent) {
-            root = (Parent) value
-        } else if (attributes.containsKey("root") && attributes.get("root") instanceof Parent) {
-            root = (Parent) attributes.remove("root")
+        // --- GroovyFX legacy: allow id: 'foo' on Scene to mean "register var foo"
+        def varId = attributes.remove('id')
+
+        // normal Scene creation
+        def root = null
+        if (value instanceof javafx.scene.Parent) {
+            root = value
+        } else if (attributes.containsKey('root')) {
+            root = attributes.remove('root')
         }
 
-        double w = toDouble(attributes.remove("width"))
-        double h = toDouble(attributes.remove("height"))
+        def width  = attributes.containsKey('width')  ? (attributes.remove('width')  as Number).doubleValue()  : 0d
+        def height = attributes.containsKey('height') ? (attributes.remove('height') as Number).doubleValue() : 0d
 
-        if (root == null) {
-            // Default root: Group so it works headless and can accept children easily
-            root = new Group()
-        }
+        def fill = attributes.remove('fill')  // may be Color/Paint/etc (your FillFactory should already produce Paint)
 
-        Scene scene
-        if (w > 0 && h > 0) {
-            scene = new Scene(root, w, h)
+        javafx.scene.Scene scene
+        if (root != null && width > 0 && height > 0 && fill != null) {
+            scene = new javafx.scene.Scene(root, width, height, (javafx.scene.paint.Paint) fill)
+        } else if (root != null && width > 0 && height > 0) {
+            scene = new javafx.scene.Scene(root, width, height)
+        } else if (root != null) {
+            scene = new javafx.scene.Scene(root)
         } else {
-            scene = new Scene(root)
+            // allow empty scene, root can be attached later by onNodeChildren
+            scene = new javafx.scene.Scene(new javafx.scene.Group())
         }
 
-        // Apply remaining attributes (unlikely for Scene, but consistent)
-        FXHelper.fxAttributes(scene, attributes)
+        // register variable after construction (legacy GroovyFX behavior)
+        if (varId != null) {
+            builder.setVariable(varId.toString(), scene)
+        }
 
         return scene
     }
+
 
     @Override
     void setChild(FactoryBuilderSupport builder, Object parent, Object child) {

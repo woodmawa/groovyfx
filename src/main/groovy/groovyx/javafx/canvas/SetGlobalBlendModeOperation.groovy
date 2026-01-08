@@ -26,19 +26,17 @@ import javafx.scene.effect.BlendMode
  * @author jimclarke
  */
 @FXBindable
-class SetGlobalBlendModeOperation implements CanvasOperation {
+class SetGlobalBlendModeOperation implements CanvasOperation, OpParamCoercion{
     BlendMode mode
-    
-    public void initParams(Object val) {
-        if(val instanceof BlendMode) {
-            mode = val;
-        }else {
-            mode = Enum.valueOf(BlendMode,val.toString().trim().toUpperCase())
-        }
+
+    void initParams(Object params) {
+        def raw = pick(params, ['blendMode','mode','value'])
+        globalBlendMode = coerce(raw, BlendMode)
     }
 
     public void execute(GraphicsContext gc) {
         gc.setGlobalBlendMode(mode);
     }
 }
+
 

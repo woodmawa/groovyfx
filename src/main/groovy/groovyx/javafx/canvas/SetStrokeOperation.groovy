@@ -27,15 +27,23 @@ import javafx.scene.paint.Paint
  * @author jimclarke
  */
 @FXBindable
-class SetStrokeOperation implements CanvasOperation {
-    Paint p;
-     
-    public void initParams(Object val) {
-        p = ColorFactory.get(val);
+class SetStrokeOperation implements CanvasOperation, OpParamCoercion {
+
+    Paint stroke
+
+    // Optional alias: if some paths pass [fill: ...] for a stroke node
+    void setFill(Paint p) { this.stroke = p }
+    Paint getFill() { return this.stroke }
+
+    @Override
+    void initParams(Object params) {
+        def raw = pick(params, ['stroke', 'paint', 'fill', 'value'])
+        stroke = coerce(raw, Paint)
     }
 
-    public void execute(GraphicsContext gc) {
-        gc.setStroke(p);
+    @Override
+    void execute(GraphicsContext gc) {
+        gc.setStroke(stroke)
     }
 }
 

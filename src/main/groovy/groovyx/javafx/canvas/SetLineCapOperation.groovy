@@ -26,19 +26,18 @@ import javafx.scene.shape.StrokeLineCap
  * @author jimclarke
  */
 @FXBindable
-class SetLineCapOperation implements CanvasOperation {
+class SetLineCapOperation implements CanvasOperation, OpParamCoercion {
     StrokeLineCap cap
     
-    public void initParams(Object val) {
-        if(val instanceof StrokeLineCap) {
-            cap = val;
-        }else {
-            cap = Enum.valueOf(StrokeLineCap,val.toString().trim().toUpperCase())
-        }
+
+    void initParams(Object params) {
+        def raw = pick(params, ['lineCap','cap','value'])
+        lineCap = coerce(raw, StrokeLineCap)
     }
 
     public void execute(GraphicsContext gc) {
         gc.setLineCap(cap);
     }
 }
+
 
