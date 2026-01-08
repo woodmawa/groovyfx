@@ -253,6 +253,8 @@ import javafx.stage.Popup
 import javafx.stage.Stage
 import javafx.stage.Window
 import org.codehaus.groovy.runtime.MethodClosure
+import groovyx.javafx.factory.FileChooserFactory
+import groovyx.javafx.factory.DirectoryChooserFactory
 
 import groovyx.javafx.spi.SceneGraphAddon
 import java.util.ServiceLoader
@@ -594,9 +596,7 @@ class SceneGraphBuilder extends FactoryBuilderSupport {
             registerFactory nodeName, groupName, new EffectFactory(beanClass)
         } else if(Parent.isAssignableFrom(beanClass)) {
             registerFactory nodeName, groupName, new ContainerFactory(beanClass)
-        } else if(Window.isAssignableFrom(beanClass) ||
-            DirectoryChooser.isAssignableFrom(beanClass) ||
-            FileChooser.isAssignableFrom(beanClass)) {
+        } else if(Window.isAssignableFrom(beanClass) ) {
                 registerFactory nodeName, groupName, new StageFactory(beanClass)
         } else if(XYChart.isAssignableFrom(beanClass)) {
             registerFactory nodeName, groupName, new XYChartFactory(beanClass)
@@ -618,8 +618,11 @@ class SceneGraphBuilder extends FactoryBuilderSupport {
     void registerStages() {
         registerFactory "stage", new StageFactory(Stage)
         registerFactory "popup", new StageFactory(Popup)
-        registerFactory "fileChooser", new StageFactory(FileChooser)
-        registerFactory "directoryChooser", new StageFactory(DirectoryChooser)
+
+        // FIX: chooser factories are NOT stages
+        registerFactory "fileChooser", new FileChooserFactory()
+        registerFactory "directoryChooser", new DirectoryChooserFactory()   // if you have one; see note below
+
         registerFactory "filter", new FilterFactory()
 
         registerFactory "onHidden",  new ClosureHandlerFactory(GroovyEventHandler)

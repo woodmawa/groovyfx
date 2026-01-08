@@ -104,17 +104,15 @@ public class GroovyFX extends Application {
      */
     @Override
     public void start(Stage primaryStage) {
-        Closure<Object> local = closure;
-        if (local == null) {
-            throw new IllegalStateException("GroovyFX.start(Closure) must be called before Application launch.");
-        }
+        Closure<Object> local = closure
+        if (local == null) throw new IllegalStateException("GroovyFX.start(Closure) must be called before Application launch.");
 
         try {
-            local.setDelegate(new SceneGraphBuilder(primaryStage));
-            InvokerHelper.invokeClosure(local, new Object[]{ this });
+            def builder = new SceneGraphBuilder(primaryStage)
+            builder.build(local)   // <- this sets DELEGATE_FIRST and rehydrates correctly
         } catch (RuntimeException re) {
-            re.printStackTrace();
-            throw re;
+            re.printStackTrace()
+            throw re
         }
     }
 

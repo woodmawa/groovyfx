@@ -17,12 +17,43 @@
  */
 package groovyx.javafx.factory
 
+import groovyx.javafx.binding.BindingHolder
+import javafx.beans.value.ObservableValue
 import javafx.scene.shape.Shape
+import groovy.util.FactoryBuilderSupport
 
 class ShapeFactory extends AbstractNodeFactory {
 
     ShapeFactory(Class<? extends Shape> shapeClass) {
-        super(shapeClass);
+        super(shapeClass, false)
     }
 
+    @Override
+    boolean onHandleNodeAttributes(FactoryBuilderSupport builder, Object node, Map attributes) {
+        def shape = (Shape) node
+
+        // --- fill ---
+        if (attributes.containsKey('fill')) {
+            def v = attributes.remove('fill')
+            // If it's a binding holder / observable, let the base class bind it.
+            if (v instanceof BindingHolder || v instanceof ObservableValue) {
+                attributes.put('fill', v)
+            } else {
+                shape.fill = ColorFactory.get(v)
+            }
+        }
+
+        // --- stroke ---
+        if (attributes.containsKey('stroke')) {
+            def v = attributes.remove('stroke')
+            if (v instanceof BindingHolder || v instanceof ObservableValue) {
+                attributes.put('stroke', v)
+            } else {
+                shape.stroke = ColorFactory.get(v)
+            }
+        }
+
+        // Continue normal processing for everything else
+        return super.onHandleNodeAttributes(builder, node, attributes)
+    }
 }

@@ -16,19 +16,36 @@
  * limitations under the License.
  */
 import static groovyx.javafx.GroovyFX.start
+import javafx.scene.paint.Color
 
 /**
  *
  * @author jimclarke
  */
 start {
-    stage(title: "Circle (bind)  Demo", x: 100, y: 100, visible: true, style: "decorated", primary: true) {
-        scene(id: "sc", fill: GROOVYBLUE, width: 400, height: 400) {
-            circle( radius: bind(sc.width()/4.0), 
-                    centerX: bind(sc.width()/2.0), 
-                    centerY: bind(sc.height()/2.0)
-            ) {
-                fill yellow
+    stage(title: "Circle (bind) Demo", x: 100, y: 100, visible: true, style: "decorated", primary: true) {
+
+        // attach handler directly to the current Stage (delegate)
+        //def st = delegate
+        //st.setOnShown {
+        onShown {evt ->
+            def w = (javafx.stage.Window) evt.source
+            def sc = w.scene
+            println "window.scene = $sc"
+            println "scene.root   = ${sc?.root}"
+        }
+
+        // NOTE:
+        // Use map attributes (or fill(Color.X)) to set visual properties like fill/stroke.
+        // e.g. circle(fill: Color.YELLOW) or circle { fill(Color.YELLOW) }
+        //
+        // Direct assignment inside the node body (fill = Color.YELLOW) is intentionally
+        // not supported, since 'fill' is a reserved DSL name handled by FillFactory.
+        scene(width: 400, height: 400, fill: GROOVYBLUE) {
+            group {
+                circle(radius: 50, centerX: 200, centerY: 200, fill: Color.YELLOW) {
+
+                }
             }
         }
     }

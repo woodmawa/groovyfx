@@ -110,6 +110,18 @@ public abstract class AbstractNodeFactory extends AbstractFXBeanFactory {
         return Object.onHandleNodeAttributes(builder, node, attributes)
     }
 
+    @Override
+    boolean onNodeChildren(FactoryBuilderSupport builder, Object node, Closure childContent) {
+        if (childContent == null) return true
+
+        // Keep original owner/thisObject (script), but delegate to the node.
+        Closure c = childContent.rehydrate(node, childContent.owner, childContent.thisObject)
+        c.resolveStrategy = Closure.DELEGATE_FIRST
+        c.call()
+
+        return true
+    }
+
     public void setChild(FactoryBuilderSupport builder, Object parent, Object child) {
         switch (child) {
             case GroovyEventHandler:
