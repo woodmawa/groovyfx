@@ -17,7 +17,9 @@
  */
 import groovyx.javafx.beans.FXBindable
 
-import static groovyfx.javafx.GroovyFX.start
+import static groovyx.javafx.GroovyFX.start
+import static javafx.scene.paint.Color.*
+
 
 /**
  *
@@ -64,13 +66,15 @@ class Time {
 start {
     final time = new Time()
 
+    def st
+
     def width = 240.0
     def height = 240.0
     def radius = width / 3.0
     def centerX = width / 2.0
     def centerY = height / 2.0
 
-    stage(title: "GroovyFX Clock Demo", width: 245, height: 265, visible: true, resizable: false) {
+    st = stage(title: "GroovyFX Clock Demo", width: 245, height: 265, resizable: false) {
         def hourDots = []
         for (i in 0..11) {
             def y = -Math.cos(Math.PI / 6.0 * i) * radius
@@ -123,5 +127,7 @@ start {
             onFinished {time.addOneSecond()}
         }
     }.playFromStart()
+
+    st.show()
 }
 

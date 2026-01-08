@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import static groovyfx.javafx.GroovyFX.start
+import static groovyx.javafx.GroovyFX.start
 
 /**
  * Example of the AccordionDemo when written in Dierk's code style

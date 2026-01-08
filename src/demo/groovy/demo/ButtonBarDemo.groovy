@@ -17,7 +17,7 @@
  */
 import javafx.scene.control.ButtonBar
 
-import static groovyfx.javafx.GroovyFX.start
+import static groovyx.javafx.GroovyFX.start
 
 start {
     stage(title: "ButtonBar", show: true) {

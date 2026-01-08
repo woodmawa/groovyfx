@@ -21,7 +21,7 @@
  * @author Dierk Koenig
  */
 
-import static groovyfx.javafx.GroovyFX.start
+import static groovyx.javafx.GroovyFX.start
 
 start {
     stage(title: "GroovyFX FXML Demo", visible: true) {

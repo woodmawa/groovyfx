@@ -1,54 +1,62 @@
-/*
- * SPDX-License-Identifier: Apache-2.0
- *
- * Copyright 2011-2021 the original author or authors.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package groovyx.javafx.factory
 
-import groovyx.javafx.event.GroovyEventHandler
+import groovy.util.AbstractFactory
+import groovy.util.FactoryBuilderSupport
+import javafx.event.Event
+import javafx.event.EventHandler
 
-/**
-*
-* @author jimclarke
-*/
-class ClosureHandlerFactory extends AbstractFXBeanFactory {
-    
-    
-    public ClosureHandlerFactory(Class beanClass) {
-        super(beanClass)
+class ClosureHandlerFactory extends AbstractFactory {
+
+    private final Class handlerType
+
+    ClosureHandlerFactory(Class handlerType) {
+        this.handlerType = handlerType
     }
 
-    public Object newInstance(FactoryBuilderSupport builder, Object name, Object value, Map attributes) throws InstantiationException, IllegalAccessException {
-        GroovyEventHandler eh = Object.newInstance(builder, name, value, attributes);
-        eh.property = name.toString();
-        if(value instanceof Closure) {
-             eh.closure = value;
-        }
-        eh
-    }
-    
+    @Override
+    boolean isLeaf() { false }
+
+    // CRITICAL: without this, FactoryBuilderSupport will NOT call onNodeChildren(...)
     @Override
     boolean isHandlesNodeChildren() { true }
 
+    static class HandlerSpec {
+        final String name
+        Closure closure
+        HandlerSpec(String name) { this.name = name }
+    }
+
+    @Override
+    Object newInstance(FactoryBuilderSupport builder, Object name, Object value, Map attributes) {
+        // value will be null for "onFinished { ... }" style calls
+        return new HandlerSpec(name?.toString())
+    }
+
     @Override
     boolean onNodeChildren(FactoryBuilderSupport builder, Object node, Closure childContent) {
-        if(childContent)
+        if (node instanceof HandlerSpec) {
             node.closure = childContent
-
-        return false
+            return false // don't execute as nested DSL
+        }
+        return true
     }
-	
-}
 
+    @Override
+    void onNodeCompleted(FactoryBuilderSupport builder, Object parent, Object node) {
+        if (!(node instanceof HandlerSpec)) return
+
+        if (node.closure == null) {
+            throw new RuntimeException(
+                    "The '${node.name}' node requires a Closure, e.g. ${node.name} { evt -> ... }"
+            )
+        }
+
+        Closure c = node.closure
+        EventHandler<Event> handler = { Event evt ->
+            if (c.maximumNumberOfParameters == 0) c.call()
+            else c.call(evt)
+        }
+
+        FXHelper.setPropertyOrMethod(parent, node.name, handler)
+    }
+}

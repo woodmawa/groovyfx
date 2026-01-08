@@ -120,8 +120,13 @@ dependencies {
     // Jansi
     implementation "org.fusesource.jansi:jansi:$jansiVersion"
 
+    implementation("org.slf4j:slf4j-api:2.0.16")
+
+    // Optional: only if you want log output at runtime (demos, running app, etc.)
+    // runtimeOnly("org.slf4j:slf4j-simple:2.0.16")
+    runtimeOnly("ch.qos.logback:logback-classic:1.5.16")
+
     // Tests
-    testImplementation platform("org.apache.groovy:groovy-bom:$groovyVersion")
     testImplementation "org.spockframework:spock-core:$spockVersion"
     testImplementation "org.apache.groovy:groovy-test:$groovyVersion"
     testRuntimeOnly "org.junit.platform:junit-platform-launcher"
@@ -129,6 +134,8 @@ dependencies {
     // Demo runtime add-on (you had this)
     //demoImplementation 'jakarta.xml.bind:jakarta.xml.bind-api:4.0.2'
     //demoRuntimeOnly 'com.sun.xml.bind:jaxb-impl:4.0.5'
+
+
 }
 
 /**
@@ -230,16 +237,23 @@ tasks.withType(Test).configureEach {
 
 
 //configure the demo runners to use the MOdule system
+/*
 tasks.withType(JavaExec).configureEach {
     // This forces Gradle to use --module-path instead of -classpath
     modularity.inferModulePath = true
 
-    // Set the main module name defined in your module-info.java
-    mainModule = "org.groovyfx"
-
     jvmArgs += [
             "--patch-module", "org.groovyfx=${sourceSets.demo.output.classesDirs.asPath}"
     ]
+}
+*/
+
+
+def demoRunClasspath = {
+    files(
+            tasks.named('jar').flatMap { it.archiveFile },
+            sourceSets.demo.runtimeClasspath - sourceSets.main.output
+    )
 }
 
 /**
@@ -248,16 +262,34 @@ tasks.withType(JavaExec).configureEach {
 tasks.register('ModernDashboard', JavaExec) {
     group = "Examples"
     description = "Runs the ModernDashboard example"
-    // Gradle now correctly assigns this to the module-path
-    classpath = sourceSets.demo.runtimeClasspath
-    mainClass.set('examples.ModernDashboard')
+
+    dependsOn tasks.named('jar'), tasks.named('demoClasses')
+
+    modularity.inferModulePath = true
+
+    // IMPORTANT:
+    // - DO NOT set mainModule
+    // - main class lives on classpath
+    mainClass.set("examples.ModernDashboard")
+
+    classpath = demoRunClasspath()
+
 }
 
 tasks.register('ResponsiveForm', JavaExec) {
     group = "Examples"
     description = "Runs the Responsive Form example"
-    classpath = sourceSets.demo.runtimeClasspath
-    mainClass.set('examples.ResponsiveForm')
+
+    dependsOn tasks.named('jar'), tasks.named('demoClasses')
+
+    modularity.inferModulePath = true
+
+    // IMPORTANT:
+    // - demo main class is NOT in the module
+    // - do NOT set mainModule
+    mainClass.set("examples.ResponsiveForm")
+
+    classpath = demoRunClasspath()
 }
 
 /**

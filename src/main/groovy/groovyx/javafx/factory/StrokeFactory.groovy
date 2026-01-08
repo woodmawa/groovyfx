@@ -20,24 +20,35 @@ package groovyx.javafx.factory
 import javafx.scene.paint.Paint
 
 /**
- * A factory to create stroke nodes.  A stroke node is a leaf node that can be placed under Shapes or any node
- * with a stroke property.
- * 
+ * A factory to create stroke nodes. A stroke node is a leaf node that can be placed under Shapes
+ * or any node with a stroke property.
+ *
  * @author Dean Iverson
  */
 class StrokeFactory extends AbstractFXBeanFactory {
-    
-    public StrokeFactory() {
+
+    StrokeFactory() {
         super(Paint, true)
     }
-    public StrokeFactory(Class<Paint> beanClass) {
+
+    StrokeFactory(Class<Paint> beanClass) {
         super(beanClass, true)
     }
+
+    @Override
     Object newInstance(FactoryBuilderSupport builder, Object name, Object value, Map attributes) {
-        Paint paint = ColorFactory.get(value)
+        def v = (value != null) ? value : (attributes ? attributes.remove('value') : null)
+
+        // IMPORTANT: unwrap buildable specs (e.g. RadialGradientFactory$Spec)
+        if (v != null && v.metaClass?.respondsTo(v, 'build')) {
+            v = v.build()
+        }
+
+        Paint paint = ColorFactory.get(v)
         if (!paint) {
-            throw new RuntimeException("The value passed to the 'stroke' node must be an instance of Paint, " +
-                    "LinearGradientBuilder, or RadialGradientBuilder")
+            throw new RuntimeException(
+                    "The value passed to the 'stroke' node must be an instance of Paint (or a buildable paint spec)."
+            )
         }
         return paint
     }
@@ -48,5 +59,4 @@ class StrokeFactory extends AbstractFXBeanFactory {
             FXHelper.setPropertyOrMethod(parent, "stroke", child)
         }
     }
-
 }

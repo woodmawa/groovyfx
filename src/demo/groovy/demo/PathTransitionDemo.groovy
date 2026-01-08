@@ -19,7 +19,7 @@ import javafx.animation.PathTransition.OrientationType
 import javafx.animation.Transition
 import javafx.scene.paint.Color
 
-import static groovyfx.javafx.GroovyFX.start
+import static groovyx.javafx.GroovyFX.start
 
 start {
     Transition rectTransition = null

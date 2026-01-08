@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import static groovyfx.javafx.GroovyFX.start
+import static groovyx.javafx.GroovyFX.start
 
 start {
     stage(title: "TabPane Example", width: 400, height: 400, visible: true) {

@@ -18,9 +18,9 @@
 import javafx.geometry.Point2D
 import javafx.scene.image.Image
 
-import jakarta.xml.bind.DatatypeConverter
+import java.util.Base64
 
-import static groovyfx.javafx.GroovyFX.start
+import static groovyx.javafx.GroovyFX.start
 
 /**
  * Inspired by Dirk Weber, "An experiment: Canvas vs. SVG vs. Flash"
@@ -31,7 +31,7 @@ import static groovyfx.javafx.GroovyFX.start
 String imgData = "iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAYAAACNbyblAAAAdElEQVQImQFpAJb/AWYzAA8PFBlgBw0QUPj08gDv6eVgBA4VHHAfLDeACw8UAPHr5AAB//+wAgwPFHAUHCUAHio1AA4UGgAJDhIwBPn48/D07+oQAQEBAPj08QD6+fbgAysK78D+/fs48+/qGO7o4dDt5dpYZmUs8b4SyMYAAAAASUVORK5CYII=";
 Image img_particle;
 
-byte[] imgBytes = DatatypeConverter.parseBase64Binary(imgData);
+byte[] imgBytes = Base64.decoder.decode(imgData);
 
     
 double numRotations = 42000;

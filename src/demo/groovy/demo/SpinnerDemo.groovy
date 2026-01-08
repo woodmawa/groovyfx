@@ -18,7 +18,7 @@
 
 import javafx.scene.control.SpinnerValueFactory
 
-import static groovyfx.javafx.GroovyFX.start
+import static groovyx.javafx.GroovyFX.start
 
 start {
     stage(title: "Spinner", show: true) {

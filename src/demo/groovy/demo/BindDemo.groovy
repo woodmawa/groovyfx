@@ -18,7 +18,7 @@
 import groovyx.javafx.beans.FXBindable
 import javafx.scene.control.TextField
 
-import static groovyfx.javafx.GroovyFX.start
+import static groovyx.javafx.GroovyFX.start
 
 /**
  *

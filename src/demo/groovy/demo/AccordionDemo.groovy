@@ -15,14 +15,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import static groovyfx.javafx.GroovyFX.start
+import static groovyx.javafx.GroovyFX.start
 
 /**
  *
  * @author jimclarke
  */
 start {
-    stage(title: "GroovyFX Accordion Demo", x: 100, y: 100, visible: true, style: "decorated", primary: true) {
+    def st = stage(title: "GroovyFX Accordion Demo", x: 100, y: 100, style: "decorated", primary: true) {
         scene(fill: GROOVYBLUE, width: 400, height: 400) {
             accordion {
                 titledPane(id: "t1", text: "Label 1") {
@@ -41,7 +41,10 @@ start {
                 }
             }
         }
+
     }
+
+    st.show()
 }
 
 

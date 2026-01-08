@@ -17,7 +17,7 @@
  */
 import javafx.scene.paint.Color
 
-import static groovyfx.javafx.GroovyFX.start
+import static groovyx.javafx.GroovyFX.start
 
 start {
     stage(title: "GroovyFX Trigger Demo", width: 600, height: 450, visible: true) {

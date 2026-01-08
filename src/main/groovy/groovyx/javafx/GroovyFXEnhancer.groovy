@@ -18,6 +18,7 @@
 package groovyx.javafx
 
 import groovy.util.FactoryBuilderSupport
+import groovy.util.logging.Slf4j
 import org.codehaus.groovy.runtime.InvokerHelper
 
 import javafx.collections.FXCollections
@@ -42,6 +43,7 @@ import javafx.scene.web.WebEngine
  * Also fixes:
  *  - Stage.metaClass methodMissing incorrectly writing to Scene.metaClass.
  */
+@Slf4j
 class GroovyFXEnhancer {
 
     private static volatile boolean enhanced = false
@@ -75,6 +77,114 @@ class GroovyFXEnhancer {
                 // We do NOT consume attrs here; just return it untouched.
                 // If you later want legacy consumption of some attributes, do it here.
                 return attrs
+            }
+        }
+
+        // ------------------------------------------------------------------
+        // 1b) REQUIRED by groovyx.javafx.factory.AbstractNodeFactory
+        // ------------------------------------------------------------------
+        // Many factories delegate to: Object.setChild(builder, parent, child)
+        // (MenuItem graphic wrapper, TitledPane graphic wrapper, etc.)
+        def existingSetChild = Object.metaClass.getMetaMethod(
+                "setChild",
+                [FactoryBuilderSupport, Object, Object] as Class[]
+        )
+        if (existingSetChild == null) {
+            Object.metaClass.'static'.setChild = { FactoryBuilderSupport builder, Object parent, Object child ->
+                if (parent == null || child == null) return
+
+                // Unwrap wrapper children (e.g. GraphicFactory.GraphicWrapper) by calling build()
+                def effectiveChild = child
+                try {
+                    if (!(child instanceof javafx.scene.Node) &&
+                            child.metaClass.respondsTo(child, "build", InvokerHelper.EMPTY_ARGUMENTS)) {
+                        def built = child.build()
+                        if (built != null) effectiveChild = built
+                    }
+                } catch (ignored) {
+                    // keep original child
+                }
+
+                // If we ended up with a Node, try common attachment patterns
+                if (effectiveChild instanceof javafx.scene.Node) {
+
+                    // 1) graphic property (MenuItem, Labeled, TitledPane, etc.)
+                    try {
+                        def p = parent.metaClass.hasProperty(parent, "graphic")
+                        if (p != null) {
+                            parent.graphic = effectiveChild
+                            return
+                        }
+                    } catch (ignored) { }
+
+                    // 2) setGraphic(Node)
+                    try {
+                        if (parent.metaClass.respondsTo(parent, "setGraphic", javafx.scene.Node)) {
+                            parent.setGraphic(effectiveChild)
+                            return
+                        }
+                    } catch (ignored) { }
+
+                    // 3) Parent.children (JavaFX SceneGraph)
+                    try {
+                        def chProp = parent.metaClass.hasProperty(parent, "children")
+                        if (chProp != null && parent.children instanceof java.util.Collection) {
+                            parent.children.add(effectiveChild)
+                            return
+                        }
+                    } catch (ignored) { }
+
+                    // 4) SplitPane.items (Nodes)
+                    // Avoid generic "items" because many controls have items that are NOT Nodes.
+                    try {
+                        if (parent instanceof javafx.scene.control.SplitPane) {
+                            parent.items.add(effectiveChild)
+                            return
+                        }
+                    } catch (ignored) { }
+                }
+
+                // Otherwise do nothing (legacy "best effort")
+                return
+            }
+        }
+
+        // ------------------------------------------------------------------
+        // 1c) REQUIRED by bindings + some factories
+        // ------------------------------------------------------------------
+        // Some parts call: Object.onNodeCompleted(builder, parent, node)
+        def existingOnNodeCompleted = Object.metaClass.getMetaMethod(
+                "onNodeCompleted",
+                [FactoryBuilderSupport, Object, Object] as Class[]
+        )
+        if (existingOnNodeCompleted == null) {
+            Object.metaClass.'static'.onNodeCompleted = { FactoryBuilderSupport builder, Object parent, Object node ->
+                if (node == null) return
+
+                // Apply common "binding holder" patterns if present.
+                // (We keep this reflective so it doesn't hard-depend on classes.)
+                def applyOne = { obj ->
+                    if (obj == null) return
+                    try {
+                        if (obj.metaClass.respondsTo(obj, "bind")) {
+                            obj.bind()
+                        } else if (obj.metaClass.respondsTo(obj, "apply")) {
+                            obj.apply()
+                        } else if (obj.metaClass.respondsTo(obj, "applyTo", FactoryBuilderSupport)) {
+                            obj.applyTo(builder)
+                        } else if (obj.metaClass.respondsTo(obj, "call")) {
+                            obj.call()
+                        }
+                    } catch (ignored) {
+                        // best-effort (legacy behaviour)
+                    }
+                }
+
+                if (node instanceof Collection) {
+                    node.each { applyOne(it) }
+                } else {
+                    applyOne(node)
+                }
             }
         }
 

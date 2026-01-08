@@ -20,7 +20,7 @@
  * @author Dierk Koenig
  */
 
-import static groovyfx.javafx.GroovyFX.start
+import static groovyx.javafx.GroovyFX.start
 
 start {
     stage title: "Chained Effects Demo", width: 450, height: 300, visible: true, {

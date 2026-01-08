@@ -21,7 +21,7 @@ import groovyx.javafx.beans.FXBindable
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
-import static groovyfx.javafx.GroovyFX.start
+import static groovyx.javafx.GroovyFX.start
 
 enum Gender {
     MALE, FEMALE

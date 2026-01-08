@@ -20,83 +20,74 @@
  * @author Andres Almiray
  */
 
-import static groovyfx.javafx.GroovyFX.start
+import static groovyx.javafx.GroovyFX.*
+
 
 start {
+    def sgb = delegate  // this is the SceneGraphBuilder
+    def st              // stage handle for show/close
 
-    actions {
-        fxaction(id: 'openAction',
-                name: 'Open',
-                onAction: { println "Open" })
-        fxaction(id: 'saveAction',
-                name: 'Save',
-                onAction: { println "Save" })
-        fxaction(id: 'saveAsAction',
-                name: 'Save As...',
-                onAction: { println "Save As ..." })
-        fxaction(id: 'exitAction',
-                name: 'Exit',
-                onAction: { primaryStage.close() })
-        fxaction(id: 'cutAction',
-                name: 'Cut',
-                icon: 'icons/cut.png',
-                onAction: { println "Cut" })
-        fxaction(id: 'copyAction',
-                name: 'Copy',
-                icon: 'icons/copy.png',
-                onAction: { println "Copy" })
-        fxaction(id: 'pasteAction',
-                name: 'Paste',
-                icon: 'icons/paste.png',
-                onAction: { println "Paste" })
-        fxaction(id: 'checkAction',
-                name: 'Check',
-                onAction: { println "Check" })
+    // Actions: run them through sgb so they don't hijack the main delegate
+    sgb.actions {
+        fxaction(id: 'openAction', name: 'Open', onAction: { println "Open" })
+        fxaction(id: 'saveAction', name: 'Save', onAction: { println "Save" })
+        fxaction(id: 'saveAsAction', name: 'Save As...', onAction: { println "Save As ..." })
+        fxaction(id: 'exitAction', name: 'Exit', onAction: { st?.close() })
+
+        fxaction(id: 'cutAction', name: 'Cut', icon: 'icons/cut.png', onAction: { println "Cut" })
+        fxaction(id: 'copyAction', name: 'Copy', icon: 'icons/copy.png', onAction: { println "Copy" })
+        fxaction(id: 'pasteAction', name: 'Paste', icon: 'icons/paste.png', onAction: { println "Paste" })
+        fxaction(id: 'checkAction', name: 'Check', onAction: { println "Check" })
     }
 
-    stage(title: "GroovyFX Menu Demo", width: 650, height: 450, visible: true) {
-        scene(fill: GROOVYBLUE) {
-            borderPane {
-                top {
-                    menuBar {
-                        menu("File") {
-                            menuItem(openAction) {
-                                rectangle(width: 16, height: 16, fill: RED)
+    // UI: build inside sgb.with { ... } so stage/scene delegates work properly
+    st = sgb.with {
+        stage(title: "GroovyFX Menu Demo", width: 650, height: 450) {
+            scene(fill: GROOVYBLUE) {
+                borderPane {
+                    top {
+                        menuBar {
+                            menu("File") {
+                                menuItem(openAction) {
+                                    rectangle(width: 16, height: 16, fill: RED)
+                                }
+                                menuItem(saveAction) {
+                                    graphic(circle(radius: 8, fill: BLUE))
+                                }
+                                menuItem(saveAsAction)
+                                separatorMenuItem()
+                                menuItem(exitAction)
                             }
-                            menuItem(saveAction) {
-                                graphic(circle(radius: 8, fill: BLUE))
-                            }
-                            saveAs = menuItem(saveAsAction)
-                            separatorMenuItem()
-                            menuItem(exitAction)
-                        }
-                        menu(text: "Edit") {
-                            menuItem(cutAction)
-                            menuItem(copyAction)
-                            menuItem(pasteAction)
-                            separatorMenuItem()
-                            checkMenuItem(checkAction)
-                            radioMenuItem("Radio", selected: true)
-                            menu("Foo") {
-                                menuItem("Bar")
-                                menuItem("FooBar")
+                            menu("Edit") {
+                                menuItem(cutAction)
+                                menuItem(copyAction)
+                                menuItem(pasteAction)
+                                separatorMenuItem()
+                                checkMenuItem(checkAction)
+                                radioMenuItem("Radio", selected: true)
+                                menu("Foo") {
+                                    menuItem("Bar")
+                                    menuItem("FooBar")
+                                }
                             }
                         }
                     }
-                }
-                center {
-                    vbox(spacing: 20, padding: 10) {
-                        checkBox("Enable 'Open' menu", id: 'cb')
-                        actions {
-                            bean(openAction, enabled: bind(cb.selectedProperty()))
+                    center {
+                        vbox(spacing: 20, padding: 10) {
+                            checkBox("Enable 'Open' menu", id: 'cb')
+                            // This actions{} is inside the normal builder context, so it's fine
+                            actions {
+                                bean(openAction, enabled: bind(cb.selectedProperty()))
+                            }
                         }
                     }
                 }
             }
         }
     }
-}
 
+    st.show()
+}
 
 
 

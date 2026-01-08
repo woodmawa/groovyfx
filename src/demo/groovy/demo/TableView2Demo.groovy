@@ -23,7 +23,7 @@ import javafx.collections.FXCollections
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
-import static groovyfx.javafx.GroovyFX.start
+import static groovyx.javafx.GroovyFX.start
 
 enum Gender2 {
     MALE, FEMALE

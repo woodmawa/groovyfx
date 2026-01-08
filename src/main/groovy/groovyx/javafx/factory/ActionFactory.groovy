@@ -17,6 +17,7 @@
  */
 package groovyx.javafx.factory
 
+import groovy.util.logging.Slf4j
 import groovyx.javafx.appsupport.Action
 import javafx.beans.value.ChangeListener
 import javafx.beans.value.ObservableValue
@@ -25,12 +26,17 @@ import javafx.scene.image.Image
 import javafx.scene.image.ImageView
 
 /**
- *
  * @author Andres Almiray
  */
+@Slf4j
 class ActionFactory extends AbstractFXBeanFactory {
     ActionFactory(C) {
         super(Action, false)
+    }
+
+    private static boolean looksLikeUrl(String s) {
+        // scheme:... (file:, jar:, http:, https:, etc)
+        return (s ==~ /[a-zA-Z][a-zA-Z0-9+.\-]*:.+/)
     }
 
     @Override
@@ -64,6 +70,7 @@ class ActionFactory extends AbstractFXBeanFactory {
             })
             control.onActionProperty().set(action.onAction)
         }
+
         if (!actionParams.skipName && mc.respondsTo(control, "textProperty")) {
             action.nameProperty().addListener(new ChangeListener() {
                 void changed(ObservableValue observableValue, Object oldValue, Object newValue) {
@@ -72,6 +79,7 @@ class ActionFactory extends AbstractFXBeanFactory {
             })
             control.textProperty().set(action.name)
         }
+
         if (!actionParams.skipDescription && mc.respondsTo(control, "tooltipProperty")) {
             action.descriptionProperty().addListener(new ChangeListener() {
                 void changed(ObservableValue observableValue, Object oldValue, Object newValue) {
@@ -80,6 +88,7 @@ class ActionFactory extends AbstractFXBeanFactory {
             })
             if (action.description) setTooltip(control, action.description)
         }
+
         if (!actionParams.skipAccelerator && mc.respondsTo(control, "acceleratorProperty")) {
             action.acceleratorProperty().addListener(new ChangeListener() {
                 void changed(ObservableValue observableValue, Object oldValue, Object newValue) {
@@ -88,6 +97,7 @@ class ActionFactory extends AbstractFXBeanFactory {
             })
             if (action.accelerator != null) control.acceleratorProperty().set(action.accelerator)
         }
+
         if (mc.respondsTo(control, "graphicProperty")) {
             if (!actionParams.skipIcon) {
                 action.iconProperty().addListener(new ChangeListener() {
@@ -98,6 +108,7 @@ class ActionFactory extends AbstractFXBeanFactory {
                 if (action.icon) setIcon(control, action.icon)
             }
         }
+
         if (!actionParams.skipSelected && mc.respondsTo(control, "selectedProperty")) {
             action.selectedProperty().addListener(new ChangeListener() {
                 void changed(ObservableValue observableValue, Object oldValue, Object newValue) {
@@ -106,6 +117,7 @@ class ActionFactory extends AbstractFXBeanFactory {
             })
             control.selectedProperty().set(action.selected)
         }
+
         if (!actionParams.skipEnabled && mc.respondsTo(control, "disableProperty")) {
             action.enabledProperty().addListener(new ChangeListener() {
                 void changed(ObservableValue observableValue, Object oldValue, Object newValue) {
@@ -116,9 +128,44 @@ class ActionFactory extends AbstractFXBeanFactory {
         }
     }
 
+    /**
+     * Accepts either:
+     *  - a URL-like string (file:/, jar:/, http(s): etc.)
+     *  - a classpath resource path (e.g. "icons/cut.png")
+     *
+     * If not found/invalid -> do NOT throw; just skip setting the icon.
+     */
     static void setIcon(node, String iconUrl) {
-        Image image = new Image(Thread.currentThread().getContextClassLoader().getResource(iconUrl).toString())
-        node.graphicProperty().set(new ImageView(image: image))
+        if (!iconUrl || node == null) return
+        if (!node.metaClass.respondsTo(node, "graphicProperty")) return
+
+        try {
+            String urlString
+
+            if (looksLikeUrl(iconUrl)) {
+                urlString = iconUrl
+            } else {
+                def cl = Thread.currentThread().contextClassLoader
+
+                // try as-is first (icons/cut.png)
+                urlString = cl.getResource(iconUrl)?.toExternalForm()
+
+                // fallback for demo resources (demo/icons/cut.png)
+                if (!urlString && !iconUrl.startsWith("demo/")) {
+                    urlString = cl.getResource("demo/$iconUrl")?.toExternalForm()
+                }
+            }
+
+            if (!urlString) {
+                log?.warn("Action icon resource not found on classpath: {}", iconUrl)
+                return
+            }
+
+            Image image = new Image(urlString, true)
+            node.graphicProperty().set(new ImageView(image: image))
+        } catch (Throwable t) {
+            log?.warn("Skipping action icon '{}': {}", iconUrl, t.toString())
+        }
     }
 
     static void setTooltip(node, String text) {

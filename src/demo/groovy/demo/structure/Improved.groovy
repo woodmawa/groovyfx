@@ -30,7 +30,7 @@ import groovyx.javafx.SceneGraphBuilder
 import groovyx.javafx.beans.FXBindable
 import javafx.event.EventHandler
 
-import static groovyfx.javafx.GroovyFX.start
+import static groovyx.javafx.GroovyFX.start
 import static javafx.geometry.HPos.RIGHT
 import static javafx.geometry.VPos.BASELINE
 

@@ -18,7 +18,7 @@
 import javafx.collections.FXCollections
 import javafx.scene.chart.PieChart
 
-import static groovyfx.javafx.GroovyFX.start
+import static groovyx.javafx.GroovyFX.start
 
 final pieData = FXCollections.observableArrayList([new PieChart.Data("Yours", 42), new PieChart.Data("Mine", 58)])
 

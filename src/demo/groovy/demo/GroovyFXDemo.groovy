@@ -19,7 +19,7 @@ import javafx.scene.layout.Region
 import javafx.scene.paint.Color
 import javafx.scene.shape.Rectangle
 
-import static groovyfx.javafx.GroovyFX.start
+import static groovyx.javafx.GroovyFX.start
 
 class Custom extends Region {
     public Custom() {

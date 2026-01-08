@@ -20,26 +20,35 @@ package groovyx.javafx.factory
 import javafx.scene.paint.Paint
 
 /**
- * A factory to create fill nodes.  A fill node is a leaf node that can be placed under Shapes and Scenes - anything
- * with a fill property.
- * 
- * @author Dean Iverson
+ * A factory to create fill nodes. A fill node is a leaf node that can be placed under Shapes
+ * or any node with a fill property.
  */
 class FillFactory extends AbstractFXBeanFactory {
-    private static final String FILL_PROPERTY = "__fill"
-    
+
     FillFactory() {
         super(Paint, true)
     }
+
     FillFactory(Class<Paint> beanClass) {
         super(beanClass, true)
     }
 
+    @Override
     Object newInstance(FactoryBuilderSupport builder, Object name, Object value, Map attributes) {
-        Paint paint = ColorFactory.get(value)
+        // Accept value from either argument or attribute (common builder pattern)
+        def v = (value != null) ? value : (attributes ? attributes.remove('value') : null)
+
+        // IMPORTANT: unwrap buildable specs (e.g. RadialGradientFactory$Spec, LinearGradientFactory$Spec, etc.)
+        if (v != null && v.metaClass?.respondsTo(v, 'build')) {
+            v = v.build()
+        }
+
+        Paint paint = ColorFactory.get(v)
+
         if (!paint) {
-            throw new RuntimeException("The value passed to the 'fill' node must be an instance of Paint, " +
-                    "LinearGradientBuilder, or RadialGradientBuilder")
+            throw new RuntimeException(
+                    "The value passed to the 'fill' node must be an instance of Paint (or a buildable paint spec)."
+            )
         }
         return paint
     }
@@ -50,5 +59,4 @@ class FillFactory extends AbstractFXBeanFactory {
             FXHelper.setPropertyOrMethod(parent, "fill", child)
         }
     }
-
 }

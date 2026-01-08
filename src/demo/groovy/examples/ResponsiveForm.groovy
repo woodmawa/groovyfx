@@ -4,7 +4,7 @@
 package examples
 
 
-import static groovyfx.javafx.GroovyFX.start
+import static groovyx.javafx.GroovyFX.start
 import javafx.scene.paint.Color
 
 /**
