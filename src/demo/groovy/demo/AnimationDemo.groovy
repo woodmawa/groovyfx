@@ -22,7 +22,9 @@ import static groovyx.javafx.GroovyFX.start
  * @author jimclarke
  */
 start {
-    stage(title: "GroovyFX Animation Demo", width: 650, height: 450, visible: true) {
+    def st
+
+    st = stage(title: "GroovyFX Animation Demo", width: 650, height: 450) {
         scene(fill: GROOVYBLUE) {
             rect1 = rectangle(x: 25, y: 40, width: 100, height: 50, fill: RED)
             rect2 = rectangle(x: 25, y: 100, width: 100, height: 50, fill: GREEN)
@@ -37,5 +39,7 @@ start {
     }
 
     tl.play()
+
+    st.show()
 }
 

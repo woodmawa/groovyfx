@@ -34,9 +34,11 @@ class QuickTest {
 }
 
 start {
+
+    def st
     def qt = new QuickTest()
 
-    stage(title: "GroovyFX Bind Demo", x: 100, y: 100, width: 400, height: 400, visible: true,
+    st = stage(title: "GroovyFX Bind Demo", x: 100, y: 100, width: 400, height: 400,
             style: "decorated", onHidden: { println "Close"}) {
         scene(fill: GROOVYBLUE) {
             vbox(spacing: 10, padding: 10) {
@@ -63,6 +65,8 @@ start {
         }
         
     }
-    bind bind1.text() to bind2.text() to qt,"qtText"  using {"Converted: ${it}"} 
+    bind bind1.text() to bind2.text() to qt,"qtText"  using {"Converted: ${it}"}
+
+    st.show()
 }
 
