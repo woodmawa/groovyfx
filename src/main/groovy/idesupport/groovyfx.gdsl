@@ -30,6 +30,14 @@
  * - Avoids Map '+' and other indexing-time fragility
  * - Uses context(place: fileScope()) because fileScope() is a POINTCUT, not a Scope
  */
+/*
+ * groovyfx.gdsl — IntelliJ-safe GroovyFX/JavaFX DSL hints (older Groovy DSL API compatible)
+ *
+ * Fixes:
+ * - Avoids fileScope() entirely (it is a DslPointcut in your IDE and causes ClassCastException when used as scope)
+ * - Uses @Field Maps so symbols resolve inside contributor closures
+ * - Avoids Map '+' merging (prevents null+null issues)
+ */
 
 package idesupport
 
@@ -95,11 +103,8 @@ import groovy.transform.Field
 
 // --- contexts ---------------------------------------------------------------
 
-// GroovyFX SceneGraphBuilder context (for direct builder usage)
-def SGB_CONTEXT = context(ctype: 'groovyx.javafx.SceneGraphBuilder')
-
-// IMPORTANT: fileScope() returns a *DslPointcut*, so it must be used as `place:`
-def FILE_CONTEXT = context(place: fileScope())
+def SGB_CONTEXT    = context(ctype: 'groovyx.javafx.SceneGraphBuilder')
+def SCRIPT_CONTEXT = context(place: scriptScope())
 
 // --- contributors -----------------------------------------------------------
 
@@ -113,7 +118,7 @@ contributor(SGB_CONTEXT) {
 }
 
 // Provide the DSL methods inside start { }, stage { }, build { } blocks in scripts
-contributor(FILE_CONTEXT) {
+contributor(SCRIPT_CONTEXT) {
 
     // Keep activation narrow to common GroovyFX entry points
     if (enclosingCall('start') || enclosingCall('stage') || enclosingCall('build')) {
