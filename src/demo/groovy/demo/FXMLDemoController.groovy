@@ -19,6 +19,7 @@
 * To change this template, choose Tools | Templates
 * and open the template in the editor.
 */
+package demo
 
 import javafx.event.ActionEvent
 import javafx.fxml.FXML

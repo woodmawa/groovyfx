@@ -56,8 +56,18 @@ class ColorFactory {
 
         if (value == null) return null
 
-        if (value instanceof Paint) {
-            return (Paint) value
+        // --- NEW: allow factories that return "Spec" objects (e.g. RadialGradientFactory.Spec)
+        // If the object has a no-arg build() method and it returns a Paint, use it.
+        try {
+            def mc = value?.metaClass
+            if (mc != null && mc.respondsTo(value, "build")) {
+                def built = value.build()
+                if (built instanceof Paint) {
+                    return (Paint) built
+                }
+            }
+        } catch (Throwable ignored) {
+            // fall through to existing string parsing
         }
 
         if (value instanceof List || value instanceof Object[]) {
@@ -188,7 +198,13 @@ class ColorFactory {
             }
         }
 
-        // JavaFX handles named colors, #hex, 0xhex, etc.
+        // JavaFX CSS paint parser: supports colors *and* linear-gradient(...) / radial-gradient(...)
+        try {
+            return Paint.valueOf(str)
+        } catch (Exception ignored) {
+            // fall through to Color.web for older/edge cases (keeps previous behavior)
+        }
+
         try {
             return Color.web(str)
         } catch (Exception ex) {

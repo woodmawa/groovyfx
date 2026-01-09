@@ -238,6 +238,26 @@ tasks.withType(Test).configureEach {
     ]
 }
 
+tasks.withType(Javadoc).configureEach {
+    options.addStringOption('Xdoclint:none', '-quiet')
+}
+
+import org.gradle.api.logging.LogLevel
+
+tasks.withType(JavaExec).configureEach {
+    // Make sure the process streams are wired through
+    standardInput = System.in
+    standardOutput = System.out
+    errorOutput = System.err
+
+    // Ensure Gradle captures + emits them (helps in IDE Gradle console)
+    logging.captureStandardOutput(LogLevel.LIFECYCLE)
+    logging.captureStandardError(LogLevel.LIFECYCLE)
+}
+
+tasks.withType(JavaExec).configureEach {
+    jvmArgs '--enable-native-access=ALL-UNNAMED'
+}
 
 //configure the demo runners to use the MOdule system
 /*

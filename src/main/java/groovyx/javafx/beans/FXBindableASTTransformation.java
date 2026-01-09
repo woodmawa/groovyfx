@@ -32,19 +32,7 @@ import org.codehaus.groovy.ast.GenericsType;
 import org.codehaus.groovy.ast.MethodNode;
 import org.codehaus.groovy.ast.Parameter;
 import org.codehaus.groovy.ast.PropertyNode;
-import org.codehaus.groovy.ast.expr.ArgumentListExpression;
-import org.codehaus.groovy.ast.expr.BinaryExpression;
-import org.codehaus.groovy.ast.expr.BooleanExpression;
-import org.codehaus.groovy.ast.expr.CastExpression;
-import org.codehaus.groovy.ast.expr.ClassExpression;
-import org.codehaus.groovy.ast.expr.ConstantExpression;
-import org.codehaus.groovy.ast.expr.ConstructorCallExpression;
-import org.codehaus.groovy.ast.expr.Expression;
-import org.codehaus.groovy.ast.expr.FieldExpression;
-import org.codehaus.groovy.ast.expr.ListExpression;
-import org.codehaus.groovy.ast.expr.MapExpression;
-import org.codehaus.groovy.ast.expr.MethodCallExpression;
-import org.codehaus.groovy.ast.expr.VariableExpression;
+import org.codehaus.groovy.ast.expr.*;
 import org.codehaus.groovy.ast.stmt.BlockStatement;
 import org.codehaus.groovy.ast.stmt.EmptyStatement;
 import org.codehaus.groovy.ast.stmt.ExpressionStatement;
@@ -157,6 +145,12 @@ public class FXBindableASTTransformation implements ASTTransformation {
         //PROPERTY_IMPL_MAP.put(OBJECT_PROPERTY_CNODE, SIMPLE_OBJECT_PROPERTY_CNODE);
     }
 
+    /**
+     * Creates a new {@code FXBindableASTTransformation}.
+     */
+    public FXBindableASTTransformation() {
+        // default constructor
+    }
 
     /**
      * Convenience method to see if an annotated node is {@code @FXBindable}.
@@ -307,6 +301,8 @@ public class FXBindableASTTransformation implements ASTTransformation {
      * getter/setter methods for accessing the original (now synthetic) Groovy property.  For
      * example, if the original property was "String firstName" then these three methods would
      * be generated:
+     *
+     *
      * <p>
      * public String getFirstName()
      * public void setFirstName(String value)
@@ -420,12 +416,13 @@ public class FXBindableASTTransformation implements ASTTransformation {
     /**
      * Creates a setter method and adds it to the declaring class.  The setter has the form:
      * <p>
-     * void <setter>(<type> fieldName)
+     * {@code void setXxx(Type fieldName)}
      *
      * @param declaringClass The class to which the method is added
      * @param propertyNode   The property node being accessed by this setter
      * @param setterName     The name of the setter method
      * @param setterBlock    The code body of the method
+     * @param annotations    Annotations to apply to the generated method (may be null)
      */
     protected void createSetterMethod(ClassNode declaringClass, PropertyNode propertyNode, String setterName,
                                       Statement setterBlock, List<AnnotationNode> annotations) {
@@ -462,7 +459,8 @@ public class FXBindableASTTransformation implements ASTTransformation {
      * @param propertyNode   The property node being accessed by this getter
      * @param getterName     The name of the getter method
      * @param getterBlock    The code body of the method
-     */
+     * @param annotations    Annotations to apply to the generated method (may be null)
+    */
     protected void createGetterMethod(ClassNode declaringClass, PropertyNode propertyNode, String getterName,
                                       Statement getterBlock, List<AnnotationNode> annotations) {
         int mod = propertyNode.getModifiers() | Modifier.FINAL;
@@ -640,11 +638,17 @@ public class FXBindableASTTransformation implements ASTTransformation {
 
     /**
      * Creates the body of a setter method for the original property that is actually backed by a
-     * JavaFX *Property instance:
+     * JavaFX *Property instance, with safe wrapping for List/Map/Set values into JavaFX observable
+     * collections when needed.
      * <p>
      * Object $property = this.someProperty()
      * $property.setValue(value)
-     *
+     * Generated shape (conceptually):
+     *   {@code def v = value
+     *   if (v != null && v instanceof List && !(v instanceof ObservableList)) {
+     *       v = FXCollections.observableList((List) v)
+     *   }
+     *   this.getXxxProperty().setValue(v) }    *
      * @param fxProperty The original Groovy property that we're creating a setter for.
      * @return A Statement that is the body of the new setter.
      */
@@ -653,12 +657,201 @@ public class FXBindableASTTransformation implements ASTTransformation {
         VariableExpression thisExpression = VariableExpression.THIS_EXPRESSION;
         ArgumentListExpression emptyArgs = ArgumentListExpression.EMPTY_ARGUMENTS;
 
+        // Object v = value
+        VariableExpression vExpr = new VariableExpression("$v", ClassHelper.OBJECT_TYPE);
+        DeclarationExpression declareV = new DeclarationExpression(
+                vExpr,
+                Token.newSymbol(Types.ASSIGN, 0, 0),
+                new VariableExpression("value")
+        );
+
+        BlockStatement block = new BlockStatement();
+        block.addStatement(new ExpressionStatement(declareV));
+
+        ClassNode fxType = fxProperty.getType();
+
+        // Normalize List/Map/Set assignments into real JavaFX observable collections (copy contents)
+        if (fxType != null && fxType.getTypeClass() != null) {
+            if (fxType.getTypeClass() == SIMPLE_LIST_PROPERTY_CNODE.getTypeClass()) {
+                block.addStatement(normalizeListAssignment(vExpr));
+            } else if (fxType.getTypeClass() == SIMPLE_MAP_PROPERTY_CNODE.getTypeClass()) {
+                block.addStatement(normalizeMapAssignment(vExpr));
+            } else if (fxType.getTypeClass() == SIMPLE_SET_PROPERTY_CNODE.getTypeClass()) {
+                block.addStatement(normalizeSetAssignment(vExpr));
+            }
+        }
+
+        // this.getXxxProperty().setValue(v)
         MethodCallExpression getProperty = new MethodCallExpression(thisExpression, fxPropertyGetter, emptyArgs);
-
-        ArgumentListExpression valueArg = new ArgumentListExpression(new Expression[]{new VariableExpression("value")});
+        ArgumentListExpression valueArg = new ArgumentListExpression(new Expression[]{vExpr});
         MethodCallExpression setValue = new MethodCallExpression(getProperty, "setValue", valueArg);
+        block.addStatement(new ExpressionStatement(setValue));
 
-        return new ExpressionStatement(setValue);
+        return block;
+    }
+
+    private Statement normalizeListAssignment(VariableExpression vExpr) {
+        // tmp = FXCollections.observableArrayList()
+        VariableExpression tmp = new VariableExpression("$tmp", ClassHelper.makeWithoutCaching("javafx.collections.ObservableList"));
+        ClassNode fxCollections = ClassHelper.makeWithoutCaching("javafx.collections.FXCollections");
+
+        MethodCallExpression mk = new MethodCallExpression(
+                new ClassExpression(fxCollections),
+                "observableArrayList",
+                ArgumentListExpression.EMPTY_ARGUMENTS
+        );
+        DeclarationExpression declTmp = new DeclarationExpression(
+                tmp,
+                Token.newSymbol(Types.ASSIGN, 0, 0),
+                mk
+        );
+
+        // if (v != null) tmp.addAll((Collection) v)
+        Expression notNull = new BinaryExpression(
+                vExpr,
+                Token.newSymbol(Types.COMPARE_NOT_EQUAL, 0, 0),
+                ConstantExpression.NULL
+        );
+        Expression castCollection = new CastExpression(ClassHelper.makeWithoutCaching("java.util.Collection"), vExpr);
+        MethodCallExpression addAll = new MethodCallExpression(
+                tmp,
+                "addAll",
+                new ArgumentListExpression(castCollection)
+        );
+        IfStatement ifAddAll = new IfStatement(
+                new BooleanExpression(notNull),
+                new ExpressionStatement(addAll),
+                EmptyStatement.INSTANCE
+        );
+
+        // v = tmp
+        Expression assignV = new BinaryExpression(
+                vExpr,
+                Token.newSymbol(Types.EQUAL, 0, 0),
+                tmp
+        );
+
+        BlockStatement bs = new BlockStatement();
+        bs.addStatement(new ExpressionStatement(declTmp));
+        bs.addStatement(ifAddAll);
+        bs.addStatement(new ExpressionStatement(assignV));
+        return bs;
+    }
+
+    private Statement normalizeMapAssignment(VariableExpression vExpr) {
+        // tmp = FXCollections.observableHashMap()
+        VariableExpression tmp = new VariableExpression("$tmp", ClassHelper.makeWithoutCaching("javafx.collections.ObservableMap"));
+        ClassNode fxCollections = ClassHelper.makeWithoutCaching("javafx.collections.FXCollections");
+
+        MethodCallExpression mk = new MethodCallExpression(
+                new ClassExpression(fxCollections),
+                "observableHashMap",
+                ArgumentListExpression.EMPTY_ARGUMENTS
+        );
+        DeclarationExpression declTmp = new DeclarationExpression(
+                tmp,
+                Token.newSymbol(Types.ASSIGN, 0, 0),
+                mk
+        );
+
+        // if (v != null) tmp.putAll((Map) v)
+        Expression notNull = new BinaryExpression(
+                vExpr,
+                Token.newSymbol(Types.COMPARE_NOT_EQUAL, 0, 0),
+                ConstantExpression.NULL
+        );
+        Expression castMap = new CastExpression(ClassHelper.makeWithoutCaching("java.util.Map"), vExpr);
+        MethodCallExpression putAll = new MethodCallExpression(
+                tmp,
+                "putAll",
+                new ArgumentListExpression(castMap)
+        );
+        IfStatement ifPutAll = new IfStatement(
+                new BooleanExpression(notNull),
+                new ExpressionStatement(putAll),
+                EmptyStatement.INSTANCE
+        );
+
+        // v = tmp
+        Expression assignV = new BinaryExpression(
+                vExpr,
+                Token.newSymbol(Types.EQUAL, 0, 0),
+                tmp
+        );
+
+        BlockStatement bs = new BlockStatement();
+        bs.addStatement(new ExpressionStatement(declTmp));
+        bs.addStatement(ifPutAll);
+        bs.addStatement(new ExpressionStatement(assignV));
+        return bs;
+    }
+
+    private Statement normalizeSetAssignment(VariableExpression vExpr) {
+        // tmp = FXCollections.observableSet()
+        VariableExpression tmp = new VariableExpression("$tmp", ClassHelper.makeWithoutCaching("javafx.collections.ObservableSet"));
+        ClassNode fxCollections = ClassHelper.makeWithoutCaching("javafx.collections.FXCollections");
+
+        MethodCallExpression mk = new MethodCallExpression(
+                new ClassExpression(fxCollections),
+                "observableSet",
+                ArgumentListExpression.EMPTY_ARGUMENTS
+        );
+        DeclarationExpression declTmp = new DeclarationExpression(
+                tmp,
+                Token.newSymbol(Types.ASSIGN, 0, 0),
+                mk
+        );
+
+        // if (v != null) tmp.addAll((Collection) v)
+        Expression notNull = new BinaryExpression(
+                vExpr,
+                Token.newSymbol(Types.COMPARE_NOT_EQUAL, 0, 0),
+                ConstantExpression.NULL
+        );
+        Expression castCollection = new CastExpression(ClassHelper.makeWithoutCaching("java.util.Collection"), vExpr);
+        MethodCallExpression addAll = new MethodCallExpression(
+                tmp,
+                "addAll",
+                new ArgumentListExpression(castCollection)
+        );
+        IfStatement ifAddAll = new IfStatement(
+                new BooleanExpression(notNull),
+                new ExpressionStatement(addAll),
+                EmptyStatement.INSTANCE
+        );
+
+        // v = tmp
+        Expression assignV = new BinaryExpression(
+                vExpr,
+                Token.newSymbol(Types.EQUAL, 0, 0),
+                tmp
+        );
+
+        BlockStatement bs = new BlockStatement();
+        bs.addStatement(new ExpressionStatement(declTmp));
+        bs.addStatement(ifAddAll);
+        bs.addStatement(new ExpressionStatement(assignV));
+        return bs;
+    }
+
+
+    //helper classes for debug
+    private Statement debugPrint(String message) {
+        MethodCallExpression println = new MethodCallExpression(
+                new PropertyExpression(new ClassExpression(ClassHelper.make(System.class)), "err"),
+                "println",
+                new ArgumentListExpression(new ConstantExpression(message))
+        );
+        return new ExpressionStatement(println);
+    }
+
+    private Statement debugPrintExpr(Expression expr) {
+        MethodCallExpression println = new MethodCallExpression(
+                new PropertyExpression(new ClassExpression(ClassHelper.make(System.class)), "err"),
+                "println",
+                new ArgumentListExpression(expr)
+        );
+        return new ExpressionStatement(println);
     }
 
     /**
@@ -677,9 +870,9 @@ public class FXBindableASTTransformation implements ASTTransformation {
         ArgumentListExpression emptyArguments = ArgumentListExpression.EMPTY_ARGUMENTS;
 
         // We're relying on the *Property() method to provide the return value - is this still needed??
-//        Expression defaultReturn = defaultReturnMap.get(originalProperty.getType());
-//        if (defaultReturn == null)
-//            defaultReturn = ConstantExpression.NULL;
+        //        Expression defaultReturn = defaultReturnMap.get(originalProperty.getType());
+        //        if (defaultReturn == null)
+        //            defaultReturn = ConstantExpression.NULL;
 
         MethodCallExpression getProperty = new MethodCallExpression(thisExpression, fxPropertyGetter, emptyArguments);
         MethodCallExpression getValue = new MethodCallExpression(getProperty, "getValue", emptyArguments);

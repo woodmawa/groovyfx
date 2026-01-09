@@ -152,20 +152,77 @@ class RadialGradientFactory extends AbstractFactory {
     private static void addStops(Spec spec, Object candidate) {
         if (candidate == null) return
 
+        // Already a Stop
         if (candidate instanceof Stop) {
             spec.stops << (Stop) candidate
             return
         }
 
+        // Stop array
         if (candidate instanceof Stop[]) {
-            spec.stops.addAll(((Stop[])candidate).toList())
+            spec.stops.addAll(((Stop[]) candidate).toList())
             return
         }
 
-        if (candidate instanceof Iterable) {
-            (candidate as Iterable).each { spec.stops << (it as Stop) }
+        // NEW: Map<offset, color> form e.g. [0.0: RED, 1.0: BLACK]
+        if (candidate instanceof Map) {
+            Map m = (Map) candidate
+            m.entrySet().each { e ->
+                double offset = toDouble(e.key)
+                Color c = toColor(e.value)
+                spec.stops << new Stop(offset, c)
+            }
+            // keep in ascending offset order
+            spec.stops.sort { a, b -> a.offset <=> b.offset }
             return
         }
+
+        // Iterable forms
+        if (candidate instanceof Iterable) {
+            def list = (candidate as Iterable).toList()
+            if (list.isEmpty()) return
+
+            // Iterable<Stop>
+            if (list.every { it instanceof Stop }) {
+                spec.stops.addAll(list as List<Stop>)
+                return
+            }
+
+            // NEW: Iterable<Color|String> -> evenly distributed offsets
+            if (list.every { it instanceof Color || it instanceof CharSequence }) {
+                def colors = list.collect { toColor(it) }
+                spec.stops.addAll(distributeEvenly(colors))
+                return
+            }
+
+            // NEW: Iterable<[offset, color]>
+            if (list.every { it instanceof List && ((List) it).size() == 2 }) {
+                list.each { pair ->
+                    def p = (List) pair
+                    spec.stops << new Stop(toDouble(p[0]), toColor(p[1]))
+                }
+                spec.stops.sort { a, b -> a.offset <=> b.offset }
+                return
+            }
+
+            // NEW: Iterable<Map(offset:.., color:..)>
+            if (list.every { it instanceof Map }) {
+                list.each { mm ->
+                    def m2 = (Map) mm
+                    if (!m2.containsKey('offset') || !m2.containsKey('color')) {
+                        throw new IllegalArgumentException("Stop map must contain offset and color. Got: ${m2}")
+                    }
+                    spec.stops << new Stop(toDouble(m2.offset), toColor(m2.color))
+                }
+                spec.stops.sort { a, b -> a.offset <=> b.offset }
+                return
+            }
+
+            // fallthrough = unsupported iterable
+            throw new IllegalArgumentException("Unsupported stops iterable: ${list.collect { it?.getClass()?.name }}")
+        }
+
+        throw new IllegalArgumentException("Unsupported stops type: ${candidate.getClass().name}")
     }
 
     private static double toDouble(Object v) {
@@ -184,5 +241,23 @@ class RadialGradientFactory extends AbstractFactory {
         if (v instanceof CycleMethod) return (CycleMethod) v
         if (v == null) return CycleMethod.NO_CYCLE
         return CycleMethod.valueOf(v.toString().trim().toUpperCase())
+    }
+
+    private static Color toColor(Object v) {
+        if (v == null) throw new IllegalArgumentException("Color value cannot be null")
+        if (v instanceof Color) return (Color) v
+        return Color.web(v.toString())
+    }
+
+    private static List<Stop> distributeEvenly(List<Color> colors) {
+        if (colors == null || colors.isEmpty()) return []
+        if (colors.size() == 1) {
+            return [new Stop(0d, colors[0]), new Stop(1d, colors[0])]
+        }
+        int n = colors.size()
+        return (0..<n).collect { i ->
+            double offset = (double) i / (double) (n - 1)
+            new Stop(offset, colors[i])
+        }
     }
 }

@@ -1,44 +1,36 @@
 /*
  * SPDX-License-Identifier: Apache-2.0
  *
- * Copyright 2011-2021 the original author or authors.
+ * Copyright 2011-2021
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
  */
 package groovyx.javafx.factory
-import groovy.util.FactoryBuilderSupport
+
 import groovy.util.AbstractFactory
+import groovy.util.FactoryBuilderSupport
 import javafx.scene.paint.Color
 import javafx.scene.paint.CycleMethod
 import javafx.scene.paint.LinearGradient
 import javafx.scene.paint.Stop
 
 /**
- * Modern JavaFX LinearGradient factory (no deprecated Builder API).
+ * JavaFX LinearGradient factory (no deprecated Builder API).
  *
  * Supported attributes:
  *  - start: [x, y] (default [0,0])
  *  - end:   [x, y] (default [1,0])
+ *  - startX/startY/endX/endY: numeric shorthands (legacy GroovyFX convenience)
  *  - proportional: boolean (default true)
  *  - cycleMethod:  'noCycle'|'reflect'|'repeat' or CycleMethod (default NO_CYCLE)
- *  - stops:  one of:
- *      * List<String|Color>                   => evenly distributed offsets
- *      * List<[offset, color]>                => explicit offsets (0..1)
- *      * List<Map(offset:..., color:...)>     => explicit offsets
- *      * List<Stop>                           => used as-is
+ *  - stops/stop/colors:
+ *      * Map<Number, Color|String>             => explicit offsets (e.g. [0.25: YELLOW, 1.0: BLUE])
+ *      * List<String|Color>                    => evenly distributed offsets
+ *      * List<[offset, color]>                 => explicit offsets
+ *      * List<Map(offset:..., color:...)>      => explicit offsets
+ *      * List<Stop>                            => used as-is
  *
- * Also supports nested stop(...) child nodes if you already have a StopFactory:
- *   linearGradient { stop(offset:0.0, color:'#fff'); stop(offset:1.0, color:'#000') }
+ * Also supports nested stop(.) child nodes.
  */
 class LinearGradientFactory extends AbstractFactory {
 
@@ -46,8 +38,23 @@ class LinearGradientFactory extends AbstractFactory {
     Object newInstance(FactoryBuilderSupport builder, Object name, Object value, Map attributes) {
         if (value instanceof LinearGradient) return value
 
-        def start = normalizePoint(attributes.remove('start') ?: [0d, 0d])
-        def end   = normalizePoint(attributes.remove('end')   ?: [1d, 0d])
+        // --- legacy point shorthands (startX/startY/endX/endY) ---
+        double startX = popDouble(attributes, 'startX', 0d)
+        double startY = popDouble(attributes, 'startY', 0d)
+        double endX   = popDouble(attributes, 'endX',   1d)
+        double endY   = popDouble(attributes, 'endY',   0d)
+
+        // --- modern point pairs override shorthands if present ---
+        def startPair = attributes.remove('start')
+        def endPair   = attributes.remove('end')
+        if (startPair != null) {
+            def p = normalizePoint(startPair)
+            startX = p[0]; startY = p[1]
+        }
+        if (endPair != null) {
+            def p = normalizePoint(endPair)
+            endX = p[0]; endY = p[1]
+        }
 
         boolean proportional = attributes.containsKey('proportional')
                 ? (attributes.remove('proportional') as boolean)
@@ -71,8 +78,8 @@ class LinearGradientFactory extends AbstractFactory {
         }
 
         return new LinearGradient(
-                start[0], start[1],
-                end[0], end[1],
+                startX, startY,
+                endX, endY,
                 proportional,
                 cycleMethod,
                 stops
@@ -81,16 +88,13 @@ class LinearGradientFactory extends AbstractFactory {
 
     @Override
     boolean isLeaf() {
-        // Not strictly a “leaf” if you want to allow nested stop nodes.
-        // Return false so FactoryBuilderSupport can call setChild().
+        // allow nested stop nodes
         return false
     }
 
     @Override
     void setChild(FactoryBuilderSupport builder, Object parent, Object child) {
         if (parent instanceof LinearGradient && child instanceof Stop) {
-            // LinearGradient is immutable, so we can't "add" to it directly.
-            // Strategy: collect stops on builder context, then rebuild in onNodeCompleted.
             def ctx = builder.getContext()
             (ctx._linearGradientStops ?: (ctx._linearGradientStops = [])).add(child)
             return
@@ -100,11 +104,9 @@ class LinearGradientFactory extends AbstractFactory {
 
     @Override
     void onNodeCompleted(FactoryBuilderSupport builder, Object parent, Object node) {
-        // If child Stop nodes were used, rebuild gradient with them.
         def ctx = builder.getContext()
         def collected = (ctx?._linearGradientStops as List<Stop>)
         if (node instanceof LinearGradient && collected && !collected.isEmpty()) {
-            // Rebuild with collected stops; preserve all other properties:
             def g = (LinearGradient) node
             def rebuilt = new LinearGradient(
                     g.startX, g.startY,
@@ -113,18 +115,26 @@ class LinearGradientFactory extends AbstractFactory {
                     g.cycleMethod,
                     collected
             )
-            // Replace the node in its parent if needed:
             builder.setProperty(parent, builder.getCurrentName(), rebuilt)
             ctx._linearGradientStops = null
         }
     }
 
+    private static double popDouble(Map attrs, String key, double defaultValue) {
+        if (!attrs.containsKey(key)) return defaultValue
+        def v = attrs.remove(key)
+        if (v == null) return defaultValue
+        if (v instanceof Number) return ((Number) v).doubleValue()
+        return (v as double)
+    }
+
     private static List<Double> normalizePoint(def p) {
-        if (p instanceof List && p.size() == 2) {
-            return [(p[0] as double), (p[1] as double)]
+        if (p instanceof List && ((List) p).size() == 2) {
+            def l = (List) p
+            return [(l[0] as double), (l[1] as double)]
         }
         if (p instanceof Number[]) {
-            def a = p as Number[]
+            def a = (Number[]) p
             if (a.length == 2) return [(a[0] as double), (a[1] as double)]
         }
         throw new IllegalArgumentException("start/end must be [x, y], got: ${p}")
@@ -148,8 +158,23 @@ class LinearGradientFactory extends AbstractFactory {
     }
 
     private static List<Stop> toStops(def stopsSpec) {
+        // --- NEW: allow Map<offset,color> directly ---
+        if (stopsSpec instanceof Map) {
+            def m = (Map) stopsSpec
+            if (m.isEmpty()) return []
+            return m.entrySet()
+                    .collect { e ->
+                        def k = e.key
+                        if (!(k instanceof Number)) {
+                            throw new IllegalArgumentException("Stop map keys must be numbers (offsets). Got: ${k?.getClass()?.name}")
+                        }
+                        new Stop(((Number) k).doubleValue(), toColor(e.value))
+                    }
+                    .sort { a, b -> a.offset <=> b.offset }
+        }
+
         if (!(stopsSpec instanceof List)) {
-            throw new IllegalArgumentException("stops must be a List, got: ${stopsSpec?.getClass()?.name}")
+            throw new IllegalArgumentException("stops must be a List or Map, got: ${stopsSpec?.getClass()?.name}")
         }
 
         def list = (List) stopsSpec
@@ -175,36 +200,31 @@ class LinearGradientFactory extends AbstractFactory {
 
         // Maps [offset:..., color:...]
         if (list.every { it instanceof Map }) {
-            return list.collect { m ->
-                def mm = (Map) m
-                if (!mm.containsKey('offset') || !mm.containsKey('color')) {
-                    throw new IllegalArgumentException("Stop map must contain offset and color. Got: ${mm}")
+            return list.collect { mm ->
+                def m = (Map) mm
+                if (!m.containsKey('offset') || !m.containsKey('color')) {
+                    throw new IllegalArgumentException("Stop map must contain offset and color. Got: ${m}")
                 }
-                new Stop((mm.offset as double), toColor(mm.color))
+                new Stop((m.offset as double), toColor(m.color))
             }
         }
 
-        throw new IllegalArgumentException("Unsupported stops format: ${list}")
+        throw new IllegalArgumentException("Unsupported stops format: ${stopsSpec}")
     }
 
     private static List<Stop> distributeEvenly(List<Color> colors) {
+        if (colors.isEmpty()) return []
+        if (colors.size() == 1) return [new Stop(0d, colors[0]), new Stop(1d, colors[0])]
         int n = colors.size()
-        if (n == 1) return [new Stop(0d, colors[0])]
-
-        def stops = []
-        for (int i = 0; i < n; i++) {
+        return (0..<n).collect { i ->
             double offset = (double) i / (double) (n - 1)
-            stops << new Stop(offset, colors[i])
+            new Stop(offset, colors[i])
         }
-        return stops
     }
 
-    private static Color toColor(def c) {
-        if (c instanceof Color) return (Color) c
-        if (c instanceof String) {
-            // Handles "#rrggbb", "#rrggbbaa", and many CSS color forms
-            return Color.web((String) c)
-        }
-        throw new IllegalArgumentException("Stop color must be String or Color, got: ${c?.getClass()?.name}")
+    private static Color toColor(def v) {
+        if (v instanceof Color) return (Color) v
+        if (v == null) throw new IllegalArgumentException("Color value cannot be null")
+        return Color.web(v.toString())
     }
 }

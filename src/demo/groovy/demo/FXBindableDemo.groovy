@@ -17,9 +17,15 @@
  */
 import groovyx.javafx.beans.FXBindable
 import javafx.application.Platform
-import javafx.collections.ObservableList
-import javafx.collections.ObservableMap
-import javafx.collections.ObservableSet
+import javafx.collections.ObservableListBase;
+import javafx.collections.ObservableMap;
+import javafx.collections.ObservableSet;
+import javafx.collections.ObservableList;
+import com.sun.javafx.collections.ObservableListWrapper;
+import com.sun.javafx.collections.ObservableMapWrapper;
+import com.sun.javafx.collections.ObservableSetWrapper;
+import javafx.collections.FXCollections
+
 
 import static groovyx.javafx.GroovyFX.start
 
@@ -32,9 +38,9 @@ class FXPerson {
     String firstName;
     String lastName;
     int age;
-    ObservableList likes = []; 
-    ObservableMap attributes = [:];
-    ObservableSet aSet = [] as Set;
+    ObservableList likes = FXCollections.observableArrayList()
+    ObservableMap attributes = FXCollections.observableHashMap()
+    ObservableSet aSet = FXCollections.observableSet()
     
 }
      
@@ -48,7 +54,7 @@ println(person.ageProperty);
 println(person.likesProperty);
 println("======================");
 
-person.likes = ["GroovyFX"] as ObservableList
+person.likes = ["GroovyFX"] as ObservableList  //FXCollections.observableArrayList("GroovyFX")
 println("LastName: " + person.lastName);
 println("FirstName: " + person.firstName);
 println("Age: " + person.age);
@@ -77,12 +83,12 @@ println(person.ageProperty);
 println(person.likesProperty);
 println("======================");
 
-person.attributes = ['one':'two'] as ObservableMap
+person.attributes = FXCollections.observableMap([one: 'two'])
 person.attributes.put('foo', 'bar');
 println person.attributes
 println person.attributes['foo'];
 
-person.aSet = [0] as ObservableSet
+person.aSet = FXCollections.observableSet(0)
 person.aSet << 1
 person.aSet << 2
 println person.aSet
@@ -90,3 +96,6 @@ println person.aSet.size()
 println person.aSet.contains(1)
 Platform.exit();
 }
+
+println "STDOUT: hello"
+System.err.println("STDERR: hello")

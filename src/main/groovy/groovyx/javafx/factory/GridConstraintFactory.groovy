@@ -20,41 +20,60 @@ package groovyx.javafx.factory
 import javafx.scene.layout.ColumnConstraints
 import javafx.scene.layout.GridPane
 import javafx.scene.layout.RowConstraints
+import java.util.Locale
 
 /**
+ * Creates ColumnConstraints / RowConstraints nodes.
  *
- * @author jimclarke
+ * Fixes a Groovy 4+ / stricter reflection path where beanClass may be Object,
+ * which causes FactoryBuilderSupport to try to call Object(builder,name,value,map).
  */
 class GridConstraintFactory extends AbstractFXBeanFactory {
-    
-    GridConstraintFactory(Class beanClass) {
-        super(beanClass);
-    }
-    @Override
-    public Object newInstance(FactoryBuilderSupport builder, Object name, Object value, Map attributes)
-    throws InstantiationException, IllegalAccessException {
-        def gc = Object.newInstance(builder, name, value, attributes)
-        FXHelper.fxAttributes(gc, attributes)
-        gc;
+
+    private final Class<?> constraintClass
+
+    GridConstraintFactory(Class<?> constraintClass = null) {
+        // IMPORTANT: pass something non-null to super when possible
+        super(constraintClass ?: Object)
+        this.constraintClass = constraintClass
     }
 
     @Override
-    void setParent(FactoryBuilderSupport builder, Object parent, Object child) {
-        if (parent instanceof GridPane) {
-            if (child instanceof RowConstraints) {
-                parent.rowConstraints.add(child)
-            } else if (child instanceof ColumnConstraints) {
-                parent.columnConstraints.add(child)
-            }
+    Object newInstance(FactoryBuilderSupport builder, Object name, Object value, Map attributes) {
+        Class<?> cls = (constraintClass && constraintClass != Object) ? constraintClass : resolveFromName(name)
+
+        if (cls == null || cls == Object) {
+            throw new IllegalArgumentException("GridConstraintFactory cannot resolve constraint type for node: ${name}")
         }
+
+        // ColumnConstraints/RowConstraints are normal JavaFX beans with no-arg ctor
+        def obj = cls.getDeclaredConstructor().newInstance()
+
+        // Apply attributes directly, but coerce enum-typed properties from strings (e.g. "right" -> HPos.RIGHT)
+        if (attributes) {
+            attributes.each { k, v ->
+                def mp = obj.metaClass.getMetaProperty(k as String)
+                if (mp && v instanceof CharSequence) {
+                    Class t = mp.type
+                    if (t != null && t.isEnum()) {
+                        String s = v.toString().trim()
+                        // Common GroovyFX style: allow lower-case enum names
+                        v = java.lang.Enum.valueOf(t, s.toUpperCase(Locale.ROOT))
+                    }
+                }
+                obj."$k" = v
+            }
+            attributes.clear()
+        }
+
+        return obj
     }
 
-    @Override
-    public void onNodeCompleted(FactoryBuilderSupport builder, Object parent, Object node) {
-        if (node instanceof GridConstraint) {
-            node.node = parent
-            node.updateConstraints()
+    private static Class<?> resolveFromName(Object name) {
+        switch (name?.toString()) {
+            case 'columnConstraints': return ColumnConstraints
+            case 'rowConstraints':    return RowConstraints
+            default:                  return Object
         }
     }
 }
-
