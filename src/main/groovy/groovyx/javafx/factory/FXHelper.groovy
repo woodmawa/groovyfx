@@ -43,6 +43,9 @@ import javafx.scene.layout.AnchorPane
 import javafx.scene.paint.Paint
 import javafx.scene.text.Font
 import org.codehaus.groovy.runtime.InvokerHelper
+import javafx.beans.value.ChangeListener
+import javafx.beans.InvalidationListener
+import javafx.beans.Observable
 
 /**
  *
@@ -603,10 +606,48 @@ class FXHelper {
     }
 
     public static void setPropertyOrMethod(node, String name, Object value) {
+        // Attach JavaFX listeners declared as child nodes (e.g. width { ... })
+        // to the corresponding xxxProperty(), instead of assigning to primitive.
+        if (tryAttachListener(node, name, value)) {
+            return
+        }
         if (node.metaClass.respondsTo(node, "set$name") || node.metaClass.hasProperty(node, name))
             node[name] = value
         else if (node.metaClass.respondsTo(node, name))
             node."$name"(value)
     }
+
+    static boolean tryAttachListener(Object bean, String name, Object value) {
+        if (!(value instanceof ChangeListener) && !(value instanceof InvalidationListener)) return false
+
+        String propMethod = "${name}Property"
+
+        // respondTo expects example args (instances), not parameter Classes
+        if (!bean?.metaClass?.respondsTo(bean, propMethod)) return false
+
+        def propObj = bean."$propMethod"()
+        if (propObj == null) return false
+
+        if (value instanceof ChangeListener) {
+            if (propObj.metaClass.respondsTo(propObj, "addListener", value)) {
+                propObj.addListener((ChangeListener) value)
+                return true
+            }
+        }
+
+        if (value instanceof InvalidationListener) {
+            if (propObj.metaClass.respondsTo(propObj, "addListener", value)) {
+                propObj.addListener((InvalidationListener) value)
+                return true
+            }
+            if (propObj instanceof Observable) {
+                ((Observable) propObj).addListener((InvalidationListener) value)
+                return true
+            }
+        }
+
+        return false
+    }
+
 }
 
