@@ -15,83 +15,70 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package demo
+
 import groovy.transform.Canonical
 import groovyx.javafx.beans.FXBindable
-
-import javafx.collections.FXCollections
 
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
 import static groovyx.javafx.GroovyFX.start
 
-enum Gender2 {
+enum TableGender {
     MALE, FEMALE
 }
 
 @Canonical
-class Person2 {
+class TablePerson {
     @FXBindable String name
     @FXBindable int age
-    @FXBindable Gender2 gender
+    @FXBindable TableGender gender
     @FXBindable LocalDate dob
 }
 
-people = FXCollections.observableList([])
-
-def random = new Random()
-def createPerson = {
-    int i = random.nextInt(30)
-    new Person2(
-        name: "Person ${people.size()}",
-        age: 30 + i,
-        gender: i % 2 ? Gender2.FEMALE : Gender2.MALE,
-        dob: LocalDate.now() - (30 + i)
-    )
-}
+def persons = [
+        new TablePerson(name: "Jim Clarke",     age: 29, gender: TableGender.MALE,   dob: LocalDate.now().minusDays(90)),
+        new TablePerson(name: "Dean Iverson",   age: 30, gender: TableGender.MALE,   dob: LocalDate.now().minusDays(45)),
+        new TablePerson(name: "Angelina Jolie", age: 36, gender: TableGender.FEMALE, dob: LocalDate.now())
+]
 
 def dateFormat = DateTimeFormatter.ofPattern("MMM dd, yyyy")
 
 start {
     stage(title: "GroovyFX Table Demo", width: 500, height: 200, visible: true) {
         scene(fill: GROOVYBLUE) {
-            gridPane(hgap: 5, vgap: 10, padding: 25, alignment: "top_center") {
-                button(row: 1, column: 0, text: 'Add Person', onAction: {
-                    people << createPerson()
-                })
-                tableView(items: people, selectionMode: "single", cellSelectionEnabled: true, editable: true, row: 2, column: 0) {
-                    tableColumn(editable: true, property: "name", text: "Name", prefWidth: 150,
+            tableView(selectionMode: "single", cellSelectionEnabled: true, editable: true, items: persons) {
+
+                tableColumn(editable: true, property: "name", text: "Name", prefWidth: 150,
                         onEditCommit: { event ->
-                            Person2 item = event.tableView.items.get(event.tablePosition.row)
+                            TablePerson item = event.tableView.items.get(event.tablePosition.row)
                             item.name = event.newValue
                         }
-                    )
-                    tableColumn(editable: true, property: "age", text: "Age", prefWidth: 50, type: Integer,
+                )
+
+                tableColumn(editable: true, property: "age", text: "Age", prefWidth: 50, type: Integer,
                         onEditCommit: { event ->
-                            Person2 item = event.tableView.items.get(event.tablePosition.row)
+                            TablePerson item = event.tableView.items.get(event.tablePosition.row)
                             item.age = Integer.valueOf(event.newValue)
                         }
-                    )
-                    tableColumn(editable: true, property: "gender", text: "Gender", prefWidth: 150, type: Gender2,
+                )
+
+                tableColumn(editable: true, property: "gender", text: "Gender", prefWidth: 150, type: TableGender,
                         onEditCommit: { event ->
-                            Person2 item = event.tableView.items.get(event.tablePosition.row)
-                            item.gender = event.newValue;
+                            TablePerson item = event.tableView.items.get(event.tablePosition.row)
+                            item.gender = event.newValue
                         }
-                    )
-                    tableColumn(editable: true, property: "dob", text: "Birth", prefWidth: 150, type: LocalDate,
-                        converter: { from ->
-                            // convert date object to String
-                            return dateFormat.format(from)
-                        },
+                )
+
+                tableColumn(editable: true, property: "dob", text: "Birth", prefWidth: 150, type: LocalDate,
+                        converter: { from -> dateFormat.format(from) },
                         onEditCommit: { event ->
-                            Person2 item = event.tableView.items.get(event.tablePosition.row)
-                            // convert TextField string to a date object.
+                            TablePerson item = event.tableView.items.get(event.tablePosition.row)
                             item.dob = LocalDate.parse(event.newValue, dateFormat)
                         }
-                    )
-                }
+                )
             }
         }
     }
 }
-

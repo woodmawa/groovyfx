@@ -152,6 +152,7 @@ javafx {
             'javafx.base',
             'javafx.graphics',
             'javafx.controls',
+            'javafx.media',  //required for media player demo
             'javafx.fxml',
             'javafx.web',
             'javafx.media',

@@ -21,8 +21,8 @@ start {
     stage(title: "GroovyFX StrokeTransition Demo", width: 400, height: 300, visible: true, resizable: true) {
         scene(fill: GROOVYBLUE) {
             stackPane {
-                rectangle(width: 200, height: 200, fill: DARKGREEN, strokeWidth: 8, stroke: BLUE) {
-                    strokeTransition(3.s, delay: 500.ms, from: BLUE, to: SILVER).playFromStart()
+                rectangle(width: 200, height: 200, fill: DARKGREEN, strokeWidth: 20, stroke: RED) {
+                    strokeTransition(3.s, delay: 500.ms, from: RED, to: YELLOW).playFromStart()
                 }
             }
         }

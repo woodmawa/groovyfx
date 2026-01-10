@@ -20,55 +20,70 @@ package groovyx.javafx.factory
 import javafx.scene.image.Image
 import javafx.scene.image.ImageView
 
-/**
-*
-* @author jimclarke
-*/
 class ImageViewFactory extends AbstractNodeFactory {
-    
-    public ImageViewFactory() {
-        super(ImageView);
+
+    ImageViewFactory() {
+        super(ImageView)
     }
-    
-    public ImageViewFactory(Class<ImageView> beanClass) {
-        super(beanClass);
+
+    ImageViewFactory(Class<ImageView> beanClass) {
+        super(beanClass)
     }
-    
-    public Object newInstance(FactoryBuilderSupport builder, Object name, Object value, Map attributes) throws InstantiationException, IllegalAccessException {
-        ImageView iv = super.newInstance(builder, name, value, attributes);
-        if(value != null) {
-            switch(value) {
+
+    @Override
+    Object newInstance(FactoryBuilderSupport builder, Object name, Object value, Map attributes)
+            throws InstantiationException, IllegalAccessException {
+
+        ImageView iv = super.newInstance(builder, name, value, attributes)
+
+        if (value != null) {
+            iv.image = coerceToImage(value)
+        }
+
+        return iv
+    }
+
+    @Override
+    void setChild(FactoryBuilderSupport builder, Object parent, Object child) {
+        if (child != null) {
+            switch (child) {
                 case Image:
-                    iv.image = value;
-                    break;
                 case File:
-                    iv.image = new Image(value.toURL().toString());
-                    break;
-                default:
-                    iv.image = new Image(value.toString());
-                    break;
+                case URL:
+                case URI:
+                    ((ImageView) parent).image = coerceToImage(child)
+                    return
             }
         }
-        iv
+        super.setChild(builder, parent, child)
     }
-    
-    public void setChild( FactoryBuilderSupport builder, Object parent, Object child ) {
-        switch(child) {
+
+    /**
+     * Convert supported value types into a JavaFX Image, with URL normalization.
+     */
+    static Image coerceToImage(Object v) {
+        switch (v) {
             case Image:
-                parent.image = child;
-                break;
+                return (Image) v
+
             case File:
-                parent.image = new Image(value.toURL().toString());
-                break;
+                return new Image(((File) v).toURI().toString())
+
             case URL:
             case URI:
-                parent.image = new Image(value.toString());
-                break;
+                return new Image(v.toString())
+
             default:
-                super.setChild(builder, parent, child);
-                break;
+                String s = v.toString()?.trim()
+                if (!s) return null
+
+                // If it looks like a hostname/path and has no scheme, assume https.
+                // (Fixes "images-assets.nasa.gov/image/..." style inputs.)
+                if (!s.contains(":/") && s.contains(".") && s.contains("/")) {
+                    s = "https://" + s
+                }
+
+                return new Image(s)
         }
     }
-	
 }
-

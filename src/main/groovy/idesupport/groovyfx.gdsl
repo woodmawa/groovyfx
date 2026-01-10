@@ -39,58 +39,43 @@
  * - Avoids Map '+' merging (prevents null+null issues)
  */
 
-package idesupport
-
 import groovy.transform.Field
-
-// --- shared argument maps (must be @Field for IntelliJ GDSL visibility) -----
 
 @Field Map<String, String> STAGE_ARGS =
         [
-                title  : 'java.lang.String',
-                x      : 'java.lang.Double',
-                y      : 'java.lang.Double',
-                width  : 'java.lang.Double',
-                height : 'java.lang.Double',
-                visible: 'java.lang.Boolean'
+                title        : 'java.lang.String',
+                width        : 'double',
+                height       : 'double',
+                x            : 'double',
+                y            : 'double',
+                fullScreen   : 'boolean',
+                alwaysOnTop  : 'boolean',
+                resizable    : 'boolean',
+                scene        : 'javafx.scene.Scene',
+                onCloseRequest: 'groovy.lang.Closure',
+                onHidden     : 'groovy.lang.Closure',
+                onHiding     : 'groovy.lang.Closure',
+                onShowing    : 'groovy.lang.Closure',
+                onShown      : 'groovy.lang.Closure',
+                icons        : 'java.util.List'
         ] as Map<String, String>
 
 @Field Map<String, String> SCENE_ARGS =
         [
-                width : 'java.lang.Double',
-                height: 'java.lang.Double',
-                fill  : 'javafx.scene.paint.Paint'
-        ] as Map<String, String>
-
-@Field Map<String, String> GROUP_ARGS =
-        [
-                autoSizeChildren: 'java.lang.Boolean'
-        ] as Map<String, String>
-
-@Field Map<String, String> RECT_ARGS =
-        [
-                x     : 'java.lang.Double',
-                y     : 'java.lang.Double',
-                width : 'java.lang.Double',
-                height: 'java.lang.Double',
-                fill  : 'javafx.scene.paint.Paint'
-        ] as Map<String, String>
-
-@Field Map<String, String> CIRCLE_ARGS =
-        [
-                centerX: 'java.lang.Double',
-                centerY: 'java.lang.Double',
-                radius : 'java.lang.Double',
-                fill   : 'javafx.scene.paint.Paint'
+                width : 'double',
+                height: 'double',
+                root  : 'javafx.scene.Parent',
+                fill  : 'javafx.scene.paint.Paint',
+                stylesheets: 'java.util.List'
         ] as Map<String, String>
 
 @Field Map<String, String> LINEAR_GRADIENT_ARGS =
         [
-                startX      : 'java.lang.Double',
-                startY      : 'java.lang.Double',
-                endX        : 'java.lang.Double',
-                endY        : 'java.lang.Double',
-                proportional: 'java.lang.Boolean',
+                startX      : 'double',
+                startY      : 'double',
+                endX        : 'double',
+                endY        : 'double',
+                proportional: 'boolean',
                 cycleMethod : 'javafx.scene.paint.CycleMethod',
                 stops       : 'java.util.List'
         ] as Map<String, String>
@@ -101,52 +86,61 @@ import groovy.transform.Field
                 node    : 'javafx.scene.Node'
         ] as Map<String, String>
 
+@Field Map<String, String> TIMELINE_ARGS =
+        [
+                cycleCount : 'java.lang.Integer',
+                autoReverse: 'java.lang.Boolean',
+                delay      : 'javafx.util.Duration',
+                rate       : 'java.lang.Double',
+                onFinished : 'groovy.lang.Closure'
+        ] as Map<String, String>
+
 // --- contexts ---------------------------------------------------------------
 
-def SGB_CONTEXT    = context(ctype: 'groovyx.javafx.SceneGraphBuilder')
-def SCRIPT_CONTEXT = context(place: scriptScope())
+def SGB_CONTEXT    = context
+def SCRIPT_CONTEXT = context(scope: scriptScope())
+def CONTRIB_SCOPE  = scope(parent: SCRIPT_CONTEXT, scopeType: 'groovyx.javafx.SceneGraphBuilder')
+def SGB_SCOPE      = scope(parent: SCRIPT_CONTEXT, scopeType: 'groovyx.javafx.SceneGraphBuilder')
 
-// --- contributors -----------------------------------------------------------
-
-// stage(...) { scene { ... } } when used on a SceneGraphBuilder
+// --- contributors -------------------------------...eneGraphBuilder
 contributor(SGB_CONTEXT) {
     method(
-            name: 'stage',
-            params: [args: STAGE_ARGS, scene: {}],
-            type: 'javafx.stage.Stage'
+            name: 'start',
+            type: 'javafx.stage.Stage',
+            params: [args: STAGE_ARGS, body: {}]
     )
-}
+    method(
+            name: 'stage',
+            type: 'javafx.stage.Stage',
+            params: [args: STAGE_ARGS, body: {}]
+    )
+    method(
+            name: 'scene',
+            type: 'javafx.scene.Scene',
+            params: [args: SCENE_ARGS, body: {}]
+    )
 
-// Provide the DSL methods inside start { }, stage { }, build { } blocks in scripts
-contributor(SCRIPT_CONTEXT) {
+    // --- factories ----------------------------------------------------------
+    method(name: 'rectangle', type: 'javafx.scene.shape.Rectangle', params: [args: [:], body: {}])
+    method(name: 'circle', type: 'javafx.scene.shape.Circle', params: [args: [:], body: {}])
 
-    // Keep activation narrow to common GroovyFX entry points
-    if (enclosingCall('start') || enclosingCall('stage') || enclosingCall('build')) {
+    // --- helpers ------------------------------------------------------------
+    method(
+            name: 'linearGradient',
+            type: 'javafx.scene.paint.LinearGradient',
+            params: [args: LINEAR_GRADIENT_ARGS]
+    )
 
-        // entry points
-        method(name: 'start', type: 'java.lang.Object', params: [body: {}])
-        method(name: 'build', type: 'java.lang.Object', params: [body: {}])
+    // animation
+    method(
+            name: 'parallelTransition',
+            type: 'javafx.animation.ParallelTransition',
+            params: [args: PARALLEL_TRANSITION_ARGS, body: {}]
+    )
 
-        // containers
-        method(name: 'scene', type: 'javafx.scene.Scene', params: [args: SCENE_ARGS, body: {}])
-        method(name: 'group', type: 'javafx.scene.Group', params: [args: GROUP_ARGS, body: {}])
-
-        // shapes
-        method(name: 'rectangle', type: 'javafx.scene.shape.Rectangle', params: [args: RECT_ARGS, body: {}])
-        method(name: 'circle', type: 'javafx.scene.shape.Circle', params: [args: CIRCLE_ARGS, body: {}])
-
-        // paint helper (for: fill: linearGradient(...))
-        method(
-                name: 'linearGradient',
-                type: 'javafx.scene.paint.LinearGradient',
-                params: [args: LINEAR_GRADIENT_ARGS]
-        )
-
-        // animation
-        method(
-                name: 'parallelTransition',
-                type: 'javafx.animation.ParallelTransition',
-                params: [args: PARALLEL_TRANSITION_ARGS, body: {}]
-        )
-    }
+    method(
+            name: 'timeline',
+            type: 'javafx.animation.Timeline',
+            params: [args: TIMELINE_ARGS, body: {}]
+    )
 }

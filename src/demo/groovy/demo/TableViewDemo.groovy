@@ -36,8 +36,8 @@ class Person {
 }
 
 def persons = [
-        new Person(name: "Jim Clarke", age: 29, gender: Gender.MALE, dob: LocalDate.now() - 90),
-        new Person(name: "Dean Iverson", age: 30, gender: Gender.MALE, dob: LocalDate.now() - 45),
+        new Person(name: "Jim Clarke", age: 29, gender: Gender.MALE, dob: LocalDate.now().minusDays(90)),
+        new Person(name: "Dean Iverson", age: 30, gender: Gender.MALE, dob: LocalDate.now().minusDays(45)),
         new Person(name: "Angelina Jolie", age: 36, gender: Gender.FEMALE, dob: LocalDate.now())
 ]
 

@@ -18,26 +18,39 @@
 import javafx.application.ConditionalFeature
 import javafx.application.Platform
 import javafx.scene.PerspectiveCamera
+import javafx.scene.paint.Color
+import javafx.scene.transform.Rotate
+import javafx.geometry.Pos
+
 
 import static groovyx.javafx.GroovyFX.start
 
 start {
     if (!Platform.isSupported(ConditionalFeature.SCENE3D)) {
-        println("*************************************************************")
-        println("*    WARNING: common conditional SCENE3D isn't supported    *")
-        println("*************************************************************")
+        println "*************************************************************"
+        println "*    WARNING: common conditional SCENE3D isn't supported    *"
+        println "*************************************************************"
     }
 
+    def cam = new PerspectiveCamera(true)
+    cam.nearClip = 0.1
+    cam.farClip  = 5000
+    cam.translateZ = -1200
+
     stage(title: "GroovyFX Transform3D Demo", width: 400, height: 300, visible: true, resizable: true) {
-        scene(fill: GROOVYBLUE, camera: new PerspectiveCamera()) {
-            rectangle(x: 20, y: 20, width: 100, height: 50, fill: BLUE) {
-                //rotate(angle: 30, axis: Rotate.Y_AXIS)
-                //scale(x: 1.2)
-                //translate(x: -100, y: -50, z:-50)
-                //shear(x: -0.35, y: 0)
-                affine(tx: -20, mxx: 2, mxy: 0.5, mxz: 1,
-                        ty: -50, myx: 1, myy: 1.2, myz: 1,
-                        tz: 0, mzx: 1, mzy: 1.0, mzz: 0)
+        // NOTE: no fill attr here — we paint background via pane style
+        scene(camera: cam) {
+            group {
+                // background (covers whole stage)
+                rectangle(x: 0, y: 0, width: 400, height: 300, fill: Color.web("#5f93a3"))
+
+                // the demo rectangle
+                rectangle(
+                        x: 120, y: 105,
+                        width: 160, height: 90,
+                        fill: Color.BLUE,
+                        transforms: [ new Rotate(30, 120 + 80, 105 + 45, 0, Rotate.Z_AXIS) ]
+                )
             }
         }
     }

@@ -15,13 +15,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+import javafx.scene.media.MediaPlayer
+
+
 import static groovyx.javafx.GroovyFX.start
 
+
 start {
-    final videoURL = "http://download.oracle.com/otndocs/products/javafx/oow2010-2.flv"
+    final videoURL = "https://download.blender.org/peach/bigbuckbunny_movies/BigBuckBunny_640x360.m4v"
+
+
     stage(title: "GroovyFX MediaView Demo", visible: true) {
-        scene(width: 540, height: 200) {
-            mediaView(mediaPlayer: mediaPlayer(source: videoURL, autoPlay: true))
+        scene(width: 900, height: 650) {
+                mediaView(
+                        mediaPlayer: mediaPlayer(source: videoURL, autoPlay: true),
+                        preserveRatio: true,
+                        fitWidth: 900,
+                        fitHeight: 650
+                )
         }
     }
 }

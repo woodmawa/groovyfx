@@ -15,10 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
+
 
 package groovyx.javafx.factory
 
@@ -28,38 +25,61 @@ import javafx.collections.FXCollections
 import javafx.scene.canvas.Canvas
 
 /**
+ * CanvasFactory collects CanvasOperation children (e.g. operation { gc -> ... })
+ * and builds a DrawOperations instance when the canvas node completes.
  *
- * @author jimclarke
+ * IMPORTANT:
+ *  - When setChild() is called, builder.context is the CHILD context.
+ *  - The canvas' context is builder.parentContext at that point.
+ *  - onNodeCompleted() runs with builder.context == the canvas context.
+ *
+ * So we must accumulate operations into builder.parentContext, not builder.context,
+ * otherwise the list is lost and the canvas draws nothing (blank output).
  */
 class CanvasFactory extends AbstractNodeFactory {
+
     private static final String CANVAS_OPERATIONS_LIST_PROPERTY = "__canvasOperationsList"
-    
+
     CanvasFactory() {
-        super(Canvas);
+        super(Canvas)
     }
-    
+
     CanvasFactory(Class<Canvas> beanClass) {
-        super(beanClass);
+        super(beanClass)
     }
-    
+
     @Override
-    public void setChild(FactoryBuilderSupport builder, Object parent, Object child) {
+    void setChild(FactoryBuilderSupport builder, Object parent, Object child) {
         if (child instanceof CanvasOperation) {
-            def operations = builder.parentContext.get(CANVAS_OPERATIONS_LIST_PROPERTY, [])
+            // Store on the CANVAS context (parent context), not the child's context.
+            def ctx = builder.parentContext
+            def operations = ctx.get(CANVAS_OPERATIONS_LIST_PROPERTY)
+
+            if (!(operations instanceof List)) {
+                operations = []
+                ctx.put(CANVAS_OPERATIONS_LIST_PROPERTY, operations)
+            }
+
             operations << child
-        }else {
-            super.setChild(builder, parent, child);
+        } else {
+            super.setChild(builder, parent, child)
         }
     }
-    
-    
+
     @Override
     void onNodeCompleted(FactoryBuilderSupport builder, Object parent, Object node) {
-        def operations = FXCollections.observableArrayList(builder.context.remove(CANVAS_OPERATIONS_LIST_PROPERTY))
-        def dop = new DrawOperations(operations: operations, canvas: node);
-        dop.draw();
-        node.userData = dop;
+        // builder.context here is the CANVAS context, so remove from it.
+        def opsList = builder.context.remove(CANVAS_OPERATIONS_LIST_PROPERTY)
+
+        // remove(.) may return null => DO NOT call observableArrayList(null)
+        def operations = (opsList instanceof Collection)
+                ? FXCollections.observableArrayList(opsList as Collection)
+                : FXCollections.observableArrayList()
+
+        def dop = new DrawOperations(operations: operations, canvas: node)
+        dop.draw()
+        node.userData = dop
+
         super.onNodeCompleted(builder, parent, node)
     }
 }
-

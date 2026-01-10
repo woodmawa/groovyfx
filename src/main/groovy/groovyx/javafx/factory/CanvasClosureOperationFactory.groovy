@@ -17,37 +17,46 @@
  */
 package groovyx.javafx.factory
 
-import groovyx.javafx.canvas.ClosureOperation
+import groovyx.javafx.canvas.CanvasOperation
 
 /**
-*
-* @author jimclarke
-*/
+ * Supports:
+ *   canvas { operation(value: someClosure) }
+ *
+ * The CanvasFactory only records children that are instances of
+ * groovyx.javafx.canvas.CanvasOperation, so this factory must return one.
+ *
+ * NOTE: We intentionally rely on Groovy SAM coercion:
+ *   Closure -> CanvasOperation
+ * so we don't need to know the exact method name on CanvasOperation.
+ */
 class CanvasClosureOperationFactory extends AbstractFXBeanFactory {
-    
+
     CanvasClosureOperationFactory() {
-        super(ClosureOperation)
+        super(Object)
     }
-    CanvasClosureOperationFactory(Class<ClosureOperation> beanClass) {
-        super(beanClass);
+
+    CanvasClosureOperationFactory(Class beanClass) {
+        // SceneGraphBuilder.registerCanvas() constructs us with (Class)
+        super(beanClass ?: Object)
     }
-    
-    public Object newInstance(FactoryBuilderSupport builder, Object name, Object value, Map attributes)
+
+    @Override
+    Object newInstance(FactoryBuilderSupport builder, Object name, Object value, Map attributes)
             throws InstantiationException, IllegalAccessException {
-         Object instance = Object.newInstance(builder,name,value, attributes);
-         if(value != null && value instanceof Closure)
-            instance.closure = value;
-         instance;
-    }
-    
-    public boolean isHandlesNodeChildren() {
-        return true;
-    }
 
-    public boolean onNodeChildren(FactoryBuilderSupport builder, Object node, Closure childContent) {
-        node.closure = childContent
-        return false
+        def op = value
+        if (op == null && attributes != null) {
+            // demo-friendly: operation(value: drawCanvas)
+            op = attributes.remove('value')
+        }
+
+        if (!(op instanceof Closure)) {
+            throw new IllegalArgumentException("operation requires a Closure (e.g. operation(value: drawCanvas))")
+        }
+
+        // Make sure the closure looks like the expected operation signature
+        // (GraphicsContext parameter). Even if it's not typed, SAM coercion works.
+        return ((Closure) op) as CanvasOperation
     }
-	
 }
-

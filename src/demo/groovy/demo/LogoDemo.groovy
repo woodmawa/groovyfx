@@ -24,7 +24,62 @@ import static groovyx.javafx.GroovyFX.start
  * Original conversion from png data by Gerrit Grunwald.
  * @author Dierk Koenig
  */
+
+/*
+ * WHY explicit DSL methods (star, fxLabel) are registered on the SceneGraphBuilder
+ *
+ * GroovyFX demos like LogoDemo use a “macro-style” DSL, e.g.:
+ *
+ *     star 12, [YELLOW, ORANGE]
+ *     fxLabel()
+ *
+ * Inside a FactoryBuilderSupport / SceneGraphBuilder closure, *unqualified*
+ * method calls are first interpreted as potential node names.
+ *
+ * That means Groovy will try to resolve:
+ *     star(...)
+ * as:
+ *     builder.createNode('star', ...)
+ *
+ * Since there is no factory registered for a node named "star" or "fxLabel",
+ * FactoryBuilderSupport logs warnings like:
+ *
+ *     "Could not find match for name 'star'"
+ *
+ * The code still works because Groovy later falls back to calling the script
+ * method, but the warnings are noisy and misleading.
+ *
+ * To preserve the original DSL style *and* eliminate these warnings, we
+ * explicitly register "star" and "fxLabel" as builder methods using
+ * registerExplicitMethod(...).
+ *
+ * This tells the builder:
+ *   - these names are DSL helper methods, not node factories
+ *   - do not attempt createNode(...) resolution
+ *
+ * Result:
+ *   - clean DSL syntax (no `this.star(...)` clutter)
+ *   - no builder warnings
+ *   - behavior matches original GroovyFX intent
+ *
+ * This is a compatibility fix for modern Groovy / JavaFX runtimes and is
+ * intentionally scoped to DSL helpers only.
+ */
+
 start {
+
+    // Make these behave like DSL keywords (not node names)
+    def b = (delegate as SceneGraphBuilder)
+
+    b.registerExplicitMethod('star') { int angle, List stops ->
+        this.star(b, angle, stops)
+        return null
+    }
+
+    b.registerExplicitMethod('fxLabel') { ->
+        this.fxLabel(b)
+        return null
+    }
 
     stage title: "GroovyFX Logo", x: 10, y: 10, visible: true, {
         scene(fill: GROOVYBLUE, width: 300, height: 300) {
@@ -33,9 +88,17 @@ start {
                 borderPane id: 'parent', {
                     group id: 'logo', {
                         transitions = parallelTransition()
+
                         star delegate, 12, [LIGHTGREEN, GREEN]*.brighter()
                         star delegate, 6, [LIGHTBLUE, BLUE]*.brighter()
                         star delegate, 0, [YELLOW, ORANGE]
+
+                        /*this.star(delegate, 12, [LIGHTGREEN, GREEN]*.brighter())
+                        this.star(delegate, 6, [LIGHTBLUE, BLUE]*.brighter())
+                        this.star(delegate, 0, [YELLOW, ORANGE])
+                        */
+
+
                         fxLabel delegate
                         onMouseClicked { transitions.playFromStart() }
                     }

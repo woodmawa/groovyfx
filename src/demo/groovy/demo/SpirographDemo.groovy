@@ -19,6 +19,7 @@ import javafx.geometry.Point2D
 import javafx.scene.image.Image
 
 import java.util.Base64
+import java.io.ByteArrayInputStream
 
 import static groovyx.javafx.GroovyFX.start
 
@@ -132,14 +133,14 @@ start {
         fps = time+" fps";
     }
 
-    img_particle = image(DatatypeConverter.parseBase64Binary(imgData));
+    img_particle = new Image(new ByteArrayInputStream(imgBytes))
     strokeColor = rgb(95,68,34,0.4)
     stage(title: "SpirographFX", x: 100, y: 100, visible: true) {
         scene(id: "scene", fill: groovyblue, width: 600, height: 640) {
             vbox(spacing: 10) {
                 canvas(id:"canvas", width: bind(scene.width()),
                     height: bind(scene.height() - 200 )) {
-                    operation drawCanvas
+                    operation (value: drawCanvas)
                     onInvalidate("width") {
                         canvas.userData.draw()
                     }
