@@ -51,15 +51,11 @@ import javafx.scene.effect.*
 import javafx.scene.image.Image
 import javafx.scene.image.ImageView
 import javafx.scene.layout.*
-import javafx.scene.media.MediaPlayer
-import javafx.scene.media.MediaView
 import javafx.scene.paint.Color
 import javafx.scene.shape.*
 import javafx.scene.text.Text
 import javafx.scene.text.TextFlow
 import javafx.scene.transform.*
-import javafx.scene.web.HTMLEditor
-import javafx.scene.web.WebView
 import javafx.stage.Stage
 import javafx.stage.Window
 import javafx.util.Duration
@@ -95,6 +91,9 @@ class SceneGraphBuilder extends FactoryBuilderSupport {
 
     // Prevent re-registering factories if initialize() is called more than once
     private boolean factoriesRegistered = false
+
+    private boolean addonsLoaded = false
+    private static final String DISABLE_ADDONS_PROP = "groovyfx.disableAddons"
 
     static {
         enhanceClasses()
@@ -137,13 +136,33 @@ class SceneGraphBuilder extends FactoryBuilderSupport {
     }
 
     private void loadAddons() {
-        ServiceLoader.load(SceneGraphAddon, this.class.classLoader).each { addon ->
-            try {
-                addon.apply(this)
-            } catch (Throwable t) {
-                LOG.warning("Failed to load SceneGraphAddon ${addon?.class?.name}: ${t.message}")
+        try {
+            def cl = Thread.currentThread().contextClassLoader ?: this.class.classLoader
+            def loader = ServiceLoader.load(SceneGraphAddon, cl)
+            for (SceneGraphAddon addon : loader) {
+                try {
+                    addon.apply(this)
+                    LOG.fine("Loaded SceneGraphAddon ${addon.class.name}")
+                } catch (Throwable t) {
+                    LOG.warning("Failed to apply SceneGraphAddon ${addon?.class?.name}: ${t.message}")
+                }
             }
+        } catch (ServiceConfigurationError sce) {
+            LOG.warning("Failed to discover SceneGraphAddon providers: ${sce.message}")
+        } catch (Throwable t) {
+            LOG.warning("Unexpected failure loading SceneGraphAddons: ${t.message}")
         }
+    }
+
+    private void loadAddonsOnce() {
+        if (addonsLoaded) return
+        addonsLoaded = true
+
+        if (Boolean.getBoolean(DISABLE_ADDONS_PROP)) {
+            LOG.fine("SceneGraphAddon loading disabled via -D${DISABLE_ADDONS_PROP}=true")
+            return
+        }
+        loadAddonsOnce()
     }
 
     /** Manually apply an addon to this builder instance. */
@@ -156,6 +175,14 @@ class SceneGraphBuilder extends FactoryBuilderSupport {
 
     /** Manually register a factory. */
     void register(String name, Factory factory) { registerFactory(name, factory) }
+
+    void registerIfAbsent(String name, Factory factory) {
+        if (getFactories()?.containsKey(name)) {
+            LOG.warning("Factory '${name}' already registered; skipping ${factory.class.name}")
+            return
+        }
+        registerFactory(name, factory)
+    }
 
     /** Subscribe to an ObservableValue (Consumer). */
     def subscribe(ObservableValue observable, Closure subscriber) {
@@ -210,7 +237,14 @@ class SceneGraphBuilder extends FactoryBuilderSupport {
         return factory
     }
 
-    SceneGraphBuilder submit(WebView wv, Closure c) {
+    SceneGraphBuilder submit(Object wv, Closure c) {
+        if (wv == null) return this
+        if (wv.class.name != "javafx.scene.web.WebView") {
+            // Backward-compatible behavior: invoke immediately
+            c.call(wv)
+            return this
+        }
+
         def submitClosure = {
             if (wv.engine.loadWorker.state == Worker.State.SUCCEEDED) {
                 c.call(wv)
@@ -772,9 +806,36 @@ class SceneGraphBuilder extends FactoryBuilderSupport {
         }
     }
 
+    private static Class tryLoadClass(String fqcn) {
+        try {
+            def cl = Thread.currentThread().contextClassLoader ?: SceneGraphBuilder.class.classLoader
+            return (Class) Class.forName(fqcn, false, cl)
+        } catch (Throwable ignored) {
+            return null
+        }
+    }
+
+    private static boolean isInstanceOf(Object obj, String fqcn) {
+        if (obj == null) return false
+        Class<?> c = obj.getClass()
+        while (c != null) {
+            if (c.getName() == fqcn) return true
+            c = c.getSuperclass()
+        }
+        return false
+    }
+
+
     void registerWeb() {
-        registerFactory "webView", new WebFactory(WebView)
-        registerFactory "htmlEditor", new WebFactory(HTMLEditor)
+        Class<?> webViewClass = tryLoadClass("javafx.scene.web.WebView")
+        Class<?> htmlEditorClass = tryLoadClass("javafx.scene.web.HTMLEditor")
+        if (webViewClass == null || htmlEditorClass == null) {
+            LOG.fine("javafx-web not present; skipping WebView/HTMLEditor DSL registration")
+            return
+        }
+
+        registerFactory "webView", new WebFactory(webViewClass)
+        registerFactory "htmlEditor", new WebFactory(htmlEditorClass)
 
         registerFactory "onLoad", new ClosureHandlerFactory(GroovyEventHandler)
         registerFactory "onError", new ClosureHandlerFactory(GroovyEventHandler)
@@ -814,8 +875,19 @@ class SceneGraphBuilder extends FactoryBuilderSupport {
     }
 
     void registerMedia() {
-        registerFactory "mediaView", new MediaViewFactory(MediaView)
-        registerFactory "mediaPlayer", new MediaPlayerFactory(MediaPlayer)
+        Class<?> mediaViewClass = tryLoadClass("javafx.scene.media.MediaView")
+        Class<?> mediaPlayerClass = tryLoadClass("javafx.scene.media.MediaPlayer")
+        if (mediaViewClass == null || mediaPlayerClass == null) {
+            LOG.fine("javafx-media not present; skipping MediaView/MediaPlayer DSL registration")
+            return
+        }
+
+        Class mv = tryLoadClass("javafx.scene.media.MediaView")
+        Class mp = tryLoadClass("javafx.scene.media.MediaPlayer")
+        if (mv == null || mp == null) return
+
+        registerFactory "mediaView", new MediaViewFactory(mv)
+        registerFactory "mediaPlayer", new MediaPlayerFactory(mp)
     }
 
     /**
@@ -829,7 +901,7 @@ class SceneGraphBuilder extends FactoryBuilderSupport {
     }
 
     private static final Closure postCompletionDelegate = { FactoryBuilderSupport builder, Object parent, Object node ->
-        if (parent instanceof MediaView && node instanceof MediaPlayer) {
+        if (isInstanceOf(parent, "javafx.scene.media.MediaView") && isInstanceOf(node, "javafx.scene.media.MediaPlayer")) {
             parent.mediaPlayer = node
         } else if (parent instanceof Stage && node instanceof Scene) {
             parent.scene = node
