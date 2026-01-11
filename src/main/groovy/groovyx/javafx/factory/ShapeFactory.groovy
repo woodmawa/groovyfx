@@ -24,7 +24,7 @@ import groovy.util.FactoryBuilderSupport
 
 class ShapeFactory extends AbstractNodeFactory {
 
-    ShapeFactory(Class<? extends Shape> shapeClass) {
+    ShapeFactory(shapeClass) {
         super(shapeClass, false)
     }
 

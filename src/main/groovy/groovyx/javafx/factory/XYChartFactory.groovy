@@ -29,7 +29,7 @@ import javafx.scene.chart.XYChart
  */
 class XYChartFactory extends AbstractFXBeanFactory {
 
-    XYChartFactory(Class<? extends XYChart> beanClass) {
+    XYChartFactory(beanClass) {
         super(beanClass)
     }
 

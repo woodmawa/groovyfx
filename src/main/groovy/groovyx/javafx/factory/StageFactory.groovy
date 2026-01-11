@@ -22,6 +22,7 @@ import javafx.event.EventHandler
 import javafx.scene.Scene
 import javafx.stage.Stage
 import javafx.stage.WindowEvent
+import groovy.util.logging.Slf4j
 
 /**
  * StageFactory - creates a JavaFX Stage and wires Scene/stylesheets.
@@ -34,10 +35,13 @@ import javafx.stage.WindowEvent
  * If a legacy flag like visible:true / show:true / autoShow:true is provided,
  * it will trigger show() on nodeCompleted.
  */
+@Slf4j
 class StageFactory extends AbstractNodeFactory {
 
     private static final String PENDING_STYLESHEETS_KEY   = "__pendingStageStylesheets"
     private static final String PENDING_STAGE_TRIGGERS_KEY = "__pendingStageTriggers"
+    private static final String WARNED_IMPLICIT_PRIMARY_KEY = "__warnedImplicitPrimaryStage"
+
 
     private static final List<String> LEGACY_SHOW_FLAGS = [
             'visible',
@@ -151,6 +155,23 @@ class StageFactory extends AbstractNodeFactory {
         if (!(node instanceof Stage)) return
         Stage stage = (Stage) node
 
+        // Backward compatibility:
+        // If no primaryStage has been set yet, treat the first created Stage as primaryStage.
+        if (builder.hasProperty('primaryStage') && builder.primaryStage == null) {
+            builder.primaryStage = stage
+
+            // warn only once per builder to avoid spam
+            def ctx = builder.context
+            if (ctx.get(WARNED_IMPLICIT_PRIMARY_KEY) != Boolean.TRUE) {
+                ctx[WARNED_IMPLICIT_PRIMARY_KEY] = true
+                log.warn(
+                        "Implicit primaryStage assignment: first 'stage { }' became primaryStage. " +
+                                "Prefer 'primaryStage { }' for explicit intent."
+                )
+            }
+        }
+
+        // Existing trigger behavior (unchanged)
         def triggers = (Map<String, List>) stage.properties.remove(PENDING_STAGE_TRIGGERS_KEY)
         if (!triggers) return
 

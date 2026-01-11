@@ -29,7 +29,7 @@ class TextFactory extends AbstractNodeFactory {
         super(Text)
     }
     
-    TextFactory(Class<Text> beanClass) {
+    TextFactory(beanClass) {
         super(beanClass)
     }
 

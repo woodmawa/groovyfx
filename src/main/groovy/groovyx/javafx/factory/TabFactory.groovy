@@ -30,7 +30,7 @@ class TabFactory extends AbstractFXBeanFactory {
     public TabFactory() {
         super(Tab);
     }
-    public TabFactory(Class<Tab> beanClass) {
+    public TabFactory(beanClass) {
         super(beanClass);
     }
     public Object newInstance(FactoryBuilderSupport builder, Object name, Object value, Map attributes) throws InstantiationException, IllegalAccessException {

@@ -29,7 +29,7 @@ class PieChartFactory extends AbstractNodeFactory {
     PieChartFactory() {
         super(PieChart)
     }
-    PieChartFactory(Class<PieChart> beanClass) {
+    PieChartFactory(beanClass) {
         super(beanClass)
     }
     

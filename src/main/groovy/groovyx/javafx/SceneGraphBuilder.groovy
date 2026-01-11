@@ -3,7 +3,7 @@
  *
  * Copyright 2011-2021 the original author or authors.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
+ * Licensed under the Apache License, Version 2.0 (the "License")
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
@@ -17,133 +17,11 @@
  */
 package groovyx.javafx
 
-import groovyx.javafx.canvas.AppendSVGPathOperation
-import groovyx.javafx.canvas.ApplyEffectOperation
-import groovyx.javafx.canvas.ArcOperation
-import groovyx.javafx.canvas.ArcToOperation
-import groovyx.javafx.canvas.BeginPathOperation
-import groovyx.javafx.canvas.BezierCurveToOperation
-import groovyx.javafx.canvas.CanvasOperation
-import groovyx.javafx.canvas.ClearRectOperation
-import groovyx.javafx.canvas.ClipOperation
-import groovyx.javafx.canvas.ClosePathOperation
-import groovyx.javafx.canvas.DrawImageOperation
-import groovyx.javafx.canvas.FillArcOperation
-import groovyx.javafx.canvas.FillOperation
-import groovyx.javafx.canvas.FillOvalOperation
-import groovyx.javafx.canvas.FillPolygonOperation
-import groovyx.javafx.canvas.FillRectOperation
-import groovyx.javafx.canvas.FillRoundRectOperation
-import groovyx.javafx.canvas.FillTextOperation
-import groovyx.javafx.canvas.LineToOperation
-import groovyx.javafx.canvas.MoveToOperation
-import groovyx.javafx.canvas.QuadraticCurveToOperation
-import groovyx.javafx.canvas.RectOperation
-import groovyx.javafx.canvas.RestoreOperation
-import groovyx.javafx.canvas.RotateOperation
-import groovyx.javafx.canvas.SaveOperation
-import groovyx.javafx.canvas.ScaleOperation
-import groovyx.javafx.canvas.SetEffectOperation
-import groovyx.javafx.canvas.SetFillOperation
-import groovyx.javafx.canvas.SetFillRuleOperation
-import groovyx.javafx.canvas.SetFontOperation
-import groovyx.javafx.canvas.SetGlobalAlphaOperation
-import groovyx.javafx.canvas.SetGlobalBlendModeOperation
-import groovyx.javafx.canvas.SetLineCapOperation
-import groovyx.javafx.canvas.SetLineJoinOperation
-import groovyx.javafx.canvas.SetLineWidthOperation
-import groovyx.javafx.canvas.SetMiterLimitOperation
-import groovyx.javafx.canvas.SetStrokeOperation
-import groovyx.javafx.canvas.SetTextAlignOperation
-import groovyx.javafx.canvas.SetTextBaselineOperation
-import groovyx.javafx.canvas.SetTransformOperation
-import groovyx.javafx.canvas.StrokeArcOperation
-import groovyx.javafx.canvas.StrokeLineOperation
-import groovyx.javafx.canvas.StrokeOperation
-import groovyx.javafx.canvas.StrokeOvalOperation
-import groovyx.javafx.canvas.StrokePolygonOperation
-import groovyx.javafx.canvas.StrokePolylineOperation
-import groovyx.javafx.canvas.StrokeRectOperation
-import groovyx.javafx.canvas.StrokeRoundRectOperation
-import groovyx.javafx.canvas.StrokeTextOperation
-import groovyx.javafx.canvas.TransformOperation
-import groovyx.javafx.canvas.TranslateOperation
-import groovyx.javafx.factory.AbstractFXBeanFactory
-import groovyx.javafx.factory.AbstractNodeFactory
-import groovyx.javafx.factory.AccordionFactory
-import groovyx.javafx.factory.ActionFactory
-import groovyx.javafx.factory.AxisFactory
-import groovyx.javafx.factory.BadgeFactory
-import groovyx.javafx.factory.BindFactory
-import groovyx.javafx.factory.BorderPanePositionFactory
-import groovyx.javafx.factory.ButtonBarFactory
-import groovyx.javafx.factory.CanvasClosureOperationFactory
-import groovyx.javafx.factory.CanvasFactory
-import groovyx.javafx.factory.CanvasOperationFactory
-import groovyx.javafx.factory.CardFactory
-import groovyx.javafx.factory.CardSectionFactory
-import groovyx.javafx.factory.CellFactory
-import groovyx.javafx.factory.ChangeFactory
-import groovyx.javafx.factory.ClipFactory
-import groovyx.javafx.factory.ClosureHandlerFactory
-import groovyx.javafx.factory.CollectionFactory
+import groovy.lang.DelegatesTo
+import groovy.transform.CompileStatic
 import groovyx.javafx.animation.TargetHolder
-import groovyx.javafx.factory.ComponentClassFactory
-import groovyx.javafx.factory.ContainerFactory
-import groovyx.javafx.factory.ControlFactory
-import groovyx.javafx.factory.CustomNodeFactory
-import groovyx.javafx.factory.DividerPositionFactory
-import groovyx.javafx.factory.DrawFactory
-import groovyx.javafx.factory.EffectFactory
-import groovyx.javafx.factory.EffectWrapper
-import groovyx.javafx.factory.FXMLFactory
-import groovyx.javafx.factory.FXMLLoaderBuilder
-import groovyx.javafx.factory.FillFactory
-import groovyx.javafx.factory.FilterFactory
-import groovyx.javafx.factory.FormLayoutFactory
-import groovyx.javafx.factory.GraphicFactory
-import groovyx.javafx.factory.GridColumn
-import groovyx.javafx.factory.GridConstraintFactory
-import groovyx.javafx.factory.GridRowColumnFactory
-import groovyx.javafx.factory.IconFactory
-import groovyx.javafx.factory.ImageFactory
-import groovyx.javafx.factory.ImageViewFactory
-import groovyx.javafx.factory.LabeledFactory
-import groovyx.javafx.factory.LinearGradientFactory
-import groovyx.javafx.factory.MediaPlayerFactory
-import groovyx.javafx.factory.MediaViewFactory
-import groovyx.javafx.factory.MenuFactory
-import groovyx.javafx.factory.MenuItemFactory
-import groovyx.javafx.factory.NodeFactory
-import groovyx.javafx.factory.PathElementFactory
-import groovyx.javafx.factory.PathFactory
-import groovyx.javafx.factory.PieChartFactory
-import groovyx.javafx.factory.RadialGradientFactory
-import groovyx.javafx.factory.ResourceFactory
-import groovyx.javafx.factory.ResponsivePaneFactory
-import groovyx.javafx.factory.SceneFactory
-import groovyx.javafx.factory.ScrollPaneFactory
-import groovyx.javafx.factory.ShapeFactory
-import groovyx.javafx.factory.SplitPaneFactory
-import groovyx.javafx.factory.StageFactory
-import groovyx.javafx.factory.StopFactory
-import groovyx.javafx.factory.StrokeFactory
-import groovyx.javafx.factory.StylesheetFactory
-import groovyx.javafx.factory.TabFactory
-import groovyx.javafx.factory.TabPaneFactory
-import groovyx.javafx.factory.TableFactory
-import groovyx.javafx.factory.TextFactory
-import groovyx.javafx.factory.TitledContent
-import groovyx.javafx.factory.TitledFactory
-import groovyx.javafx.factory.ToggleSwitchFactory
-import groovyx.javafx.factory.ToolBarFactory
-import groovyx.javafx.factory.TransformFactory
-import groovyx.javafx.factory.TransitionFactory
-import groovyx.javafx.factory.TreeItemFactory
-import groovyx.javafx.factory.WebFactory
-import groovyx.javafx.factory.XYChartFactory
-import groovyx.javafx.factory.XYSeriesFactory
 import groovyx.javafx.canvas.*
+import groovyx.javafx.components.Notification
 import groovyx.javafx.event.GroovyCallback
 import groovyx.javafx.event.GroovyEventHandler
 import groovyx.javafx.factory.*
@@ -152,19 +30,8 @@ import groovyx.javafx.factory.animation.KeyFrameWrapper
 import groovyx.javafx.factory.animation.KeyValueFactory
 import groovyx.javafx.factory.animation.KeyValueSubFactory
 import groovyx.javafx.factory.animation.TimelineFactory
-import javafx.animation.FadeTransition
-import javafx.animation.FillTransition
-import javafx.animation.Interpolator
-import javafx.animation.ParallelTransition
-import javafx.animation.PathTransition
-import javafx.animation.PauseTransition
-import javafx.animation.RotateTransition
-import javafx.animation.ScaleTransition
-import javafx.animation.SequentialTransition
-import javafx.animation.StrokeTransition
-import javafx.animation.Timeline
-import javafx.animation.Transition
-import javafx.animation.TranslateTransition
+import groovyx.javafx.spi.SceneGraphAddon
+import javafx.animation.*
 import javafx.application.Platform
 import javafx.beans.InvalidationListener
 import javafx.beans.value.ChangeListener
@@ -178,122 +45,60 @@ import javafx.scene.Group
 import javafx.scene.Node
 import javafx.scene.Parent
 import javafx.scene.Scene
-import javafx.scene.chart.AreaChart
-import javafx.scene.chart.Axis
-import javafx.scene.chart.BarChart
-import javafx.scene.chart.BubbleChart
-import javafx.scene.chart.CategoryAxis
-import javafx.scene.chart.LineChart
-import javafx.scene.chart.NumberAxis
-import javafx.scene.chart.PieChart
-import javafx.scene.chart.ScatterChart
-import javafx.scene.chart.StackedAreaChart
-import javafx.scene.chart.StackedBarChart
-import javafx.scene.chart.XYChart
-import groovyx.javafx.components.Badge
-import groovyx.javafx.components.Card
-import groovyx.javafx.components.FormLayout
-import groovyx.javafx.components.Icon
-import groovyx.javafx.components.Notification
-import groovyx.javafx.components.ResponsivePane
-import groovyx.javafx.components.ToggleSwitch
+import javafx.scene.chart.*
 import javafx.scene.control.*
-import javafx.scene.control.ColorPicker
-import javafx.scene.control.Pagination
-import javafx.scene.effect.Blend
-import javafx.scene.effect.Bloom
-import javafx.scene.effect.BoxBlur
-import javafx.scene.effect.ColorAdjust
-import javafx.scene.effect.ColorInput
-import javafx.scene.effect.DisplacementMap
-import javafx.scene.effect.DropShadow
-import javafx.scene.effect.Effect
-import javafx.scene.effect.GaussianBlur
-import javafx.scene.effect.Glow
-import javafx.scene.effect.ImageInput
-import javafx.scene.effect.InnerShadow
-import javafx.scene.effect.Light
-import javafx.scene.effect.Lighting
-import javafx.scene.effect.MotionBlur
-import javafx.scene.effect.PerspectiveTransform
-import javafx.scene.effect.Reflection
-import javafx.scene.effect.SepiaTone
-import javafx.scene.effect.Shadow
+import javafx.scene.effect.*
 import javafx.scene.image.Image
 import javafx.scene.image.ImageView
-import javafx.scene.layout.AnchorPane
-import javafx.scene.layout.BorderPane
-import javafx.scene.layout.ColumnConstraints
-import javafx.scene.layout.FlowPane
-import javafx.scene.layout.GridPane
-import javafx.scene.layout.HBox
-import javafx.scene.layout.Pane
-import javafx.scene.layout.Region
-import javafx.scene.layout.RowConstraints
-import javafx.scene.layout.StackPane
-import javafx.scene.layout.TilePane
-import javafx.scene.layout.VBox
+import javafx.scene.layout.*
 import javafx.scene.media.MediaPlayer
 import javafx.scene.media.MediaView
 import javafx.scene.paint.Color
 import javafx.scene.shape.*
 import javafx.scene.text.Text
 import javafx.scene.text.TextFlow
-import javafx.scene.transform.Affine
-import javafx.scene.transform.Rotate
-import javafx.scene.transform.Scale
-import javafx.scene.transform.Shear
-import javafx.scene.transform.Transform
-import javafx.scene.transform.Translate
+import javafx.scene.transform.*
 import javafx.scene.web.HTMLEditor
 import javafx.scene.web.WebView
-import javafx.stage.DirectoryChooser
-import javafx.stage.FileChooser
-import javafx.stage.Popup
 import javafx.stage.Stage
 import javafx.stage.Window
-import org.codehaus.groovy.runtime.MethodClosure
-import groovyx.javafx.factory.FileChooserFactory
-import groovyx.javafx.factory.DirectoryChooserFactory
-
-import groovyx.javafx.spi.SceneGraphAddon
-import java.util.ServiceLoader
-
-
-import java.util.logging.Logger
-import java.util.function.Consumer
 import javafx.util.Duration
+import org.codehaus.groovy.runtime.MethodClosure
+
+import java.util.function.Consumer
+import java.util.logging.Logger
 
 import static groovyx.javafx.GroovyFXEnhancer.*
 
 /**
+ * SceneGraphBuilder
  *
- * @author jimclarke
+ * GroovyFX DSL builder for JavaFX.
  */
 class SceneGraphBuilder extends FactoryBuilderSupport {
-    static final String DELEGATE_PROPERTY_OBJECT_ID = "_delegateProperty:id";
-    static final String DEFAULT_DELEGATE_PROPERTY_OBJECT_ID = "id";
+    static final String DELEGATE_PROPERTY_OBJECT_ID = "_delegateProperty:id"
+    static final String DEFAULT_DELEGATE_PROPERTY_OBJECT_ID = "id"
 
-    static final String DELEGATE_PROPERTY_OBJECT_FILL = "_delegateProperty:fill";
-    static final String DEFAULT_DELEGATE_PROPERTY_OBJECT_FILL = "fill";
+    static final String DELEGATE_PROPERTY_OBJECT_FILL = "_delegateProperty:fill"
+    static final String DEFAULT_DELEGATE_PROPERTY_OBJECT_FILL = "fill"
 
-    static final String DELEGATE_PROPERTY_OBJECT_STROKE = "_delegateProperty:stroke";
-    static final String DEFAULT_DELEGATE_PROPERTY_OBJECT_STROKE = "stroke";
+    static final String DELEGATE_PROPERTY_OBJECT_STROKE = "_delegateProperty:stroke"
+    static final String DEFAULT_DELEGATE_PROPERTY_OBJECT_STROKE = "stroke"
 
-    static final String CONTEXT_SCENE_KEY = "CurrentScene";
-    static final String CONTEXT_DIVIDER_KEY = "CurrentDividers";
+    static final String CONTEXT_SCENE_KEY = "CurrentScene"
+    static final String CONTEXT_DIVIDER_KEY = "CurrentDividers"
 
     private static final Logger LOG = Logger.getLogger(SceneGraphBuilder.name)
     private static final Random random = new Random()
 
-    private Scene currentScene;
+    private Scene currentScene
 
     // Prevent re-registering factories if initialize() is called more than once
     private boolean factoriesRegistered = false
 
     static {
         enhanceClasses()
-     }
+    }
 
     SceneGraphBuilder(boolean init = true) {
         super(init)
@@ -306,160 +111,151 @@ class SceneGraphBuilder extends FactoryBuilderSupport {
         initialize()
     }
 
-    Stage getPrimaryStage() { return variables.primaryStage }
+    // ---- IDE-friendly explicit DSL entrypoint (works with registered PrimaryStageFactory) ----
+    @CompileStatic
+    Stage primaryStage(@DelegatesTo(strategy = Closure.DELEGATE_FIRST, value = Stage) Closure cl) {
+        return (Stage) invokeMethod("primaryStage", (Object) cl)
+    }
+
+    @CompileStatic
+    Stage primaryStage(Map attrs,
+                       @DelegatesTo(strategy = Closure.DELEGATE_FIRST, value = Stage) Closure cl) {
+        return (Stage) invokeMethod("primaryStage", (Object) ([attrs, cl] as Object[]))
+    }
+
+    Stage getPrimaryStage() { return (Stage) variables.primaryStage }
 
     Scene getCurrentScene() { return currentScene }
-    void setCurrentScene(Scene scene) { this.currentScene = scene}
+    void setCurrentScene(Scene scene) { this.currentScene = scene }
 
     SceneGraphBuilder defer(Closure c) {
         if (!(c instanceof MethodClosure)) {
             c = c.curry([this])
         }
-        Platform.runLater(c);
-        return this;
+        Platform.runLater(c)
+        return this
     }
 
     private void loadAddons() {
         ServiceLoader.load(SceneGraphAddon, this.class.classLoader).each { addon ->
             try {
-                LOG.info("load any component addons, via the spi ...")
                 addon.apply(this)
             } catch (Throwable t) {
                 LOG.warning("Failed to load SceneGraphAddon ${addon?.class?.name}: ${t.message}")
-                // optionally rethrow if you want strict behavior
             }
         }
     }
 
-    /**
-     * Manually apply an addon to this builder instance.
-     */
-    void addon(SceneGraphAddon addon) {
-        addon.apply(this)
-    }
+    /** Manually apply an addon to this builder instance. */
+    void addon(SceneGraphAddon addon) { addon.apply(this) }
 
-    /**
-     * Manually apply an addon by class name.
-     */
+    /** Manually apply an addon by class name. */
     void addon(Class<? extends SceneGraphAddon> addonClass) {
         addonClass.getDeclaredConstructor().newInstance().apply(this)
     }
 
-    /**
-     * Manually register a factory.
-     */
-    void register(String name, Factory factory) {
-        registerFactory(name, factory)
-    }
+    /** Manually register a factory. */
+    void register(String name, Factory factory) { registerFactory(name, factory) }
 
-    /**
-     * Subscribe to an ObservableValue.
-     * @param observable the observable to subscribe to
-     * @param subscriber the closure to call when the observable changes
-     * @return a Subscription that can be used to unsubscribe
-     */
+    /** Subscribe to an ObservableValue (Consumer). */
     def subscribe(ObservableValue observable, Closure subscriber) {
         return observable.subscribe(subscriber as Consumer)
     }
 
-    /**
-     * Subscribe to an ObservableValue.
-     * @param observable the observable to subscribe to
-     * @param subscriber the closure to call when the observable changes
-     * @return a Subscription that can be used to unsubscribe
-     */
+    /** Subscribe to an ObservableValue (Runnable). */
     def subscribe(ObservableValue observable, Runnable subscriber) {
         return observable.subscribe(subscriber)
     }
 
-    /**
-     * Show a non-blocking notification.
-     */
+    /** Show a non-blocking notification. */
     void notify(String message, Duration duration = Duration.seconds(3)) {
         Notification.show(getPrimaryStage(), message, duration)
     }
 
     /**
      * Show a non-blocking notification with named arguments.
+     * Supports:
+     *   notify(duration: 2, "Hello")
+     *   notify(duration: Duration.seconds(2), "Hello")
      */
     void notify(Map args, String message) {
-        Duration duration = args.duration ?: Duration.seconds(3)
+        def d = args?.duration
+        Duration duration
+        if (d instanceof Duration) {
+            duration = (Duration) d
+        } else if (d instanceof Number) {
+            duration = Duration.seconds(((Number) d).doubleValue())
+        } else {
+            duration = Duration.seconds(3)
+        }
         Notification.show(getPrimaryStage(), message, duration)
     }
 
-    boolean isFxApplicationThread() {
-        Platform.isFxApplicationThread();
-    }
+    boolean isFxApplicationThread() { Platform.isFxApplicationThread() }
 
+    @Override
     protected Factory resolveFactory(Object name, Map attributes, Object value) {
-        // First, see if parent factory has a factory,
-        // if not, go to the builder.
-        Factory factory = null;
-        Factory parent = getParentFactory();
-        if(parent != null && parent instanceof AbstractFXBeanFactory) {
-            factory = parent.resolveFactory(name, attributes, value);
+        // First, see if parent factory has a factory, if not, go to the builder.
+        Factory factory = null
+        Factory parent = getParentFactory()
+        if (parent != null && parent instanceof AbstractFXBeanFactory) {
+            factory = parent.resolveFactory(name, attributes, value)
         }
-        if(factory) {
-            // This is actually done in super.resolveFactory
-            // so we need to do it here for the child factory
-            getProxyBuilder().getContext().put(CHILD_BUILDER, getProxyBuilder());
-        }else {
-            factory =  super.resolveFactory(name, attributes, value);
+        if (factory) {
+            // This is actually done in super.resolveFactory; do it here for child factory path.
+            getProxyBuilder().getContext().put(CHILD_BUILDER, getProxyBuilder())
+        } else {
+            factory = super.resolveFactory(name, attributes, value)
         }
-
         return factory
     }
 
     SceneGraphBuilder submit(WebView wv, Closure c) {
-        //if (!(c instanceof MethodClosure)) {
-        //    c = c.curry([this])
-        //}
         def submitClosure = {
-            if(wv.engine.loadWorker.state == Worker.State.SUCCEEDED) {
-                c.call(wv);
-            }else {
+            if (wv.engine.loadWorker.state == Worker.State.SUCCEEDED) {
+                c.call(wv)
+            } else {
                 def listener = new ChangeListener<Worker.State>() {
                     @Override
-                    public void changed(ObservableValue<? extends Worker.State> observable,
-                                Worker.State oldState, Worker.State newState) {
+                    void changed(ObservableValue<? extends Worker.State> observable,
+                                 Worker.State oldState, Worker.State newState) {
                         defer {
-                            switch(newState) {
+                            switch (newState) {
                                 case Worker.State.SUCCEEDED:
-                                    c.call(wv);
-                                    wv.engine.loadWorker.stateProperty().removeListener(this);
-                                    break;
+                                    c.call(wv)
+                                    wv.engine.loadWorker.stateProperty().removeListener(this)
+                                    break
                                 case Worker.State.FAILED:
                                     LOG.warning(wv.engine.loadWorker.message)
-                                    if (wv.engine.loadWorker.exception?.message)
+                                    if (wv.engine.loadWorker.exception?.message) {
                                         LOG.warning(wv.engine.loadWorker.exception.message)
-                                    wv.engine.loadWorker.stateProperty().removeListener(this);
-                                    break;
+                                    }
+                                    wv.engine.loadWorker.stateProperty().removeListener(this)
+                                    break
                                 case Worker.State.CANCELLED:
-                                    LOG.warning(wv.engine.loadWorker.message);
-                                    wv.engine.loadWorker.stateProperty().removeListener(this);
-                                    break;
+                                    LOG.warning(wv.engine.loadWorker.message)
+                                    wv.engine.loadWorker.stateProperty().removeListener(this)
+                                    break
                                 default:
-                                    break;
-
+                                    break
                             }
                         }
                     }
-                };
-                wv.engine.loadWorker.stateProperty().addListener(listener);
+                }
+                wv.engine.loadWorker.stateProperty().addListener(listener)
             }
         }
 
-        if(Platform.isFxApplicationThread()) {
-              submitClosure.call()
-        }else {
+        if (Platform.isFxApplicationThread()) {
+            submitClosure.call()
+        } else {
             defer submitClosure
         }
-
-        return this;
+        return this
     }
 
-    private static Map propertyMap = [
-            // TODO remove lowercase versions
+    // ---- Common named constants / shortcuts ----
+    private static final Map propertyMap = [
             horizontal: Orientation.HORIZONTAL,
             vertical: Orientation.VERTICAL,
             ease_both: Interpolator.EASE_BOTH,
@@ -471,12 +267,7 @@ class SceneGraphBuilder extends FactoryBuilderSupport {
             discrete: Interpolator.DISCRETE,
             linear: Interpolator.LINEAR,
             indefinite: Timeline.INDEFINITE,
-            // the following commented out because they cause
-            // trouble with nodes that have the same name :-(
-            //top: VPos.TOP,
-            //bottom: VPos.BOTTOM,
-            //left: HPos.LEFT,
-            //right: HPos.RIGHT,
+
             top_left: Pos.TOP_LEFT,
             top_center: Pos.TOP_CENTER,
             top_right: Pos.TOP_RIGHT,
@@ -489,6 +280,7 @@ class SceneGraphBuilder extends FactoryBuilderSupport {
             baseline_center: Pos.BASELINE_CENTER,
             baseline_right: Pos.BASELINE_RIGHT,
             baseline_left: Pos.BASELINE_LEFT,
+
             HORIZONTAL: Orientation.HORIZONTAL,
             VERTICAL: Orientation.VERTICAL,
             EASEBOTH: Interpolator.EASE_BOTH,
@@ -516,7 +308,7 @@ class SceneGraphBuilder extends FactoryBuilderSupport {
             BASELINE_CENTER: Pos.BASELINE_CENTER,
             BASELINE_RIGHT: Pos.BASELINE_RIGHT,
             BASELINE_LEFT: Pos.BASELINE_LEFT
-    ];
+    ]
 
     def propertyMissing(String name) {
         // 1) Hex colors like "#336699"
@@ -524,13 +316,12 @@ class SceneGraphBuilder extends FactoryBuilderSupport {
             return Color.web(name)
         }
 
-        // 2) If someone already defined it as a variable (your existing behavior elsewhere)
+        // 2) Builder variables
         if (variables != null && variables.containsKey(name)) {
             return variables[name]
         }
 
-        // 3) Try CSS color names ("navy", "rebeccapurple", "darkslategray", etc.)
-        //    Cache both lower + upper to match existing style in the builder.
+        // 3) CSS color names
         try {
             def c = Color.web(name)
             setVariable(name, c)
@@ -541,101 +332,99 @@ class SceneGraphBuilder extends FactoryBuilderSupport {
         }
 
         throw new MissingPropertyException("Unrecognized property: ${name}", name, this.class)
-
     }
 
-    Color rgb(int r, int g, int b) {
-        Color.rgb(r,g,b);
-    }
+    Color rgb(int r, int g, int b) { Color.rgb(r, g, b) }
+    Color rgb(int r, int g, int b, float alpha) { Color.rgb(r, g, b, alpha) }
+    Color rgba(int r, int g, int b, float alpha) { rgb(r, g, b, alpha) }
+    Color hsb(int hue, float saturation, float brightness, float alpha) { Color.hsb(hue, saturation, brightness, alpha) }
+    Color hsb(int hue, float saturation, float brightness) { Color.hsb(hue, saturation, brightness) }
 
-    Color rgb(int r, int g, int b, float alpha) {
-        Color.rgb(r,g,b, alpha);
-    }
-
-    Color rgba(int r, int g, int b, float alpha) {
-        rgb(r,g,b, alpha);
-    }
-
-    Color hsb(int hue, float saturation, float brightness, float alpha) {
-        Color.hsb(hue, saturation, brightness, alpha);
-    }
-
-    Color hsb(int hue, float saturation, float brightness) {
-        Color.hsb(hue, saturation, brightness);
-    }
-
-    public void registerBeanFactory(String nodeName, String groupName, Class beanClass) {
-        // poke at the type to see if we need special handling
-        if(ContextMenu.isAssignableFrom(beanClass) ||
-             MenuBar.isAssignableFrom(beanClass) ||
-             MenuButton.isAssignableFrom(beanClass) ||
-             SplitMenuButton.isAssignableFrom(beanClass)  ) {
+    // ---- Bean factory routing ----
+    @Override
+    void registerBeanFactory(String nodeName, String groupName, Class beanClass) {
+        // Special handling based on type
+        if (ContextMenu.isAssignableFrom(beanClass)) {
+            // Ensure ContextMenu uses the dedicated factory (prevents misrouting to MenuFactory)
+            registerFactory nodeName, groupName, new ContextMenuFactory()
+        } else if (MenuBar.isAssignableFrom(beanClass) ||
+                MenuButton.isAssignableFrom(beanClass) ||
+                SplitMenuButton.isAssignableFrom(beanClass)) {
             registerFactory nodeName, groupName, new MenuFactory(beanClass)
-        }else if(MenuItem.isAssignableFrom(beanClass)) {
+        } else if (MenuItem.isAssignableFrom(beanClass)) {
             registerFactory nodeName, groupName, new MenuItemFactory(beanClass)
-        }else if(TreeItem.isAssignableFrom(beanClass)) {
+        } else if (TreeItem.isAssignableFrom(beanClass)) {
             registerFactory nodeName, groupName, new TreeItemFactory(beanClass)
-        }else if(TableView.isAssignableFrom(beanClass) ||
-            TableColumn.isAssignableFrom(beanClass) ){
+        } else if (TableView.isAssignableFrom(beanClass) || TableColumn.isAssignableFrom(beanClass)) {
             registerFactory nodeName, groupName, new TableFactory(beanClass)
-        }else if(Labeled.isAssignableFrom(beanClass)) {
+        } else if (Labeled.isAssignableFrom(beanClass)) {
             registerFactory nodeName, groupName, new LabeledFactory(beanClass)
-        } else if(Control.isAssignableFrom(beanClass)) {
+        } else if (Control.isAssignableFrom(beanClass)) {
             registerFactory nodeName, groupName, new ControlFactory(beanClass)
-        } else if(Scene.isAssignableFrom(beanClass)) {
+        } else if (Scene.isAssignableFrom(beanClass)) {
             registerFactory nodeName, groupName, new SceneFactory(beanClass)
-        } else if(Tab.isAssignableFrom(beanClass)) {
+        } else if (Tab.isAssignableFrom(beanClass)) {
             registerFactory nodeName, groupName, new TabFactory(beanClass)
-        } else if(Text.isAssignableFrom(beanClass)) {
+        } else if (Text.isAssignableFrom(beanClass)) {
             registerFactory nodeName, groupName, new TextFactory(beanClass)
-        } else if(Shape.isAssignableFrom(beanClass)) {
+        } else if (Shape.isAssignableFrom(beanClass)) {
             registerFactory nodeName, groupName, new ShapeFactory(beanClass)
-        } else if(Transform.isAssignableFrom(beanClass)) {
+        } else if (Transform.isAssignableFrom(beanClass)) {
             registerFactory nodeName, groupName, new TransformFactory(beanClass)
-        } else if(Effect.isAssignableFrom(beanClass)) {
+        } else if (Effect.isAssignableFrom(beanClass)) {
             registerFactory nodeName, groupName, new EffectFactory(beanClass)
-        } else if(Parent.isAssignableFrom(beanClass)) {
+        } else if (Parent.isAssignableFrom(beanClass)) {
             registerFactory nodeName, groupName, new ContainerFactory(beanClass)
-        } else if(Window.isAssignableFrom(beanClass) ) {
-                registerFactory nodeName, groupName, new StageFactory(beanClass)
-        } else if(XYChart.isAssignableFrom(beanClass)) {
+        } else if (Window.isAssignableFrom(beanClass)) {
+            registerFactory nodeName, groupName, new StageFactory(beanClass)
+        } else if (XYChart.isAssignableFrom(beanClass)) {
             registerFactory nodeName, groupName, new XYChartFactory(beanClass)
-        } else if(PieChart.isAssignableFrom(beanClass)) {
+        } else if (PieChart.isAssignableFrom(beanClass)) {
             registerFactory nodeName, groupName, new PieChartFactory(beanClass)
-        } else if(Axis.isAssignableFrom(beanClass)) {
+        } else if (Axis.isAssignableFrom(beanClass)) {
             registerFactory nodeName, groupName, new AxisFactory(beanClass)
-        } else if(XYChart.Series.isAssignableFrom(beanClass)) {
+        } else if (XYChart.Series.isAssignableFrom(beanClass)) {
             registerFactory nodeName, groupName, new XYSeriesFactory(beanClass)
-        } else if (Node.isAssignableFrom(beanClass)) {
-            registerFactory nodeName, groupName, new NodeFactory(beanClass)
         } else if (CanvasOperation.isAssignableFrom(beanClass)) {
             registerFactory nodeName, groupName, new CanvasOperationFactory(beanClass)
+        } else if (Node.isAssignableFrom(beanClass)) {
+            registerFactory nodeName, groupName, new NodeFactory(beanClass)
         } else {
             super.registerBeanFactory(nodeName, groupName, beanClass)
         }
     }
 
+    // ---- Helper: safe registration (doesn't crash builder init if optional class missing) ----
+    private void safeRegisterFactory(String name, Factory factory) {
+        try {
+            registerFactory(name, factory)
+        } catch (Throwable t) {
+            LOG.warning("Skipping factory '${name}' (${factory?.class?.name}): ${t.message}")
+        }
+    }
+
     void registerStages() {
         registerFactory "stage", new StageFactory(Stage)
-        registerFactory "popup", new StageFactory(Popup)
+        registerFactory "primaryStage", new PrimaryStageFactory(Stage)
+        registerFactory "popup", new PopupFactory()
 
-        // FIX: chooser factories are NOT stages
-        registerFactory "fileChooser", new FileChooserFactory()
-        registerFactory "directoryChooser", new DirectoryChooserFactory()   // if you have one; see note below
+        // Choosers are not stages; register if available in this build.
+        safeRegisterFactory("fileChooser", new FileChooserFactory())
+        safeRegisterFactory("directoryChooser", new DirectoryChooserFactory())
 
         registerFactory "filter", new FilterFactory()
 
-        registerFactory "onHidden",  new ClosureHandlerFactory(GroovyEventHandler)
-        registerFactory "onHiding",  new ClosureHandlerFactory(GroovyEventHandler)
-        registerFactory "onShowing",  new ClosureHandlerFactory(GroovyEventHandler)
-        registerFactory "onShown",  new ClosureHandlerFactory(GroovyEventHandler)
-        registerFactory "onCloseRequest",  new ClosureHandlerFactory(GroovyEventHandler)
+        registerFactory "onHidden", new ClosureHandlerFactory(GroovyEventHandler)
+        registerFactory "onHiding", new ClosureHandlerFactory(GroovyEventHandler)
+        registerFactory "onShowing", new ClosureHandlerFactory(GroovyEventHandler)
+        registerFactory "onShown", new ClosureHandlerFactory(GroovyEventHandler)
+        registerFactory "onCloseRequest", new ClosureHandlerFactory(GroovyEventHandler)
     }
 
     // register this one first
     void registerNodes() {
         registerFactory "bean", new CustomNodeFactory(Object)
-        registerFactory "node", new CustomNodeFactory(javafx.scene.Node)
+        registerFactory "node", new CustomNodeFactory(Node)
         registerFactory "nodes", new CustomNodeFactory(List, true)
         registerFactory "container", new CustomNodeFactory(Parent)
 
@@ -651,42 +440,41 @@ class SceneGraphBuilder extends FactoryBuilderSupport {
 
     void registerContainers() {
         registerFactory "scene", new SceneFactory(Scene)
-        registerFactory 'stylesheets', new StylesheetFactory(List)
-        registerFactory 'stylesheet',  new StylesheetFactory(List)   // <-- add this alias
-        registerFactory 'resource', new ResourceFactory()
+        registerFactory "stylesheets", new StylesheetFactory(List)
+        registerFactory "stylesheet", new StylesheetFactory(List)   // alias
+        registerFactory "resource", new ResourceFactory()
 
-        registerFactory 'pane', new ContainerFactory(Pane)
-        registerFactory 'region', new ContainerFactory(Region)
-        registerFactory 'anchorPane', new ContainerFactory(AnchorPane)
-        registerFactory 'borderPane', new ContainerFactory(BorderPane)
-        registerFactory 'flowPane', new ContainerFactory(FlowPane)
-        registerFactory 'hbox', new ContainerFactory(HBox)
-        registerFactory 'vbox', new ContainerFactory(VBox)
-        registerFactory 'stackPane', new ContainerFactory(StackPane)
-        registerFactory 'tilePane', new ContainerFactory(TilePane)
-        registerFactory 'group', new ContainerFactory(Group)
-        registerFactory 'gridPane', new ContainerFactory(GridPane)
-        registerFactory 'textFlow', new ContainerFactory(TextFlow)
+        registerFactory "pane", new ContainerFactory(Pane)
+        registerFactory "region", new ContainerFactory(Region)
+        registerFactory "anchorPane", new ContainerFactory(AnchorPane)
+        registerFactory "borderPane", new ContainerFactory(BorderPane)
+        registerFactory "flowPane", new ContainerFactory(FlowPane)
+        registerFactory "hbox", new ContainerFactory(HBox)
+        registerFactory "vbox", new ContainerFactory(VBox)
+        registerFactory "stackPane", new ContainerFactory(StackPane)
+        registerFactory "tilePane", new ContainerFactory(TilePane)
+        registerFactory "group", new ContainerFactory(Group)
+        registerFactory "gridPane", new ContainerFactory(GridPane)
+        registerFactory "textFlow", new ContainerFactory(TextFlow)
 
-        registerFactory 'constraint', new GridConstraintFactory(GridConstraint)
-        registerFactory 'rowConstraints', new GridConstraintFactory(RowConstraints)
-        registerFactory 'columnConstraints', new GridConstraintFactory(ColumnConstraints)
+        registerFactory "constraint", new GridConstraintFactory(GridConstraint)
+        registerFactory "rowConstraints", new GridConstraintFactory(RowConstraints)
+        registerFactory "columnConstraints", new GridConstraintFactory(ColumnConstraints)
 
-        registerFactory 'row', new GridRowColumnFactory(GridRow);
-        registerFactory 'column', new GridRowColumnFactory(GridColumn);
+        registerFactory "row", new GridRowColumnFactory(GridRow)
+        registerFactory "column", new GridRowColumnFactory(GridColumn)
 
-        registerFactory 'top',    new BorderPanePositionFactory('top')
-        registerFactory 'bottom', new BorderPanePositionFactory('bottom')
-        registerFactory 'left',   new BorderPanePositionFactory('left')
-        registerFactory 'right',  new BorderPanePositionFactory('right')
-        registerFactory 'center', new BorderPanePositionFactory('center')
+        registerFactory "top", new BorderPanePositionFactory("top")
+        registerFactory "bottom", new BorderPanePositionFactory("bottom")
+        registerFactory "left", new BorderPanePositionFactory("left")
+        registerFactory "right", new BorderPanePositionFactory("right")
+        registerFactory "center", new BorderPanePositionFactory("center")
     }
 
     void registerCanvas() {
-        CanvasFactory cf = new CanvasFactory();
-        
+        CanvasFactory cf = new CanvasFactory()
         registerFactory "canvas", cf
-        
+
         cf.registerFactory "appendSVGPath", new CanvasOperationFactory(AppendSVGPathOperation)
         cf.registerFactory "applyEffect", new CanvasOperationFactory(ApplyEffectOperation)
         cf.registerFactory "arc", new CanvasOperationFactory(ArcOperation)
@@ -739,169 +527,195 @@ class SceneGraphBuilder extends FactoryBuilderSupport {
         cf.registerFactory "translate", new CanvasOperationFactory(TranslateOperation)
         cf.registerFactory "operation", new CanvasClosureOperationFactory(ClosureOperation)
 
-        DrawFactory df = new DrawFactory();
-        
+        DrawFactory df = new DrawFactory()
         registerFactory "draw", df
         df.childFactories = cf.childFactories
-        
     }
 
     void registerBinding() {
-        BindFactory bf = new BindFactory();
-        registerFactory "bind", bf;
-        
+        BindFactory bf = new BindFactory()
+        registerFactory "bind", bf
+
         registerFactory "onChange", new ChangeFactory(ChangeListener)
         registerFactory "onInvalidate", new ChangeFactory(InvalidationListener)
     }
 
     void registerThreading() {
         registerExplicitMethod "defer", this.&defer
-        registerExplicitMethod "notify", this.&notify
+
+        // IMPORTANT:
+        // MethodClosure resolution can be ambiguous with overloads.
+        // Use a dispatcher closure so "notify" works for both call styles:
+        //   notify("msg")
+        //   notify("msg", Duration.seconds(2))
+        //   notify(duration: 2, "msg")
+        registerExplicitMethod "notify", { Object... a ->
+            if (a == null || a.length == 0) return null
+            if (a.length == 1) {
+                def x = a[0]
+                if (x instanceof Map) return null // invalid form alone
+                return notify(String.valueOf(x))
+            }
+            if (a.length == 2) {
+                def first = a[0]
+                def second = a[1]
+                if (first instanceof Map) {
+                    return notify((Map) first, String.valueOf(second))
+                }
+                if (second instanceof Duration) {
+                    return notify(String.valueOf(first), (Duration) second)
+                }
+                if (second instanceof Number) {
+                    return notify(String.valueOf(first), Duration.seconds(((Number) second).doubleValue()))
+                }
+                // fallback
+                return notify(String.valueOf(first))
+            }
+            // Ignore extras
+            return notify(String.valueOf(a[0]))
+        }
     }
 
     void registerMenus() {
-        registerFactory 'menuBar', new MenuFactory(MenuBar)
-        registerFactory 'contextMenu', new MenuFactory(ContextMenu)
-        registerFactory 'menuButton', new MenuFactory(MenuButton)
-        registerFactory 'splitMenuButton', new MenuFactory(SplitMenuButton)
+        registerFactory "menuBar", new MenuFactory(MenuBar)
+        registerFactory "menuButton", new MenuFactory(MenuButton)
+        registerFactory "splitMenuButton", new MenuFactory(SplitMenuButton)
 
-        registerFactory 'menu', new MenuItemFactory(Menu);
-        registerFactory 'menuItem', new MenuItemFactory(MenuItem);
-        registerFactory 'checkMenuItem', new MenuItemFactory(CheckMenuItem);
-        registerFactory 'customMenuItem', new MenuItemFactory(CustomMenuItem);
-        registerFactory 'separatorMenuItem', new MenuItemFactory(SeparatorMenuItem);
-        registerFactory 'radioMenuItem', new MenuItemFactory(RadioMenuItem);
+        registerFactory "menu", new MenuItemFactory(Menu)
+        registerFactory "menuItem", new MenuItemFactory(MenuItem)
+        registerFactory "checkMenuItem", new MenuItemFactory(CheckMenuItem)
+        registerFactory "customMenuItem", new MenuItemFactory(CustomMenuItem)
+        registerFactory "separatorMenuItem", new MenuItemFactory(SeparatorMenuItem)
+        registerFactory "radioMenuItem", new MenuItemFactory(RadioMenuItem)
     }
 
     void registerCharts() {
-        registerFactory 'pieChart', new PieChartFactory(PieChart)
-        registerFactory 'lineChart', new XYChartFactory(LineChart)
-        registerFactory 'areaChart', new XYChartFactory(AreaChart)
-        
+        registerFactory "pieChart", new PieChartFactory(PieChart)
+        registerFactory "lineChart", new XYChartFactory(LineChart)
+        registerFactory "areaChart", new XYChartFactory(AreaChart)
+
         // Modern Components
         CardFactory cardFactory = new CardFactory()
-        registerFactory 'card', cardFactory
-        cardFactory.registerFactory 'cardHeader', new CardSectionFactory('cardHeader')
-        cardFactory.registerFactory 'cardBody', new CardSectionFactory('cardBody')
-        cardFactory.registerFactory 'cardFooter', new CardSectionFactory('cardFooter')
-        registerFactory 'badge', new BadgeFactory()
-        registerFactory 'icon', new IconFactory()
-        registerFactory 'toggleSwitch', new ToggleSwitchFactory()
-        registerFactory 'formLayout', new FormLayoutFactory()
-        registerFactory 'responsivePane', new ResponsivePaneFactory()
-        registerFactory 'stackedAreaChart', new XYChartFactory(StackedAreaChart)
-        registerFactory 'bubbleChart', new XYChartFactory(BubbleChart)
-        registerFactory 'barChart', new XYChartFactory(BarChart)
-        registerFactory 'stackedBarChart', new XYChartFactory(StackedBarChart)
-        registerFactory 'scatterChart', new XYChartFactory(ScatterChart)
-        registerFactory 'numberAxis', new AxisFactory(NumberAxis)
-        registerFactory 'categoryAxis', new AxisFactory(CategoryAxis)
-        registerFactory 'series', new XYSeriesFactory(XYChart.Series)
+        registerFactory "card", cardFactory
+        cardFactory.registerFactory "cardHeader", new CardSectionFactory("cardHeader")
+        cardFactory.registerFactory "cardBody", new CardSectionFactory("cardBody")
+        cardFactory.registerFactory "cardFooter", new CardSectionFactory("cardFooter")
+        registerFactory "badge", new BadgeFactory()
+        registerFactory "icon", new IconFactory()
+        registerFactory "toggleSwitch", new ToggleSwitchFactory()
+        registerFactory "formLayout", new FormLayoutFactory()
+        registerFactory "responsivePane", new ResponsivePaneFactory()
+
+        registerFactory "stackedAreaChart", new XYChartFactory(StackedAreaChart)
+        registerFactory "bubbleChart", new XYChartFactory(BubbleChart)
+        registerFactory "barChart", new XYChartFactory(BarChart)
+        registerFactory "stackedBarChart", new XYChartFactory(StackedBarChart)
+        registerFactory "scatterChart", new XYChartFactory(ScatterChart)
+
+        registerFactory "numberAxis", new AxisFactory(NumberAxis)
+        registerFactory "categoryAxis", new AxisFactory(CategoryAxis)
+        registerFactory "series", new XYSeriesFactory(XYChart.Series)
     }
 
     void registerTransforms() {
-        registerFactory 'affine', new TransformFactory(Affine)
-        registerFactory 'rotate', new TransformFactory(Rotate)
-        registerFactory 'scale', new TransformFactory(Scale)
-        registerFactory 'shear', new TransformFactory(Shear)
-        registerFactory 'translate', new TransformFactory(Translate)
+        registerFactory "affine", new TransformFactory(Affine)
+        registerFactory "rotate", new TransformFactory(Rotate)
+        registerFactory "scale", new TransformFactory(Scale)
+        registerFactory "shear", new TransformFactory(Shear)
+        registerFactory "translate", new TransformFactory(Translate)
     }
 
     void registerShapes() {
-        registerFactory 'arc',        new ShapeFactory(Arc)
-        registerFactory 'circle',     new ShapeFactory(Circle)
-        registerFactory 'cubicCurve', new ShapeFactory(CubicCurve)
-        registerFactory 'ellipse',    new ShapeFactory(Ellipse)
-        registerFactory 'line',       new ShapeFactory(Line)
-        registerFactory 'polygon',    new ShapeFactory(Polygon)
-        registerFactory 'polyline',   new ShapeFactory(Polyline)
-        registerFactory 'quadCurve',  new ShapeFactory(QuadCurve)
-        registerFactory 'rectangle',  new ShapeFactory(Rectangle)
-        registerFactory 'svgPath',    new ShapeFactory(SVGPath)
+        registerFactory "arc", new ShapeFactory(Arc)
+        registerFactory "circle", new ShapeFactory(Circle)
+        registerFactory "cubicCurve", new ShapeFactory(CubicCurve)
+        registerFactory "ellipse", new ShapeFactory(Ellipse)
+        registerFactory "line", new ShapeFactory(Line)
+        registerFactory "polygon", new ShapeFactory(Polygon)
+        registerFactory "polyline", new ShapeFactory(Polyline)
+        registerFactory "quadCurve", new ShapeFactory(QuadCurve)
+        registerFactory "rectangle", new ShapeFactory(Rectangle)
+        registerFactory "svgPath", new ShapeFactory(SVGPath)
 
         PathFactory pathFactory = new PathFactory(Path)
-        registerFactory 'path', pathFactory
+        registerFactory "path", pathFactory
 
-        pathFactory.registerFactory 'arcTo',        new PathElementFactory(ArcTo)
-        pathFactory.registerFactory 'closePath',    new PathElementFactory(ClosePath)
-        pathFactory.registerFactory 'cubicCurveTo', new PathElementFactory(CubicCurveTo)
-        pathFactory.registerFactory 'hLineTo',      new PathElementFactory(HLineTo)
-        pathFactory.registerFactory 'lineTo',       new PathElementFactory(LineTo)
-        pathFactory.registerFactory 'moveTo',       new PathElementFactory(MoveTo)
-        pathFactory.registerFactory 'quadCurveTo',  new PathElementFactory(QuadCurveTo)
-        pathFactory.registerFactory 'vLineTo',      new PathElementFactory(VLineTo)
+        pathFactory.registerFactory "arcTo", new PathElementFactory(ArcTo)
+        pathFactory.registerFactory "closePath", new PathElementFactory(ClosePath)
+        pathFactory.registerFactory "cubicCurveTo", new PathElementFactory(CubicCurveTo)
+        pathFactory.registerFactory "hLineTo", new PathElementFactory(HLineTo)
+        pathFactory.registerFactory "lineTo", new PathElementFactory(LineTo)
+        pathFactory.registerFactory "moveTo", new PathElementFactory(MoveTo)
+        pathFactory.registerFactory "quadCurveTo", new PathElementFactory(QuadCurveTo)
+        pathFactory.registerFactory "vLineTo", new PathElementFactory(VLineTo)
 
-        registerFactory 'text', new TextFactory(Text)
+        registerFactory "text", new TextFactory(Text)
 
-        registerFactory 'linearGradient', new LinearGradientFactory()
-        registerFactory 'radialGradient', new RadialGradientFactory()
-        registerFactory 'stop',   new StopFactory()
-        registerFactory 'fill',   new FillFactory()
-        registerFactory 'stroke', new StrokeFactory()
+        registerFactory "linearGradient", new LinearGradientFactory()
+        registerFactory "radialGradient", new RadialGradientFactory()
+        registerFactory "stop", new StopFactory()
+        registerFactory "fill", new FillFactory()
+        registerFactory "stroke", new StrokeFactory()
     }
 
     void registerControls() {
-
         // labeled
-        registerFactory 'button', new LabeledFactory(Button)
-        registerFactory 'checkBox', new LabeledFactory(CheckBox)
-        registerFactory 'label', new LabeledFactory(Label)
-        registerFactory 'choiceBox', new LabeledFactory(ChoiceBox)
-        registerFactory 'hyperlink', new LabeledFactory(Hyperlink)
-        registerFactory 'tooltip', new LabeledFactory(Tooltip)
-        registerFactory 'radioButton', new LabeledFactory(RadioButton)
-        registerFactory 'toggleButton', new LabeledFactory(ToggleButton)
+        registerFactory "button", new LabeledFactory(Button)
+        registerFactory "checkBox", new LabeledFactory(CheckBox)
+        registerFactory "label", new LabeledFactory(Label)
+        registerFactory "choiceBox", new LabeledFactory(ChoiceBox)
+        registerFactory "hyperlink", new LabeledFactory(Hyperlink)
+        registerFactory "tooltip", new LabeledFactory(Tooltip)
+        registerFactory "radioButton", new LabeledFactory(RadioButton)
+        registerFactory "toggleButton", new LabeledFactory(ToggleButton)
 
         registerFactory "onSelect", new CellFactory()
         registerFactory "cellFactory", new CellFactory()
-        registerFactory "onAction", new ClosureHandlerFactory(GroovyEventHandler);
-
+        registerFactory "onAction", new ClosureHandlerFactory(GroovyEventHandler)
 
         // regular controls
-        registerFactory 'scrollBar', new ControlFactory(ScrollBar)
-        registerFactory 'slider', new ControlFactory(Slider)
-        registerFactory 'separator', new ControlFactory(Separator)
-        registerFactory 'listView', new ControlFactory(ListView)
-        registerFactory 'textArea', new ControlFactory(TextArea)
-        registerFactory 'textField', new ControlFactory(TextField)
-        registerFactory 'passwordField', new ControlFactory(PasswordField)
-        registerFactory 'progressBar', new ControlFactory(ProgressBar)
-        registerFactory 'progressIndicator', new ControlFactory(ProgressIndicator)
-        registerFactory 'scrollPane', new ScrollPaneFactory()
-        registerFactory 'comboBox', new ControlFactory(ComboBox)
+        registerFactory "scrollBar", new ControlFactory(ScrollBar)
+        registerFactory "slider", new ControlFactory(Slider)
+        registerFactory "separator", new ControlFactory(Separator)
+        registerFactory "listView", new ListViewFactory()
+        registerFactory "textArea", new ControlFactory(TextArea)
+        registerFactory "textField", new ControlFactory(TextField)
+        registerFactory "passwordField", new ControlFactory(PasswordField)
+        registerFactory "progressBar", new ControlFactory(ProgressBar)
+        registerFactory "progressIndicator", new ControlFactory(ProgressIndicator)
+        registerFactory "scrollPane", new ScrollPaneFactory()
+        registerFactory "comboBox", new ControlFactory(ComboBox)
 
+        // context menus (node + attachment handled in ControlFactory)
+        registerFactory "contextMenu", new ContextMenuFactory()
 
-        registerFactory 'accordion', new AccordionFactory()
-        registerFactory 'splitPane', new SplitPaneFactory()
-        registerFactory 'tabPane', new TabPaneFactory()
-        registerFactory 'titledPane', new ControlFactory(TitledPane)
-        registerFactory 'dividerPosition', new DividerPositionFactory(DividerPosition)
-        registerFactory 'tab', new TabFactory(Tab)
-        registerFactory 'toolBar', new ToolBarFactory()
-        registerFactory 'buttonBar', new ButtonBarFactory()
-        registerFactory 'colorPicker', new ControlFactory(ColorPicker)
-        registerFactory 'pagination', new ControlFactory(Pagination)
-        registerFactory 'datePicker', new ControlFactory(DatePicker)
-        registerFactory 'spinner', new ControlFactory(Spinner)
+        registerFactory "accordion", new AccordionFactory()
+        registerFactory "splitPane", new SplitPaneFactory()
+        registerFactory "tabPane", new TabPaneFactory()
+        registerFactory "titledPane", new ControlFactory(TitledPane)
+        registerFactory "dividerPosition", new DividerPositionFactory(DividerPosition)
+        registerFactory "tab", new TabFactory(Tab)
+        registerFactory "toolBar", new ToolBarFactory()
+        registerFactory "buttonBar", new ButtonBarFactory()
+        registerFactory "colorPicker", new ControlFactory(ColorPicker)
+        registerFactory "pagination", new ControlFactory(Pagination)
+        registerFactory "datePicker", new ControlFactory(DatePicker)
+        registerFactory "spinner", new ControlFactory(Spinner)
 
+        registerFactory "treeView", new ControlFactory(TreeView)
+        registerFactory "treeItem", new TreeItemFactory(TreeItem)
 
-        registerFactory 'treeView', new ControlFactory(TreeView)
-        registerFactory 'treeItem', new TreeItemFactory(TreeItem)
-        // popupControl
+        registerFactory "tableView", new TableFactory(TableView)
+        registerFactory "tableColumn", new TableFactory(TableColumn)
 
-        //'indexedCell'
-        //'cell'
-        registerFactory 'tableView', new TableFactory(TableView)
-        registerFactory 'tableColumn', new TableFactory(TableColumn)
+        registerFactory "title", new TitledFactory(TitledNode)
+        registerFactory "content", new TitledFactory(TitledContent)
 
-        registerFactory 'title', new TitledFactory(TitledNode)
-        registerFactory 'content', new TitledFactory(TitledContent)
-
-        registerFactory 'graphic', new GraphicFactory(Graphic)
+        registerFactory "graphic", new GraphicFactory(Graphic)
 
         // tree events
-        TreeItemFactory.treeItemEvents.each {
-            registerFactory it.key, new ClosureHandlerFactory(GroovyEventHandler);
+        TreeItemFactory.treeItemEvents.each { String name, eventType ->
+            registerFactory name, new ClosureHandlerFactory(GroovyEventHandler)
         }
 
         registerFactory "onEditCancel", new ClosureHandlerFactory(GroovyEventHandler)
@@ -909,49 +723,43 @@ class SceneGraphBuilder extends FactoryBuilderSupport {
         registerFactory "onEditStart", new ClosureHandlerFactory(GroovyEventHandler)
     }
 
-    /**
-     * Register a node name that maps to a class with a static build(builder, attrs, body) method
-     * OR a no-arg constructor returning a Node.
-     */
+    /** Register a node name that maps to a class with a static build(builder, attrs, body) method OR a no-arg ctor. */
     void registerComponentNode(String name, Class componentClass) {
         registerFactory(name, new ComponentClassFactory(componentClass))
     }
 
-    /**
-     * @deprecated use registerComponentNode
-     */
+    /** @deprecated use registerComponentNode */
     @Deprecated
     void registerComponent(String name, Class componentClass) {
         registerComponentNode(name, componentClass)
     }
 
     void registerEffects() {
-
         // Dummy node for attaching child effects
-        registerFactory 'effect', new EffectFactory(Effect)
+        registerFactory "effect", new EffectFactory(Effect)
 
-        registerFactory 'blend', new EffectFactory(Blend)
-        registerFactory 'bloom', new EffectFactory(Bloom)
-        registerFactory 'boxBlur', new EffectFactory(BoxBlur)
-        registerFactory 'colorAdjust', new EffectFactory(ColorAdjust)
+        registerFactory "blend", new EffectFactory(Blend)
+        registerFactory "bloom", new EffectFactory(Bloom)
+        registerFactory "boxBlur", new EffectFactory(BoxBlur)
+        registerFactory "colorAdjust", new EffectFactory(ColorAdjust)
         registerFactory "colorInput", new EffectFactory(ColorInput)
-        registerFactory 'displacementMap', new EffectFactory(DisplacementMap)
-        registerFactory 'dropShadow', new EffectFactory(DropShadow)
-        registerFactory 'gaussianBlur', new EffectFactory(GaussianBlur)
-        registerFactory 'glow', new EffectFactory(Glow)
-        registerFactory 'imageInput', new EffectFactory(ImageInput)
-        registerFactory 'innerShadow', new EffectFactory(InnerShadow)
-        registerFactory 'lighting', new EffectFactory(Lighting)
-        registerFactory 'motionBlur', new EffectFactory(MotionBlur)
-        registerFactory 'perspectiveTransform', new EffectFactory(PerspectiveTransform)
-        registerFactory 'reflection', new EffectFactory(Reflection)
-        registerFactory 'sepiaTone', new EffectFactory(SepiaTone)
-        registerFactory 'shadow', new EffectFactory(Shadow)
+        registerFactory "displacementMap", new EffectFactory(DisplacementMap)
+        registerFactory "dropShadow", new EffectFactory(DropShadow)
+        registerFactory "gaussianBlur", new EffectFactory(GaussianBlur)
+        registerFactory "glow", new EffectFactory(Glow)
+        registerFactory "imageInput", new EffectFactory(ImageInput)
+        registerFactory "innerShadow", new EffectFactory(InnerShadow)
+        registerFactory "lighting", new EffectFactory(Lighting)
+        registerFactory "motionBlur", new EffectFactory(MotionBlur)
+        registerFactory "perspectiveTransform", new EffectFactory(PerspectiveTransform)
+        registerFactory "reflection", new EffectFactory(Reflection)
+        registerFactory "sepiaTone", new EffectFactory(SepiaTone)
+        registerFactory "shadow", new EffectFactory(Shadow)
 
-        registerFactory 'topInput', new EffectFactory(EffectWrapper)
-        registerFactory 'bottomInput', new EffectFactory(EffectWrapper)
-        registerFactory 'bumpInput', new EffectFactory(EffectWrapper)
-        registerFactory 'contentInput', new EffectFactory(EffectWrapper)
+        registerFactory "topInput", new EffectFactory(EffectWrapper)
+        registerFactory "bottomInput", new EffectFactory(EffectWrapper)
+        registerFactory "bumpInput", new EffectFactory(EffectWrapper)
+        registerFactory "contentInput", new EffectFactory(EffectWrapper)
         registerFactory "distant", new EffectFactory(Light.Distant)
         registerFactory "point", new EffectFactory(Light.Point)
         registerFactory "spot", new EffectFactory(Light.Spot)
@@ -959,96 +767,88 @@ class SceneGraphBuilder extends FactoryBuilderSupport {
 
     void registerEventHandlers() {
         ClosureHandlerFactory eh = new ClosureHandlerFactory(GroovyEventHandler)
-
-        for(property in AbstractNodeFactory.nodeEvents) {
+        for (property in AbstractNodeFactory.nodeEvents) {
             registerFactory property, eh
         }
     }
 
     void registerWeb() {
+        registerFactory "webView", new WebFactory(WebView)
+        registerFactory "htmlEditor", new WebFactory(HTMLEditor)
 
-        registerFactory 'webView', new WebFactory(WebView)
-        registerFactory 'htmlEditor',new WebFactory(HTMLEditor)
-
-        registerFactory 'onLoad', new ClosureHandlerFactory(GroovyEventHandler)
-        registerFactory 'onError', new ClosureHandlerFactory(GroovyEventHandler)
-        registerFactory 'onAlert', new ClosureHandlerFactory(GroovyEventHandler)
-        registerFactory 'onResized', new ClosureHandlerFactory(GroovyEventHandler)
-        registerFactory 'onVisibilityChanged', new ClosureHandlerFactory(GroovyEventHandler)
-        registerFactory 'createPopupHandler', new ClosureHandlerFactory(GroovyCallback)
-        registerFactory 'confirmHandler', new ClosureHandlerFactory(GroovyCallback)
-        registerFactory 'promptHandler', new ClosureHandlerFactory(GroovyCallback)
+        registerFactory "onLoad", new ClosureHandlerFactory(GroovyEventHandler)
+        registerFactory "onError", new ClosureHandlerFactory(GroovyEventHandler)
+        registerFactory "onAlert", new ClosureHandlerFactory(GroovyEventHandler)
+        registerFactory "onResized", new ClosureHandlerFactory(GroovyEventHandler)
+        registerFactory "onVisibilityChanged", new ClosureHandlerFactory(GroovyEventHandler)
+        registerFactory "createPopupHandler", new ClosureHandlerFactory(GroovyCallback)
+        registerFactory "confirmHandler", new ClosureHandlerFactory(GroovyCallback)
+        registerFactory "promptHandler", new ClosureHandlerFactory(GroovyCallback)
     }
 
     void registerTransition() {
+        registerFactory "fadeTransition", new TransitionFactory(FadeTransition)
+        registerFactory "fillTransition", new TransitionFactory(FillTransition)
+        registerFactory "parallelTransition", new TransitionFactory(ParallelTransition)
+        registerFactory "pauseTransition", new TransitionFactory(PauseTransition)
+        registerFactory "rotateTransition", new TransitionFactory(RotateTransition)
+        registerFactory "scaleTransition", new TransitionFactory(ScaleTransition)
+        registerFactory "translateTransition", new TransitionFactory(TranslateTransition)
+        registerFactory "sequentialTransition", new TransitionFactory(SequentialTransition)
+        registerFactory "pathTransition", new TransitionFactory(PathTransition)
+        registerFactory "strokeTransition", new TransitionFactory(StrokeTransition)
+        registerFactory "transition", new TransitionFactory(Transition)
 
-        registerFactory 'fadeTransition', new TransitionFactory(FadeTransition)
-        registerFactory 'fillTransition', new TransitionFactory(FillTransition)
-        registerFactory 'parallelTransition', new TransitionFactory(ParallelTransition)
-        registerFactory 'pauseTransition', new TransitionFactory(PauseTransition)
-        registerFactory 'rotateTransition', new TransitionFactory(RotateTransition);
-        registerFactory 'scaleTransition', new TransitionFactory(ScaleTransition)
-        registerFactory 'translateTransition', new TransitionFactory(TranslateTransition)
-        registerFactory 'sequentialTransition', new TransitionFactory(SequentialTransition)
-        registerFactory 'pathTransition', new TransitionFactory(PathTransition)
-        registerFactory 'strokeTransition', new TransitionFactory(StrokeTransition)
-        registerFactory 'transition', new TransitionFactory(Transition)
+        TimelineFactory tf = new TimelineFactory(Timeline)
+        registerFactory "timeline", tf
 
-        TimelineFactory tf =  new TimelineFactory(Timeline)
-        registerFactory 'timeline', tf
-        
         KeyFrameFactory kf = new KeyFrameFactory(KeyFrameWrapper)
         tf.registerFactory "at", kf
-        
-        
-        KeyValueFactory kvf = new KeyValueFactory(TargetHolder);
-        kf.registerFactory "change",kvf
+
+        KeyValueFactory kvf = new KeyValueFactory(TargetHolder)
+        kf.registerFactory "change", kvf
         kvf.registerFactory "to", new KeyValueSubFactory(Object)
         kvf.registerFactory "tween", new KeyValueSubFactory(Interpolator)
-        
-        // applies to Timeline and KeyFrame
+
         registerFactory "onFinished", new ClosureHandlerFactory(GroovyEventHandler)
-        
-        
     }
 
     void registerMedia() {
-        registerFactory 'mediaView', new MediaViewFactory(MediaView)
-        registerFactory 'mediaPlayer', new MediaPlayerFactory(MediaPlayer);
+        registerFactory "mediaView", new MediaViewFactory(MediaView)
+        registerFactory "mediaPlayer", new MediaPlayerFactory(MediaPlayer)
     }
 
     /**
      * Compatibility API.
-     *
-     * @param c run this closure in the builder
+     * Run this closure in the builder.
      */
-    public Object build(
-            @DelegatesTo(value = SceneGraphBuilder, strategy = Closure.DELEGATE_FIRST)
-                    Closure c
-    ) {
+    Object build(@DelegatesTo(value = SceneGraphBuilder, strategy = Closure.DELEGATE_FIRST) Closure c) {
         c = c.rehydrate(this, c.owner, c.thisObject)
         c.resolveStrategy = Closure.DELEGATE_FIRST
         return c.call()
     }
 
-    private static postCompletionDelegate = { FactoryBuilderSupport builder, Object parent, Object node ->
-        if(parent instanceof MediaView && node instanceof MediaPlayer) {
-            parent.mediaPlayer = node;
-        } else if(parent instanceof Stage && node instanceof Scene) {
+    private static final Closure postCompletionDelegate = { FactoryBuilderSupport builder, Object parent, Object node ->
+        if (parent instanceof MediaView && node instanceof MediaPlayer) {
+            parent.mediaPlayer = node
+        } else if (parent instanceof Stage && node instanceof Scene) {
             parent.scene = node
-        } else if(node instanceof FXMLLoaderBuilder) {
-            node = node.build();
+        } else if (node instanceof FXMLLoaderBuilder) {
+            node = node.build()
         }
-     }
+    }
 
-    private static idDelegate = { FactoryBuilderSupport builder, node, Map attributes ->
-        if (attributes.id) builder.setVariable(attributes.id, node)
+    // Strongly typed + removes id from attrs so it doesn't leak into bean properties.
+    private static final Closure idDelegate = { FactoryBuilderSupport builder, node, Map attributes ->
+        def id = attributes?.remove("id")
+        if (id != null) {
+            builder.setVariable(id.toString(), node)
+        }
     }
 
     private void initialize() {
-
         if (factoriesRegistered) return
-            factoriesRegistered = true
+        factoriesRegistered = true
 
         this[DELEGATE_PROPERTY_OBJECT_ID] = DEFAULT_DELEGATE_PROPERTY_OBJECT_ID
         this[DELEGATE_PROPERTY_OBJECT_FILL] = DEFAULT_DELEGATE_PROPERTY_OBJECT_FILL
@@ -1078,10 +878,7 @@ class SceneGraphBuilder extends FactoryBuilderSupport {
                 this.&registerTransition
         ]
 
-        registrations.each { Closure c ->
-            //assert this.metaClass.respondsTo(this, name) : "Missing method: $name()"
-            c.call()
-        }
+        registrations.each { Closure c -> c.call() }
 
         // Public API: define any special/legacy colors as variables
         setVariable("groovyblue", Color.rgb(99, 152, 170))
@@ -1103,12 +900,9 @@ class SceneGraphBuilder extends FactoryBuilderSupport {
             }
         }
 
-        propertyMap.each { name, value ->
-            setVariable(name, value)
-        }
+        propertyMap.each { name, value -> setVariable(name, value) }
 
         // Discover external component libraries (SPI)
         loadAddons()
     }
 }
-

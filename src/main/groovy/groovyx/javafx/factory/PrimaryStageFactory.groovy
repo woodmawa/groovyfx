@@ -15,24 +15,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import javafx.scene.control.ButtonBar
+package groovyx.javafx.factory
 
-import static groovyx.javafx.GroovyFX.start
+import groovy.util.FactoryBuilderSupport
+import groovy.util.logging.Slf4j
+import javafx.stage.Stage
 
-start {
-    stage(title: "ButtonBar", show: true) {
-        scene(fill: WHITE, width: 300, height: 200) {
-            borderPane {
-                bottom {
-                    hbox(alignment: CENTER_RIGHT, padding: 10) {
-                        buttonBar(buttonOrder: '+YN') {
-                            button('Yes', buttonData: ButtonBar.ButtonData.YES)
-                            button('No', buttonData: ButtonBar.ButtonData.NO)
-                        }
-                    }
-                }
-            }
-        }
+@Slf4j
+class PrimaryStageFactory extends StageFactory {
+
+    PrimaryStageFactory(Class beanClass) {
+        super(beanClass)
+    }
+
+    @Override
+    void onNodeCompleted(FactoryBuilderSupport builder, Object parent, Object node) {
+        super.onNodeCompleted(builder, parent, node)
+
+        if (!(node instanceof Stage)) return
+
+        builder.primaryStage = node
+        log.debug("primaryStage explicitly assigned via primaryStage { }")
     }
 }
-

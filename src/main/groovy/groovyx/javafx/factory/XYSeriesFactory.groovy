@@ -39,7 +39,7 @@ class XYSeriesFactory extends AbstractFXBeanFactory {
         super(XYChart.Series)
     }
 
-    public XYSeriesFactory(Class<XYChart.Series> beanClass) {
+    public XYSeriesFactory( beanClass) {
         super(beanClass)
     }
 

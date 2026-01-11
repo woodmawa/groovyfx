@@ -38,6 +38,9 @@ start {
         fxaction(id: 'copyAction', name: 'Copy', icon: 'icons/copy.png', onAction: { println "Copy" })
         fxaction(id: 'pasteAction', name: 'Paste', icon: 'icons/paste.png', onAction: { println "Paste" })
         fxaction(id: 'checkAction', name: 'Check', onAction: { println "Check" })
+        fxaction(id: 'openAction', name: 'Open', onAction: {
+            println "Open (enabled=${openAction.enabled})"
+        })
     }
 
     // UI: build inside sgb.with { ... } so stage/scene delegates work properly

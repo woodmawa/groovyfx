@@ -33,7 +33,7 @@ import groovyx.javafx.canvas.CanvasOperation
  */
 class CanvasOperationFactory extends AbstractFXBeanFactory {
 
-    CanvasOperationFactory(Class<? extends CanvasOperation> beanClass) {
+    CanvasOperationFactory(beanClass) {
         super(beanClass)
     }
 

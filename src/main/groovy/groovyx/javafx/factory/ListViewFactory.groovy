@@ -32,7 +32,7 @@ class ListViewFactory extends AbstractNodeFactory {
         super(ListView)
     }
     
-    ListViewFactory(Class<ListView> beanClass) {
+    ListViewFactory(beanClass) {
         super(beanClass)
     }
 

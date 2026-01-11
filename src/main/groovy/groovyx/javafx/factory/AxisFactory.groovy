@@ -28,7 +28,7 @@ import javafx.scene.chart.Axis
 class AxisFactory extends AbstractNodeFactory {
     private static final String X_AXIS_PROPERTY = '__xAxis'
 
-    AxisFactory(Class<? extends Axis> axisClass) {
+    AxisFactory(axisClass) {
         super(axisClass, true);
     }
 

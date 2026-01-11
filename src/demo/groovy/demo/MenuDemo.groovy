@@ -65,6 +65,18 @@ start {
                             menuItem("22222", onAction: { println "22222"})
                             menuItem("33333", onAction: { println "33333"})
                         }
+                        // ContextMenu behavior note:
+                        // -------------------------
+                        // In JavaFX, a ContextMenu attached to a Control is shown by the
+                        // platform "context menu trigger" (usually RIGHT-click).
+                        //
+                        // This demo attaches the ContextMenu to the Button, so:
+                        //   • Right-click → shows the context menu
+                        //   • Left-click  → activates the button (no menu by default)
+                        //
+                        // To show a ContextMenu on left-click as well, call
+                        // contextMenu.show(...) explicitly from an onAction handler.
+                        // See ContextMenuDemo for an example.
                         button("Context Menu") {
                             onMouseEntered {println "over"}
                             contextMenu() {

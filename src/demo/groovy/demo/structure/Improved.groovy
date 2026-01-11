@@ -40,39 +40,39 @@ class Email2 {
     String toString() { "<$name> $address : $feedback" }
 }
 
-start { app ->
+/**
+ * Demonstrates a more structured GroovyFX application using helper methods
+ * and shared styling.
+ */
+start {
     SceneGraphBuilder builder = delegate
-    layoutFrame builder
-    DemoStyle.style builder
 
-    def model = new Email2()
-    bindModelToViews model, builder
-    attachHandlers model, builder
+    //layoutFrame is not part of delegate - its directly in the script below - so use explicit call to avoid dsl processing
+    this.layoutFrame(builder)
+    DemoStyle.style(builder)
 
     primaryStage.show()
 }
 
+
 def layoutFrame(SceneGraphBuilder sgb) {
-    sgb.stage {
+    def st = sgb.stage {
         scene {
             gridPane {
-                label id: 'header', row: 0, column: 1,
-                        'Please Send Us Your Feedback'
-
+                label id: 'header', row: 0, column: 1, 'Please Send Us Your Feedback'
                 label 'Name', row: 1, column: 0
                 textField id: 'name', row: 1, column: 1
-
                 label 'Address', row: 2, column: 0
                 textField id: 'address', row: 2, column: 1
-
                 label 'Feedback', row: 3, column: 0, valignment: BASELINE
                 textArea id: 'feedback', row: 3, column: 1
-
-                button id: 'submit', row: 4, column: 1, halignment: RIGHT,
-                        "Send Feedback"
+                button id: 'submit', row: 4, column: 1, halignment: RIGHT, "Send Feedback"
             }
         }
     }
+
+    // <-- critical line
+    sgb.primaryStage = st
 }
 
 

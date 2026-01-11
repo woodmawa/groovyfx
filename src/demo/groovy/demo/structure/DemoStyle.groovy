@@ -30,6 +30,7 @@ class DemoStyle {
 
     static style(SceneGraphBuilder sgb) {
         Stage frame = sgb.primaryStage
+        if (frame == null || frame.scene == null) return
         Scene scene = frame.scene
         scene.stylesheets << 'demo/demo.css'
 //        def GROOVYBLUE = sgb.groovyblue

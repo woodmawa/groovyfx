@@ -46,7 +46,7 @@ class TreeItemFactory extends AbstractFXBeanFactory {
         super(TreeItem)
     }
 
-    public TreeItemFactory(Class<TreeItem> beanClass) {
+    public TreeItemFactory(beanClass) {
         super(beanClass)
     }
 
@@ -57,23 +57,74 @@ class TreeItemFactory extends AbstractFXBeanFactory {
         }
         item;
     }
-    public void setChild( FactoryBuilderSupport builder, Object parent, Object child ) {
-        switch(child) {
-            case TreeItem:
-                parent.children.add(child);
-                break
-            case Graphic:
-                parent.graphic = child.node
-                break
-            case Node:
-                parent.graphic = child;
-                break
-            case GroovyEventHandler:
-                setEventHandler(parent, child.property, child);
-                break
-            default:
-                throw new Exception("In a TreeItem, value must be an instanceof TreeItem, Node, or an event to be used as embedded content.")
+
+    void setChild(FactoryBuilderSupport builder, Object parent, Object child) {
+        // Some "property/event" nodes apply themselves and return null.
+        if (child == null) return
+
+        if (child instanceof TreeItem) {
+            parent.children.add(child)
+            return
         }
+
+        if (child instanceof Node) {
+            // Treat embedded Node as graphic unless a dedicated graphic{} node handled it
+            parent.graphic = child
+            return
+        }
+
+        // GroovyFX event wrapper (old path)
+        if (child instanceof GroovyEventHandler) {
+            def name = child.name
+            if (treeItemEvents.containsKey(name)) {
+                setEventHandler(parent as TreeItem, name, child as EventHandler)
+                return
+            }
+            // If it's some other event spec, let it pass quietly (legacy tolerance)
+            return
+        }
+
+        // ClosureHandlerFactory "spec" (new path you're hitting):
+        // groovyx.javafx.factory.ClosureHandlerFactory$HandlerSpec
+        if (child?.class?.name == 'groovyx.javafx.factory.ClosureHandlerFactory$HandlerSpec') {
+            def name = child.name
+            def handler = (child.hasProperty('handler') ? child.handler : null)
+            if (handler == null && child.hasProperty('closure')) handler = child.closure
+
+            if (handler != null && treeItemEvents.containsKey(name)) {
+                setEventHandler(parent as TreeItem, name, handler as EventHandler)
+            }
+            return
+        }
+
+        // graphic { ... } in GroovyFX often returns a wrapper, not a Node
+        if (child?.class?.name == 'groovyx.javafx.factory.GraphicFactory$GraphicWrapper') {
+            def wrapped =
+                    (child.hasProperty('node') ? child.node : null) ?:
+                            (child.hasProperty('graphic') ? child.graphic : null) ?:
+                                    (child.hasProperty('value') ? child.value : null)
+
+            if (wrapped instanceof Node) {
+                parent.graphic = wrapped
+                return
+            }
+
+            // If wrapper didn't contain a Node, ignore (or throw if you prefer strictness)
+            return
+        }
+
+        // Last-resort tolerance: silently ignore known DSL wrapper types
+        if (child?.class?.name?.startsWith('groovyx.javafx.factory.')) {
+            return
+        }
+
+        // Newer paths may return a raw handler; ignore here.
+        if (child instanceof EventHandler) return
+
+        throw new Exception(
+                "In a TreeItem, value must be an instanceof TreeItem, Node, or an event to be used as embedded content. " +
+                        "Got: ${child.getClass().name}"
+        )
     }
 
     public boolean onHandleNodeAttributes( FactoryBuilderSupport builder, Object node,
