@@ -22,7 +22,6 @@
 
 import static groovyx.javafx.GroovyFX.*
 
-
 start {
     def sgb = delegate  // this is the SceneGraphBuilder
     def st              // stage handle for show/close

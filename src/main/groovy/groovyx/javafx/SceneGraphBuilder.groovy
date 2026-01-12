@@ -162,7 +162,7 @@ class SceneGraphBuilder extends FactoryBuilderSupport {
             LOG.fine("SceneGraphAddon loading disabled via -D${DISABLE_ADDONS_PROP}=true")
             return
         }
-        loadAddonsOnce()
+        loadAddons()
     }
 
     /** Manually apply an addon to this builder instance. */

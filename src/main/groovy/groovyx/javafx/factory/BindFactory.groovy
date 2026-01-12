@@ -33,7 +33,7 @@ class BindFactory extends AbstractFXBeanFactory {
         super(ObservableValue)
     }
     
-    public BindFactory(Class<ObservableValue> beanClass) {
+    public BindFactory(beanClass) {
         super(beanClass);
     }
     

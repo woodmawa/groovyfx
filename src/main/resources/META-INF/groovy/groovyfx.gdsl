@@ -1,0 +1,265 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * Copyright 2011-2021 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * Copyright 2011-2021 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+// GroovyFX / GroovyFX Demos - IntelliJ GDSL support
+// Drop-in replacement focused on "high value" DSL nodes + helpers.
+// Notes:
+// - This file is executed by IntelliJ's Groovy DSLD runtime (not compiled).
+// - Some calls (e.g. delegatesTo(findClass(...))) may be underlined by IDE inspections
+//   but still work at runtime. Suppressions are included where helpful.
+
+// ---------- shared param signatures ----------
+//file:noinspection GrPackage
+
+def MAP_ONLY = [args: 'java.util.Map']
+// Use a closure literal for closure parameter typing (IDEA resolves this best)
+def CLOSURE_ONLY = [c: {}]
+def MAP_CLOSURE  = [args: 'java.util.Map', body: {}]
+
+// Common GroovyFX builder closure arg pattern used in many existing GDSLs
+def STAGE_ARGS = 'java.util.Map'
+
+// ---------- contexts ----------
+def SCRIPT_CTX  = context(scope: scriptScope())
+def CLOSURE_CTX = context(scope: closureScope())
+
+
+// ---------- helper for declaring node methods ----------
+def nodeMethod = { String n, String t ->
+    // Support both: node { ... } and node(args) { ... }
+    method(name: n, type: t, params: CLOSURE_ONLY)
+    method(name: n, type: t, params: MAP_CLOSURE)
+}
+def nodeMethodNoArgs = { String n, String t ->
+    method(name: n, type: t, params: CLOSURE_ONLY)
+}
+
+// ============================================================================
+// Script-level entry points (e.g., start { ... })
+// ============================================================================
+contributor(SCRIPT_CTX) {
+
+    // GroovyFX.start { ... } / start { ... } (static import)
+    method(name: 'start', type: 'javafx.stage.Stage', params: [c: {}])
+    method(name: 'start', type: 'javafx.stage.Stage', params: [args: 'java.util.Map', c: {}])
+
+    //stage and scene - can also be called top level
+    method(name:'stage', type:'javafx.stage.Stage', params:[args:'java.util.Map', c:{}])
+    method(name:'scene', type:'javafx.scene.Scene', params:[args:'java.util.Map', c:{}])
+
+
+    // Common script conveniences that appear in demos
+    property(name: 'GROOVYBLUE', type: 'javafx.scene.paint.Color')
+    property(name: 'groovyblue', type: 'javafx.scene.paint.Color')
+}
+
+// ============================================================================
+// Builder-closure DSL (only inside GroovyFX builder closures)
+// We gate by common enclosing calls to avoid leaking these methods into all closures.
+// ============================================================================
+contributor(CLOSURE_CTX) {
+
+    if (enclosingCall('start')) {
+
+        // -------------------------
+        // Builder helpers (not nodes)
+        // -------------------------
+        method(
+                name: 'primaryStage',
+                type: 'javafx.stage.Stage',
+                params: [c: {}]
+        )
+
+        method(
+                name: 'primaryStage',
+                type: 'javafx.stage.Stage',
+                params: [args: 'java.util.Map', c: {}]
+        )
+
+        method(
+                name: 'defer',
+                type: 'groovyx.javafx.SceneGraphBuilder',
+                params: [c: {}]
+        )
+
+        method(name: 'notify', type: 'void', params: [message: 'java.lang.String'])
+        method(name: 'notify', type: 'void', params: [message: 'java.lang.String', duration: 'javafx.util.Duration'])
+        method(name: 'notify', type: 'void', params: [args: 'java.util.Map', message: 'java.lang.String'])
+
+        method(name: 'subscribe', type: 'java.lang.Object', params: [observable: 'javafx.beans.value.ObservableValue', subscriber: 'groovy.lang.Closure'])
+        method(name: 'submit', type: 'groovyx.javafx.SceneGraphBuilder', params: [webView: 'java.lang.Object', body: {}])
+
+        method(name: 'registerComponentNode', type: 'void', params: [args: 'java.util.Map', c: {}])
+        method(name: 'registerComponent', type: 'void', params: [args: 'java.util.Map', c: {}])
+
+        // SPI helpers (visible in IDE)
+        method(name: 'addon', type: 'void', params: [addon: 'groovyx.javafx.spi.SceneGraphAddon'])
+        method(name: 'addon', type: 'void', params: [addonClass: 'java.lang.Class'])
+        method(name: 'registerIfAbsent', type: 'void', params: [name: 'java.lang.String', factory: 'groovy.util.Factory'])
+        method(name: 'register', type: 'void', params: [name: 'java.lang.String', factory: 'groovy.util.Factory'])
+
+        // -------------------------
+        // Common constants / vars
+        // -------------------------
+        property(name: 'GROOVYBLUE', type: 'javafx.scene.paint.Color')
+        property(name: 'groovyblue', type: 'javafx.scene.paint.Color')
+
+        // -------------------------
+        // Top-level stage/scene
+        // -------------------------
+        nodeMethod('stage', 'javafx.stage.Stage')
+        nodeMethod('scene', 'javafx.scene.Scene')
+
+        // -------------------------
+        // Layout panes (high value)
+        // -------------------------
+        nodeMethod('borderPane', 'javafx.scene.layout.BorderPane')
+        nodeMethod('vbox', 'javafx.scene.layout.VBox')
+        nodeMethod('hbox', 'javafx.scene.layout.HBox')
+        nodeMethod('stackPane', 'javafx.scene.layout.StackPane')
+        nodeMethod('gridPane', 'javafx.scene.layout.GridPane')
+        nodeMethod('flowPane', 'javafx.scene.layout.FlowPane')
+        nodeMethod('anchorPane', 'javafx.scene.layout.AnchorPane')
+        nodeMethod('tilePane', 'javafx.scene.layout.TilePane')
+        nodeMethod('pane', 'javafx.scene.layout.Pane')
+        nodeMethod('region', 'javafx.scene.layout.Region')
+        nodeMethod('group', 'javafx.scene.Group')
+        nodeMethod('textFlow', 'javafx.scene.text.TextFlow')
+
+        // BorderPane regions
+        nodeMethodNoArgs('top', 'javafx.scene.Node')
+        nodeMethodNoArgs('bottom', 'javafx.scene.Node')
+        nodeMethodNoArgs('left', 'javafx.scene.Node')
+        nodeMethodNoArgs('right', 'javafx.scene.Node')
+        nodeMethodNoArgs('center', 'javafx.scene.Node')
+
+        // -------------------------
+        // Common controls (high value)
+        // -------------------------
+        nodeMethod('label', 'javafx.scene.control.Label')
+        nodeMethod('button', 'javafx.scene.control.Button')
+        nodeMethod('checkBox', 'javafx.scene.control.CheckBox')
+        nodeMethod('textField', 'javafx.scene.control.TextField')
+        nodeMethod('textArea', 'javafx.scene.control.TextArea')
+        nodeMethod('passwordField', 'javafx.scene.control.PasswordField')
+        nodeMethod('hyperlink', 'javafx.scene.control.Hyperlink')
+
+        nodeMethod('comboBox', 'javafx.scene.control.ComboBox')
+        nodeMethod('choiceBox', 'javafx.scene.control.ChoiceBox')
+
+        nodeMethod('radioButton', 'javafx.scene.control.RadioButton')
+        nodeMethod('toggleButton', 'javafx.scene.control.ToggleButton')
+
+        nodeMethod('slider', 'javafx.scene.control.Slider')
+        nodeMethod('progressBar', 'javafx.scene.control.ProgressBar')
+        nodeMethod('progressIndicator', 'javafx.scene.control.ProgressIndicator')
+
+        nodeMethod('scrollPane', 'javafx.scene.control.ScrollPane')
+        nodeMethod('splitPane', 'javafx.scene.control.SplitPane')
+        nodeMethod('tabPane', 'javafx.scene.control.TabPane')
+        nodeMethod('tab', 'javafx.scene.control.Tab')
+        nodeMethod('accordion', 'javafx.scene.control.Accordion')
+        nodeMethod('titledPane', 'javafx.scene.control.TitledPane')
+        nodeMethod('toolBar', 'javafx.scene.control.ToolBar')
+
+        nodeMethod('listView', 'javafx.scene.control.ListView')
+        nodeMethod('treeView', 'javafx.scene.control.TreeView')
+        nodeMethod('treeItem', 'javafx.scene.control.TreeItem')
+
+        nodeMethod('tableView', 'javafx.scene.control.TableView')
+        nodeMethod('tableColumn', 'javafx.scene.control.TableColumn')
+
+        nodeMethod('buttonBar', 'javafx.scene.control.ButtonBar')
+
+        // -------------------------
+        // Menus / Actions (high value demos)
+        // -------------------------
+        nodeMethod('actions', 'java.lang.Object')
+        nodeMethod('fxaction', 'java.lang.Object')
+        nodeMethod('bean', 'java.lang.Object') // used for binding actions etc.
+
+        nodeMethod('menuBar', 'javafx.scene.control.MenuBar')
+        nodeMethod('menu', 'javafx.scene.control.Menu')
+        nodeMethod('menuItem', 'javafx.scene.control.MenuItem')
+        nodeMethod('checkMenuItem', 'javafx.scene.control.CheckMenuItem')
+        nodeMethod('radioMenuItem', 'javafx.scene.control.RadioMenuItem')
+        nodeMethodNoArgs('separatorMenuItem', 'javafx.scene.control.SeparatorMenuItem')
+        nodeMethod('contextMenu', 'javafx.scene.control.ContextMenu')
+        nodeMethodNoArgs('separator', 'javafx.scene.control.Separator')
+
+        // -------------------------
+        // Binding / listeners (high value)
+        // -------------------------
+        nodeMethod('bind', 'java.lang.Object')
+        nodeMethod('onChange', 'java.lang.Object')
+        nodeMethod('onInvalidate', 'java.lang.Object')
+
+        // -------------------------
+        // Common shapes / graphics
+        // -------------------------
+        nodeMethod('rectangle', 'javafx.scene.shape.Rectangle')
+        nodeMethod('circle', 'javafx.scene.shape.Circle')
+        nodeMethod('line', 'javafx.scene.shape.Line')
+        nodeMethod('polygon', 'javafx.scene.shape.Polygon')
+        nodeMethod('polyline', 'javafx.scene.shape.Polyline')
+        nodeMethod('path', 'javafx.scene.shape.Path')
+        nodeMethod('imageView', 'javafx.scene.image.ImageView')
+
+        // -------------------------
+        // Charts (high value)
+        // -------------------------
+        nodeMethod('lineChart', 'javafx.scene.chart.LineChart')
+        nodeMethod('areaChart', 'javafx.scene.chart.AreaChart')
+        nodeMethod('barChart', 'javafx.scene.chart.BarChart')
+        nodeMethod('scatterChart', 'javafx.scene.chart.ScatterChart')
+        nodeMethod('pieChart', 'javafx.scene.chart.PieChart')
+        nodeMethod('categoryAxis', 'javafx.scene.chart.CategoryAxis')
+        nodeMethod('numberAxis', 'javafx.scene.chart.NumberAxis')
+
+        // -------------------------
+        // Event handler nodes that frequently appear in scripts
+        // (These help stop "unknown DSL node" red underlines)
+        // -------------------------
+        nodeMethod('onAction', 'java.lang.Object')
+        nodeMethod('onMouseClicked', 'java.lang.Object')
+        nodeMethod('onMousePressed', 'java.lang.Object')
+        nodeMethod('onMouseReleased', 'java.lang.Object')
+        nodeMethod('onKeyPressed', 'java.lang.Object')
+        nodeMethod('onKeyReleased', 'java.lang.Object')
+        nodeMethod('onShown', 'java.lang.Object')
+        nodeMethod('onHidden', 'java.lang.Object')
+        nodeMethod('onCloseRequest', 'java.lang.Object')
+    }
+
+}
