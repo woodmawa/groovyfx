@@ -19,6 +19,7 @@ package groovyx.javafx
 
 import groovy.util.FactoryBuilderSupport
 import groovy.util.logging.Slf4j
+import javafx.scene.control.SplitPane
 import org.codehaus.groovy.runtime.InvokerHelper
 
 import javafx.collections.FXCollections
@@ -42,6 +43,10 @@ import javafx.scene.web.WebEngine
  *
  * Also fixes:
  *  - Stage.metaClass methodMissing incorrectly writing to Scene.metaClass.
+ *
+ * Hardenings:
+ *  - Chains existing methodMissing handlers instead of clobbering them
+ *  - Adds null-safe fallbacks for List/Map asType interception
  */
 @Slf4j
 class GroovyFXEnhancer {
@@ -62,20 +67,15 @@ class GroovyFXEnhancer {
         // ------------------------------------------------------------------
         // 1) REQUIRED by groovyx.javafx.factory.AbstractNodeFactory
         // ------------------------------------------------------------------
-        // Some factories call: Object.onHandleNodeAttributes(builder, node, attrs)
-        // If this isn't installed you get your current MissingMethodException.
         def existing = Object.metaClass.getMetaMethod(
                 "onHandleNodeAttributes",
                 [FactoryBuilderSupport, Object, Map] as Class[]
         )
         if (existing == null) {
             Object.metaClass.'static'.onHandleNodeAttributes = { FactoryBuilderSupport builder, Object node, Map attrs ->
-                // Important: must be safe when attrs is empty (common in tests)
+                // Must be safe when attrs is empty (common in tests)
                 if (attrs == null || attrs.isEmpty()) return attrs
-
-                // Keep behavior conservative: let FactoryBuilderSupport do the real work.
-                // We do NOT consume attrs here; just return it untouched.
-                // If you later want legacy consumption of some attributes, do it here.
+                // Conservative: do not consume; let factories handle it.
                 return attrs
             }
         }
@@ -83,8 +83,6 @@ class GroovyFXEnhancer {
         // ------------------------------------------------------------------
         // 1b) REQUIRED by groovyx.javafx.factory.AbstractNodeFactory
         // ------------------------------------------------------------------
-        // Many factories delegate to: Object.setChild(builder, parent, child)
-        // (MenuItem graphic wrapper, TitledPane graphic wrapper, etc.)
         def existingSetChild = Object.metaClass.getMetaMethod(
                 "setChild",
                 [FactoryBuilderSupport, Object, Object] as Class[]
@@ -93,7 +91,6 @@ class GroovyFXEnhancer {
             Object.metaClass.'static'.setChild = { FactoryBuilderSupport builder, Object parent, Object child ->
                 if (parent == null || child == null) return
 
-                // Unwrap wrapper children (e.g. GraphicFactory.GraphicWrapper) by calling build()
                 def effectiveChild = child
                 try {
                     if (!(child instanceof javafx.scene.Node) &&
@@ -101,21 +98,19 @@ class GroovyFXEnhancer {
                         def built = child.build()
                         if (built != null) effectiveChild = built
                     }
-                } catch (ignored) {
-                    // keep original child
+                } catch (Throwable ignored) {
+                    // best effort; keep original child
                 }
 
-                // If we ended up with a Node, try common attachment patterns
                 if (effectiveChild instanceof javafx.scene.Node) {
-
-                    // 1) graphic property (MenuItem, Labeled, TitledPane, etc.)
+                    // 1) graphic property
                     try {
                         def p = parent.metaClass.hasProperty(parent, "graphic")
                         if (p != null) {
                             parent.graphic = effectiveChild
                             return
                         }
-                    } catch (ignored) { }
+                    } catch (Throwable ignored) { }
 
                     // 2) setGraphic(Node)
                     try {
@@ -123,28 +118,26 @@ class GroovyFXEnhancer {
                             parent.setGraphic(effectiveChild)
                             return
                         }
-                    } catch (ignored) { }
+                    } catch (Throwable ignored) { }
 
-                    // 3) Parent.children (JavaFX SceneGraph)
+                    // 3) Parent.children
                     try {
                         def chProp = parent.metaClass.hasProperty(parent, "children")
-                        if (chProp != null && parent.children instanceof java.util.Collection) {
+                        if (chProp != null && parent.children instanceof Collection) {
                             parent.children.add(effectiveChild)
                             return
                         }
-                    } catch (ignored) { }
+                    } catch (Throwable ignored) { }
 
-                    // 4) SplitPane.items (Nodes)
-                    // Avoid generic "items" because many controls have items that are NOT Nodes.
+                    // 4) SplitPane.items (Nodes only)
                     try {
-                        if (parent instanceof javafx.scene.control.SplitPane) {
+                        if (parent instanceof SplitPane) {
                             parent.items.add(effectiveChild)
                             return
                         }
-                    } catch (ignored) { }
+                    } catch (Throwable ignored) { }
                 }
 
-                // Otherwise do nothing (legacy "best effort")
                 return
             }
         }
@@ -152,7 +145,6 @@ class GroovyFXEnhancer {
         // ------------------------------------------------------------------
         // 1c) REQUIRED by bindings + some factories
         // ------------------------------------------------------------------
-        // Some parts call: Object.onNodeCompleted(builder, parent, node)
         def existingOnNodeCompleted = Object.metaClass.getMetaMethod(
                 "onNodeCompleted",
                 [FactoryBuilderSupport, Object, Object] as Class[]
@@ -161,8 +153,6 @@ class GroovyFXEnhancer {
             Object.metaClass.'static'.onNodeCompleted = { FactoryBuilderSupport builder, Object parent, Object node ->
                 if (node == null) return
 
-                // Apply common "binding holder" patterns if present.
-                // (We keep this reflective so it doesn't hard-depend on classes.)
                 def applyOne = { obj ->
                     if (obj == null) return
                     try {
@@ -175,29 +165,28 @@ class GroovyFXEnhancer {
                         } else if (obj.metaClass.respondsTo(obj, "call")) {
                             obj.call()
                         }
-                    } catch (ignored) {
-                        // best-effort (legacy behaviour)
+                    } catch (Throwable ignored) {
+                        // legacy best-effort
                     }
                 }
 
-                if (node instanceof Collection) {
-                    node.each { applyOne(it) }
-                } else {
-                    applyOne(node)
-                }
+                if (node instanceof Collection) node.each { applyOne(it) }
+                else applyOne(node)
             }
         }
 
         // ------------------------------------------------------------------
-        // 2) Collection coercions (your existing behavior)
+        // 2) Collection coercions
         // ------------------------------------------------------------------
         def origListAsType = List.metaClass.getMetaMethod("asType", [Class] as Class[])
         List.metaClass {
             asType << { Class clazz ->
                 if (clazz == ObservableList) {
                     FXCollections.observableArrayList(delegate)
-                } else {
+                } else if (origListAsType != null) {
                     origListAsType.invoke(delegate, clazz)
+                } else {
+                    InvokerHelper.asType(delegate, clazz)
                 }
             }
         }
@@ -207,8 +196,10 @@ class GroovyFXEnhancer {
             asType << { Class clazz ->
                 if (clazz == ObservableMap) {
                     FXCollections.observableMap(delegate)
-                } else {
+                } else if (origMapAsType != null) {
                     origMapAsType.invoke(delegate, clazz)
+                } else {
+                    InvokerHelper.asType(delegate, clazz)
                 }
             }
         }
@@ -220,52 +211,53 @@ class GroovyFXEnhancer {
                     FXCollections.observableSet(delegate)
                 } else if (origSetAsType != null) {
                     origSetAsType.invoke(delegate, clazz)
+                } else {
+                    InvokerHelper.asType(delegate, clazz)
                 }
             }
         }
 
         // ------------------------------------------------------------------
-        // 3) Shortcut: xxx() -> xxxProperty() for Node/Scene/Stage
+        // 3) Shortcut: xxx() -> xxxProperty() for Node/Scene/Stage (CHAINED)
         // ------------------------------------------------------------------
-        Node.metaClass {
-            methodMissing = { String name, args ->
-                def fxName = "${name}Property"
-                if (delegate.metaClass.respondsTo(delegate, fxName, InvokerHelper.EMPTY_ARGUMENTS)) {
-                    def meth = { Object[] varargs -> delegate."${name}Property"() }
-                    Node.metaClass."$name" = meth
-                    return meth(args as Object[])
-                }
-                throw new MissingMethodException(name, delegate.class, args)
+        def prevNodeMM = Node.metaClass.getMetaMethod("methodMissing", [String, Object] as Class[])
+        Node.metaClass.methodMissing = { String name, args ->
+            def fxName = "${name}Property"
+            if (delegate.metaClass.respondsTo(delegate, fxName, InvokerHelper.EMPTY_ARGUMENTS)) {
+                def meth = { Object[] varargs -> delegate."${name}Property"() }
+                Node.metaClass."$name" = meth
+                return meth(args as Object[])
             }
+            if (prevNodeMM != null) return prevNodeMM.invoke(delegate, name, args)
+            throw new MissingMethodException(name, delegate.class, args)
         }
 
-        Scene.metaClass {
-            methodMissing = { String name, args ->
-                def fxName = "${name}Property"
-                if (delegate.metaClass.respondsTo(delegate, fxName, InvokerHelper.EMPTY_ARGUMENTS)) {
-                    def meth = { Object[] varargs -> delegate."${name}Property"() }
-                    Scene.metaClass."$name" = meth
-                    return meth(args as Object[])
-                }
-                throw new MissingMethodException(name, delegate.class, args)
+        def prevSceneMM = Scene.metaClass.getMetaMethod("methodMissing", [String, Object] as Class[])
+        Scene.metaClass.methodMissing = { String name, args ->
+            def fxName = "${name}Property"
+            if (delegate.metaClass.respondsTo(delegate, fxName, InvokerHelper.EMPTY_ARGUMENTS)) {
+                def meth = { Object[] varargs -> delegate."${name}Property"() }
+                Scene.metaClass."$name" = meth
+                return meth(args as Object[])
             }
+            if (prevSceneMM != null) return prevSceneMM.invoke(delegate, name, args)
+            throw new MissingMethodException(name, delegate.class, args)
         }
 
-        Stage.metaClass {
-            methodMissing = { String name, args ->
-                def fxName = "${name}Property"
-                if (delegate.metaClass.respondsTo(delegate, fxName, InvokerHelper.EMPTY_ARGUMENTS)) {
-                    def meth = { Object[] varargs -> delegate."${name}Property"() }
-                    // FIX: must install on Stage.metaClass (your file installed on Scene.metaClass)
-                    Stage.metaClass."$name" = meth
-                    return meth(args as Object[])
-                }
-                throw new MissingMethodException(name, delegate.class, args)
+        def prevStageMM = Stage.metaClass.getMetaMethod("methodMissing", [String, Object] as Class[])
+        Stage.metaClass.methodMissing = { String name, args ->
+            def fxName = "${name}Property"
+            if (delegate.metaClass.respondsTo(delegate, fxName, InvokerHelper.EMPTY_ARGUMENTS)) {
+                def meth = { Object[] varargs -> delegate."${name}Property"() }
+                Stage.metaClass."$name" = meth
+                return meth(args as Object[])
             }
+            if (prevStageMM != null) return prevStageMM.invoke(delegate, name, args)
+            throw new MissingMethodException(name, delegate.class, args)
         }
 
         // ------------------------------------------------------------------
-        // 4) WebEngine handler sugar (your existing behavior)
+        // 4) WebEngine handler sugar
         // ------------------------------------------------------------------
         if (System.properties['javafx.platform'] != 'eglfb') {
             WebEngine.metaClass {

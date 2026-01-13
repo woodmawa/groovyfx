@@ -19,6 +19,7 @@ package groovyx.javafx
 
 import groovy.lang.DelegatesTo
 import groovy.transform.CompileStatic
+import groovy.util.logging.Slf4j
 import groovyx.javafx.animation.TargetHolder
 import groovyx.javafx.canvas.*
 import groovyx.javafx.components.Notification
@@ -62,7 +63,6 @@ import javafx.util.Duration
 import org.codehaus.groovy.runtime.MethodClosure
 
 import java.util.function.Consumer
-import java.util.logging.Logger
 
 import static groovyx.javafx.GroovyFXEnhancer.*
 
@@ -71,6 +71,7 @@ import static groovyx.javafx.GroovyFXEnhancer.*
  *
  * GroovyFX DSL builder for JavaFX.
  */
+@Slf4j
 class SceneGraphBuilder extends FactoryBuilderSupport {
     static final String DELEGATE_PROPERTY_OBJECT_ID = "_delegateProperty:id"
     static final String DEFAULT_DELEGATE_PROPERTY_OBJECT_ID = "id"
@@ -84,7 +85,7 @@ class SceneGraphBuilder extends FactoryBuilderSupport {
     static final String CONTEXT_SCENE_KEY = "CurrentScene"
     static final String CONTEXT_DIVIDER_KEY = "CurrentDividers"
 
-    private static final Logger LOG = Logger.getLogger(SceneGraphBuilder.name)
+    
     private static final Random random = new Random()
 
     private Scene currentScene
@@ -101,13 +102,15 @@ class SceneGraphBuilder extends FactoryBuilderSupport {
 
     SceneGraphBuilder(boolean init = true) {
         super(init)
-        initialize()
+        if ( init)
+            initialize()
     }
 
     SceneGraphBuilder(Stage primaryStage, boolean init = true) {
         super(init)
         this.variables.primaryStage = primaryStage
-        initialize()
+        if ( init)
+            initialize()
     }
 
     // ---- IDE-friendly explicit DSL entrypoint (works with registered PrimaryStageFactory) ----
@@ -128,10 +131,7 @@ class SceneGraphBuilder extends FactoryBuilderSupport {
     void setCurrentScene(Scene scene) { this.currentScene = scene }
 
     SceneGraphBuilder defer(Closure c) {
-        if (!(c instanceof MethodClosure)) {
-            c = c.curry([this])
-        }
-        Platform.runLater(c)
+        Platform.runLater { c.call() }
         return this
     }
 
@@ -142,15 +142,16 @@ class SceneGraphBuilder extends FactoryBuilderSupport {
             for (SceneGraphAddon addon : loader) {
                 try {
                     addon.apply(this)
-                    LOG.fine("Loaded SceneGraphAddon ${addon.class.name}")
+                    log.info("Loaded SceneGraphAddon ${addon.class.name}")
                 } catch (Throwable t) {
-                    LOG.warning("Failed to apply SceneGraphAddon ${addon?.class?.name}: ${t.message}")
+                    log.warn("Failed to apply SceneGraphAddon ${addon?.class?.name}", t)
+
                 }
             }
         } catch (ServiceConfigurationError sce) {
-            LOG.warning("Failed to discover SceneGraphAddon providers: ${sce.message}")
+            log.warn("Failed to discover SceneGraphAddon providers: ${sce.message}")
         } catch (Throwable t) {
-            LOG.warning("Unexpected failure loading SceneGraphAddons: ${t.message}")
+            log.warn("Unexpected failure loading SceneGraphAddons: ${t.message}")
         }
     }
 
@@ -159,7 +160,7 @@ class SceneGraphBuilder extends FactoryBuilderSupport {
         addonsLoaded = true
 
         if (Boolean.getBoolean(DISABLE_ADDONS_PROP)) {
-            LOG.fine("SceneGraphAddon loading disabled via -D${DISABLE_ADDONS_PROP}=true")
+            log.info("SceneGraphAddon loading disabled via -D${DISABLE_ADDONS_PROP}=true")
             return
         }
         loadAddons()
@@ -178,7 +179,7 @@ class SceneGraphBuilder extends FactoryBuilderSupport {
 
     void registerIfAbsent(String name, Factory factory) {
         if (getFactories()?.containsKey(name)) {
-            LOG.warning("Factory '${name}' already registered; skipping ${factory.class.name}")
+            log.warn("Factory '${name}' already registered; skipping ${factory.class.name}")
             return
         }
         registerFactory(name, factory)
@@ -241,7 +242,12 @@ class SceneGraphBuilder extends FactoryBuilderSupport {
         if (wv == null) return this
         if (wv.class.name != "javafx.scene.web.WebView") {
             // Backward-compatible behavior: invoke immediately
-            c.call(wv)
+            try {
+                c.call(wv)
+            } catch (Throwable t) {
+                log.error ("submit: callback failed ", t)
+
+            }
             return this
         }
 
@@ -256,18 +262,22 @@ class SceneGraphBuilder extends FactoryBuilderSupport {
                         defer {
                             switch (newState) {
                                 case Worker.State.SUCCEEDED:
-                                    c.call(wv)
+                                    try {
+                                        c.call(wv)
+                                    } catch (Throwable t) {
+                                        log.error("submit: web view callback failed", t)
+                                    }
                                     wv.engine.loadWorker.stateProperty().removeListener(this)
                                     break
                                 case Worker.State.FAILED:
-                                    LOG.warning(wv.engine.loadWorker.message)
+                                    log.warn(wv.engine.loadWorker.message)
                                     if (wv.engine.loadWorker.exception?.message) {
-                                        LOG.warning(wv.engine.loadWorker.exception.message)
+                                        log.warn(wv.engine.loadWorker.exception.message)
                                     }
                                     wv.engine.loadWorker.stateProperty().removeListener(this)
                                     break
                                 case Worker.State.CANCELLED:
-                                    LOG.warning(wv.engine.loadWorker.message)
+                                    log.warn(wv.engine.loadWorker.message)
                                     wv.engine.loadWorker.stateProperty().removeListener(this)
                                     break
                                 default:
@@ -280,10 +290,18 @@ class SceneGraphBuilder extends FactoryBuilderSupport {
             }
         }
 
+        def safeSubmit = {
+            try {
+                submitClosure.call()
+            } catch (Throwable t) {
+                log.error("submit: web view callback failed", t)
+            }
+        }
+
         if (Platform.isFxApplicationThread()) {
-            submitClosure.call()
+            safeSubmit.call()
         } else {
-            defer submitClosure
+            defer safeSubmit
         }
         return this
     }
@@ -433,7 +451,7 @@ class SceneGraphBuilder extends FactoryBuilderSupport {
         try {
             registerFactory(name, factory)
         } catch (Throwable t) {
-            LOG.warning("Skipping factory '${name}' (${factory?.class?.name}): ${t.message}")
+            log.warn("Skipping factory '${name}' (${factory?.class?.name}): ${t.message}")
         }
     }
 
@@ -830,7 +848,7 @@ class SceneGraphBuilder extends FactoryBuilderSupport {
         Class<?> webViewClass = tryLoadClass("javafx.scene.web.WebView")
         Class<?> htmlEditorClass = tryLoadClass("javafx.scene.web.HTMLEditor")
         if (webViewClass == null || htmlEditorClass == null) {
-            LOG.fine("javafx-web not present; skipping WebView/HTMLEditor DSL registration")
+            log.info("javafx-web not present; skipping WebView/HTMLEditor DSL registration")
             return
         }
 
@@ -878,7 +896,7 @@ class SceneGraphBuilder extends FactoryBuilderSupport {
         Class<?> mediaViewClass = tryLoadClass("javafx.scene.media.MediaView")
         Class<?> mediaPlayerClass = tryLoadClass("javafx.scene.media.MediaPlayer")
         if (mediaViewClass == null || mediaPlayerClass == null) {
-            LOG.fine("javafx-media not present; skipping MediaView/MediaPlayer DSL registration")
+            log.info("javafx-media not present; skipping MediaView/MediaPlayer DSL registration")
             return
         }
 
@@ -975,6 +993,6 @@ class SceneGraphBuilder extends FactoryBuilderSupport {
         propertyMap.each { name, value -> setVariable(name, value) }
 
         // Discover external component libraries (SPI)
-        loadAddons()
+        loadAddonsOnce()
     }
 }

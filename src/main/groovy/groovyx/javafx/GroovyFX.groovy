@@ -18,13 +18,15 @@
 package groovyx.javafx;
 
 import groovy.lang.Closure
-import groovy.transform.CompileStatic;
+import groovy.transform.CompileStatic
+import groovy.util.logging.Slf4j;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.stage.Stage;
 import org.codehaus.groovy.runtime.InvokerHelper;
 
-import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -42,6 +44,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * @author Dierk Koenig (default delegate)
  */
 @CompileStatic
+@Slf4j
 public class GroovyFX extends Application {
 
     /**
@@ -51,6 +54,7 @@ public class GroovyFX extends Application {
      * before {@link Application#launch(Class, String...)} transfers control to JavaFX.</p>
      */
     public static volatile Closure<Object> closure;
+    private static AtomicBoolean LAUNCHED = new AtomicBoolean(false)
 
     private static final AtomicBoolean TOOLKIT_STARTED = new AtomicBoolean(false);
 
@@ -105,14 +109,21 @@ public class GroovyFX extends Application {
     @Override
     public void start(Stage primaryStage) {
         Closure<Object> local = closure
+
+        if (!LAUNCHED.compareAndSet(false, true)) {
+            throw new IllegalStateException("GroovyFX.start(...) can only be called once per JVM (Application.launch limitation).");
+        }
+
         if (local == null) throw new IllegalStateException("GroovyFX.start(Closure) must be called before Application launch.");
 
         try {
             def builder = new SceneGraphBuilder(primaryStage)
             builder.build(local)   // <- this sets DELEGATE_FIRST and rehydrates correctly
-        } catch (RuntimeException re) {
-            re.printStackTrace()
-            throw re
+        } catch (Throwable t) {
+            log.error("GroovyFX application failed during startup", t);
+            throw t
+        } finally {
+            closure = null  //allow GC to clean up
         }
     }
 
@@ -130,6 +141,7 @@ public class GroovyFX extends Application {
             @DelegatesTo(value = SceneGraphBuilder, strategy = Closure.DELEGATE_FIRST)
                     Closure<Object> buildMe
     ) {
+
         start(buildMe, new String[0])
     }
 
@@ -183,10 +195,11 @@ public class GroovyFX extends Application {
         });
 
         try {
-            latch.await();
-        } catch (InterruptedException ie) {
+            boolean ok = latch.await(30, TimeUnit.SECONDS);
+            if (!ok) throw new RuntimeException("Timed out waiting for FX task to complete");
+        } catch (Throwable t) {
             Thread.currentThread().interrupt();
-            throw new RuntimeException(ie);
+            throw new RuntimeException(t);
         }
     }
 }
