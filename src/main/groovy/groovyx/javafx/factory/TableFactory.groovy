@@ -17,6 +17,7 @@
  */
 package groovyx.javafx.factory
 
+import groovy.util.logging.Slf4j
 import groovyx.javafx.event.GroovyCallback
 import javafx.beans.property.SimpleStringProperty
 import javafx.beans.property.StringProperty
@@ -233,6 +234,7 @@ class ConverterPropertyValueFactory extends PropertyValueFactory implements Chan
     
 }
 
+@Slf4j
 class TableFactory extends AbstractNodeFactory {
     private static EditingCallback defaultCellFactory = new EditingCallback();
     private static EnumEditingCallback enumCellFactory = new EnumEditingCallback();
@@ -336,14 +338,40 @@ class TableFactory extends AbstractNodeFactory {
         }else if(child instanceof GroovyCallback) {
             if(parent instanceof TableView && child.property == "onSelect") {
                    parent.selectionModel.selectedItemProperty().addListener(new ChangeListener() {
-                        public void changed(final ObservableValue observable, final Object oldValue, final Object newValue) {
-                            builder.defer({child.closure.call(parent, oldValue, newValue);});
-                        }
+                       void changed(ObservableValue observable, Object oldValue, Object newValue) {
+                           builder.defer {
+                               def c = child.closure ?: { Object... ignored -> }
+                               try {
+                                   switch (c.maximumNumberOfParameters) {
+                                       case 0:
+                                           c.call()
+                                           break
+                                       case 1:
+                                           c.call(newValue)
+                                           break
+                                       case 2:
+                                           c.call(oldValue, newValue)
+                                           break
+                                       default:
+                                           c.call(parent, oldValue, newValue)
+                                           break
+                                   }
+                               } catch (Throwable t) {
+                                   // optional: route through builder / logger
+                                   log.error(
+                                           "Exception in onSelect callback (parent=${parent.getClass().simpleName}, oldValue=${oldValue}, newValue=${newValue})",
+                                           t
+                                   )
+                               }
+                           }
+                       }
                     });      
-            }else if(parent instanceof TableColumn ) {
-                InvokerHelper.setProperty(node, child.property, child);
+            }else {
+                super.setChild(builder, parent, child)
+
             }
-        }else {
+        } else {
+            // IMPORTANT: delegate everything else you don't explicitly handle
             super.setChild(builder, parent, child)
         }
     }

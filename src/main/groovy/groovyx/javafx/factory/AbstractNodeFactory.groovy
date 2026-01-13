@@ -17,6 +17,7 @@
  */
 package groovyx.javafx.factory
 
+import groovy.util.logging.Slf4j
 import groovyx.javafx.event.GroovyCallback
 import groovyx.javafx.event.GroovyChangeListener
 import groovyx.javafx.event.GroovyEventHandler
@@ -40,6 +41,7 @@ import javafx.scene.transform.Transform
  *
  * @author jimclarke
  */
+@Slf4j
 public abstract class AbstractNodeFactory extends AbstractFXBeanFactory {
 
     public static def nodeEvents = [
@@ -94,8 +96,8 @@ public abstract class AbstractNodeFactory extends AbstractFXBeanFactory {
 
     public boolean onHandleNodeAttributes(FactoryBuilderSupport builder, Object node, Map attributes) {
         // Store attributes in context for potential use in setChild (e.g., FormLayout)
-        builder.getContext().put(node, new HashMap(attributes))
-        
+        builder.context['_attrs'] = attributes ? new HashMap(attributes) : [:]
+
         for (v in nodeEvents) {
             if (attributes.containsKey(v)) {
                 def val = attributes.remove(v)
@@ -108,7 +110,7 @@ public abstract class AbstractNodeFactory extends AbstractFXBeanFactory {
         }
         def parent = builder.context.get(FactoryBuilderSupport.CURRENT_NODE)
         handleLayoutConstraints(parent, node, attributes)
-        return Object.onHandleNodeAttributes(builder, node, attributes)
+        return super.onHandleNodeAttributes(builder, node, attributes)
     }
 
     @Override
@@ -118,7 +120,12 @@ public abstract class AbstractNodeFactory extends AbstractFXBeanFactory {
         // Keep original owner/thisObject (script), but delegate to the node.
         Closure c = childContent.rehydrate(node, childContent.owner, childContent.thisObject)
         c.resolveStrategy = Closure.DELEGATE_FIRST
-        c.call()
+        try {
+            c.call()
+        } catch (Throwable t) {
+            log.error("Exception building children for ${node?.getClass()?.name}", t)
+            throw t
+        }
 
         return true
     }
@@ -135,7 +142,8 @@ public abstract class AbstractNodeFactory extends AbstractFXBeanFactory {
                 FXHelper.setPropertyOrMethod(parent, child.property, child)
                 break
             case GroovyCallback:
-                FXHelper.setPropertyOrMethod(parent, child.property, child)
+                if (child?.property)
+                    FXHelper.setPropertyOrMethod(parent, child.property, child)
                 break
             case Image:
                 // for imageviews

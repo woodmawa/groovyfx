@@ -27,7 +27,7 @@ class AbstractFXBeanFactory extends AbstractFactory {
     final Class beanClass
     protected boolean leaf
     
-    Map<String, Factory> childFactories;
+    Map<String, Factory> childFactories = [:] as LinkedHashMap
 
     public AbstractFXBeanFactory(Class beanClass) {
         this(beanClass, false)
@@ -43,7 +43,13 @@ class AbstractFXBeanFactory extends AbstractFactory {
         if (checkValue(name, value)) {
             return value
         }
-        return beanClass.newInstance()
+        try {
+            return beanClass.getDeclaredConstructor().newInstance()
+        } catch (Throwable t) {
+            throw new InstantiationException("Cannot instantiate ${beanClass.name}: ${t.message}").tap {
+                initCause(t)
+            }
+        }
     }
 
     public boolean checkValue(Object name, Object value) {
@@ -62,6 +68,7 @@ class AbstractFXBeanFactory extends AbstractFactory {
     boolean onHandleNodeAttributes(FactoryBuilderSupport builder, Object node, Map attributes) {
         // set the properties
         // noinspection unchecked
+        attributes = attributes ?: [:]
         FXHelper.fxAttributes(node, attributes)
         super.onHandleNodeAttributes(builder, node, attributes);
         return true;
@@ -74,14 +81,12 @@ class AbstractFXBeanFactory extends AbstractFactory {
     
     
     public void registerFactory(String name, Factory factory) {
-        if(childFactories == null)
-            childFactories = [(name):factory]
-        else
-            childFactories.put(name, factory);
+        if (childFactories == null) childFactories = [:] as LinkedHashMap
+        childFactories[name] = factory
     }
     
     public Factory resolveFactory(Object name, Map attributes, Object value) {
-        childFactories == null? null : childFactories[name];
+        childFactories == null ? null : childFactories[name?.toString()]
     }
 }
 
