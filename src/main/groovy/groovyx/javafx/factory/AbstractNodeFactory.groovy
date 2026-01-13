@@ -17,6 +17,7 @@
  */
 package groovyx.javafx.factory
 
+import groovyx.javafx.event.GroovyCallback
 import groovyx.javafx.event.GroovyChangeListener
 import groovyx.javafx.event.GroovyEventHandler
 import groovyx.javafx.event.GroovyInvalidationListener
@@ -131,6 +132,9 @@ public abstract class AbstractNodeFactory extends AbstractFXBeanFactory {
                 FXHelper.setPropertyOrMethod(parent, child.property, child)
                 break
             case GroovyInvalidationListener:
+                FXHelper.setPropertyOrMethod(parent, child.property, child)
+                break
+            case GroovyCallback:
                 FXHelper.setPropertyOrMethod(parent, child.property, child)
                 break
             case Image:

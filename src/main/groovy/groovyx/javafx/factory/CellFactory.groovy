@@ -37,14 +37,16 @@ class CellFactory extends AbstractNodeFactory {
         factory.property = name;
         factory;
     }
-    
+
+
     public boolean isHandlesNodeChildren() {
         return true;
     }
 
     public boolean onNodeChildren(FactoryBuilderSupport builder, Object node, Closure childContent) {
         node.closure = childContent;
-        return false;
+        return true;
     }
+
 }
 
