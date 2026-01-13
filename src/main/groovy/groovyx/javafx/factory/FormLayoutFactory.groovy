@@ -17,45 +17,49 @@
  */
 package groovyx.javafx.factory
 
+import groovyx.javafx.components.FormField
 import groovyx.javafx.components.FormLayout
+import javafx.beans.value.ChangeListener
 import javafx.scene.Node
 import javafx.scene.control.Label
 
 /**
  * Factory for the modern FormLayout component.
+ *
+ * Preferred contract:
+ *   formLayout {
+ *     field(label: "...", validate: { ... }) { <one Node> }
+ *   }
+ *
+ * Fallback:
+ *   formLayout { <plain Nodes> }  // added directly to children
  */
-class FormLayoutFactory extends AbstractNodeFactory {
+class FormLayoutFactory extends AbstractFXBeanFactory {
+
     FormLayoutFactory() {
         super(FormLayout)
     }
 
     @Override
+    boolean isLeaf() { false }
+
+    @Override
+    boolean isHandlesNodeChildren() { true }  // <-- critical for setChild routing
+
+    @Override
+    Object newInstance(FactoryBuilderSupport builder, Object name, Object value, Map attributes) {
+        def inst = super.newInstance(builder, name, value, attributes)
+        return inst
+    }
+
+    @Override
     void setChild(FactoryBuilderSupport builder, Object parent, Object child) {
-        if (parent instanceof FormLayout && child instanceof Node) {
-            Map attributes = builder.getContext().get(child) ?: [:]
-            String labelText = attributes.remove("label")
-            Closure validateClosure = (Closure) attributes.remove("validate")
+        // do NOT add fields here
+        super.setChild(builder, parent, child)
+    }
 
-            if (labelText) {
-                if (validateClosure) {
-                    Label errorLabel = new Label()
-                    parent.addField(labelText, (Node) child, errorLabel)
-
-                    // Simple validation logic wired to text property if it exists
-                    if (child.metaClass.hasProperty(child, "text")) {
-                        child.textProperty().addListener { obs, old, val ->
-                            String error = validateClosure.call(val)
-                            errorLabel.setText(error ?: "")
-                        }
-                    }
-                } else {
-                    parent.addField(labelText, (Node) child)
-                }
-            } else {
-                parent.getChildren().add((Node) child)
-            }
-        } else {
-            super.setChild(builder, parent, child)
-        }
+    @Override
+    void onNodeCompleted(FactoryBuilderSupport builder, Object parent, Object node) {
+        super.onNodeCompleted(builder, parent, node)
     }
 }

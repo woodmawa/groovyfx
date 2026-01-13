@@ -17,10 +17,31 @@
  */
 package groovyx.javafx.factory
 
+import groovy.util.FactoryBuilderSupport
 import groovyx.javafx.components.Icon
 
 class IconFactory extends AbstractNodeFactory {
+
     IconFactory() {
         super(Icon)
+    }
+
+    @Override
+    Object newInstance(FactoryBuilderSupport builder,
+                       Object name,
+                       Object value,
+                       Map attrs) {
+
+        // --- DSL aliases ---
+        // icon(name: "check")
+        // icon(glyph: "check")
+        def iconName = attrs.remove('name') ?: attrs.remove('glyph')
+
+        // Normalize onto the real writable property
+        if (iconName && !attrs.containsKey('iconName')) {
+            attrs.put('iconName', iconName)
+        }
+
+        return super.newInstance(builder, name, value, attrs)
     }
 }

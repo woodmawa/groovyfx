@@ -113,6 +113,19 @@ contributor(CLOSURE_CTX) {
                 params: [c: {}]
         )
 
+
+        method(name:'stage', type:'javafx.stage.Stage', params:[c:{}])
+        method(name:'stage', type:'javafx.stage.Stage', params:[args:'java.util.Map', c:{}])
+
+        method(name:'scene', type:'javafx.scene.Scene', params:[c:{}])
+        method(name:'scene', type:'javafx.scene.Scene', params:[args:'java.util.Map', c:{}])
+
+        method(name:'carousel', type:'groovyx.javafx.components.Carousel', params:[c:{}])
+        method(name:'carousel', type:'groovyx.javafx.components.Carousel', params:[args:'java.util.Map', c:{}])
+
+        method(name:'slide', type:'groovyx.javafx.components.CarouselSlide', params:[c:{}])
+        method(name:'slide', type:'groovyx.javafx.components.CarouselSlide', params:[args:'java.util.Map', c:{}])
+
         method(name: 'notify', type: 'void', params: [message: 'java.lang.String'])
         method(name: 'notify', type: 'void', params: [message: 'java.lang.String', duration: 'javafx.util.Duration'])
         method(name: 'notify', type: 'void', params: [args: 'java.util.Map', message: 'java.lang.String'])

@@ -91,10 +91,10 @@ class SceneGraphBuilder extends FactoryBuilderSupport {
     private Scene currentScene
 
     // Prevent re-registering factories if initialize() is called more than once
-    private boolean factoriesRegistered = false
-
+    private boolean initialized = false
     private boolean addonsLoaded = false
     private static final String DISABLE_ADDONS_PROP = "groovyfx.disableAddons"
+
 
     static {
         enhanceClasses()
@@ -156,6 +156,9 @@ class SceneGraphBuilder extends FactoryBuilderSupport {
     }
 
     private void loadAddonsOnce() {
+        if (!initialized) {
+            throw new IllegalStateException("Addons loaded before SceneGraphBuilder initialization")
+        }
         if (addonsLoaded) return
         addonsLoaded = true
 
@@ -646,18 +649,6 @@ class SceneGraphBuilder extends FactoryBuilderSupport {
         registerFactory "lineChart", new XYChartFactory(LineChart)
         registerFactory "areaChart", new XYChartFactory(AreaChart)
 
-        // Modern Components
-        CardFactory cardFactory = new CardFactory()
-        registerFactory "card", cardFactory
-        cardFactory.registerFactory "cardHeader", new CardSectionFactory("cardHeader")
-        cardFactory.registerFactory "cardBody", new CardSectionFactory("cardBody")
-        cardFactory.registerFactory "cardFooter", new CardSectionFactory("cardFooter")
-        registerFactory "badge", new BadgeFactory()
-        registerFactory "icon", new IconFactory()
-        registerFactory "toggleSwitch", new ToggleSwitchFactory()
-        registerFactory "formLayout", new FormLayoutFactory()
-        registerFactory "responsivePane", new ResponsivePaneFactory()
-
         registerFactory "stackedAreaChart", new XYChartFactory(StackedAreaChart)
         registerFactory "bubbleChart", new XYChartFactory(BubbleChart)
         registerFactory "barChart", new XYChartFactory(BarChart)
@@ -668,6 +659,7 @@ class SceneGraphBuilder extends FactoryBuilderSupport {
         registerFactory "categoryAxis", new AxisFactory(CategoryAxis)
         registerFactory "series", new XYSeriesFactory(XYChart.Series)
     }
+
 
     void registerTransforms() {
         registerFactory "affine", new TransformFactory(Affine)
@@ -784,6 +776,26 @@ class SceneGraphBuilder extends FactoryBuilderSupport {
     @Deprecated
     void registerComponent(String name, Class componentClass) {
         registerComponentNode(name, componentClass)
+    }
+
+    void registerComponentWidgets() {
+        // Modern Components / Widgets
+        CardFactory cardFactory = new CardFactory()
+        registerFactory "card", cardFactory
+        cardFactory.registerFactory "cardHeader", new CardSectionFactory("cardHeader")
+        cardFactory.registerFactory "cardBody", new CardSectionFactory("cardBody")
+        cardFactory.registerFactory "cardFooter", new CardSectionFactory("cardFooter")
+
+        registerFactory "badge", new BadgeFactory()
+        registerFactory "icon", new IconFactory()
+        registerFactory "toggleSwitch", new ToggleSwitchFactory()
+        registerFactory "field", new FormFieldFactory()
+        registerFactory "formLayout", new FormLayoutFactory()
+        registerFactory "responsivePane", new ResponsivePaneFactory()
+        registerFactory "carousel", new CarouselFactory()
+        registerFactory "slide", new CarouselSlideFactory()
+
+        //registerFactory "notification", new NotificationFactory()   // if you have one
     }
 
     void registerEffects() {
@@ -937,8 +949,10 @@ class SceneGraphBuilder extends FactoryBuilderSupport {
     }
 
     private void initialize() {
-        if (factoriesRegistered) return
-        factoriesRegistered = true
+
+        if (initialized) return
+        initialized = true
+
 
         this[DELEGATE_PROPERTY_OBJECT_ID] = DEFAULT_DELEGATE_PROPERTY_OBJECT_ID
         this[DELEGATE_PROPERTY_OBJECT_FILL] = DEFAULT_DELEGATE_PROPERTY_OBJECT_FILL
@@ -953,6 +967,7 @@ class SceneGraphBuilder extends FactoryBuilderSupport {
                 this.&registerStages,
                 this.&registerNodes,
                 this.&registerContainers,
+                this.&registerComponentWidgets,  //register new widgets and components added during rebuild
                 this.&registerShapes,
                 this.&registerTransforms,
                 this.&registerEffects,

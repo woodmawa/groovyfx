@@ -72,6 +72,30 @@ class LabeledFactory extends AbstractNodeFactory {
 
     @Override
     boolean onHandleNodeAttributes(FactoryBuilderSupport builder, Object node, Map attributes) {
+
+        // --- Added: explicit text binding support for Labeled controls
+        def bindText = attributes.remove("bindText")
+        if (bindText != null) {
+            // allow bindText: { someObservable } as convenience
+            if (bindText instanceof Closure) {
+                bindText = (bindText as Closure).call(node)
+            }
+
+            if (bindText instanceof ObservableValue) {
+                try {
+                    node.textProperty().bind(bindText as ObservableValue)
+                } catch (MissingMethodException | MissingPropertyException ignored) {
+                    // not all Labeled-ish controls expose textProperty the same way; ignore
+                }
+            } else {
+                try {
+                    node.text = bindText?.toString()
+                } catch (MissingPropertyException ignored) {
+                    // ignore
+                }
+            }
+        }
+
         if (node instanceof ChoiceBox) {
             List items = attributes.remove("items")
             if (items) {

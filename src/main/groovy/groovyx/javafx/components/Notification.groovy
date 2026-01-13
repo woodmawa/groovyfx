@@ -33,7 +33,7 @@ import javafx.util.Duration
 /**
  * A non-blocking Notification (Toast) system.
  */
-class Notification {
+class Notification extends StackPane {
     static void show(Stage owner, String message, Duration duration = Duration.seconds(3)) {
         Popup popup = new Popup()
         

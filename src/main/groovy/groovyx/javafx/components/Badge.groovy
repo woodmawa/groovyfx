@@ -17,44 +17,60 @@
  */
 package groovyx.javafx.components
 
+import javafx.beans.property.StringProperty
 import javafx.geometry.Insets
 import javafx.scene.control.Label
 import javafx.scene.layout.StackPane
 import javafx.scene.paint.Color
+import javafx.scene.paint.Paint
 import javafx.scene.shape.Rectangle
+import javafx.scene.text.Font
+import javafx.scene.text.FontWeight
 
 /**
  * A modern Badge component for status indicators.
+ *
+ * - Programmatic API: setText(), setBackgroundFill()
+ * - Themeable: style classes "groovyfx-badge" + "groovyfx-badge-label"
+ * - Safe sizing: background tracks label size with a small extra pad
  */
 class Badge extends StackPane {
-    private Label label = new Label()
-    private Rectangle background = new Rectangle()
+    private final Label label = new Label()
+    private final Rectangle background = new Rectangle()
+
+    private static final double ARC = 10d
+    private static final Insets LABEL_PADDING = new Insets(2, 6, 2, 6)
+    private static final double BG_EXTRA = 2d
 
     Badge() {
-        this.getStyleClass().add("groovyfx-badge")
-        
-        background.setArcWidth(10)
-        background.setArcHeight(10)
-        background.setFill(Color.LIGHTGRAY)
-        
-        label.setStyle("-fx-font-size: 10px; -fx-text-fill: white; -fx-font-weight: bold;")
-        label.setPadding(new Insets(2, 5, 2, 5))
-        
-        background.widthProperty().bind(label.widthProperty())
-        background.heightProperty().bind(label.heightProperty())
-        
-        this.getChildren().addAll(background, label)
+        styleClass.add("groovyfx-badge")
+
+        // Background pill
+        background.arcWidth = ARC
+        background.arcHeight = ARC
+        background.fill = Color.LIGHTGRAY
+
+        // Text
+        label.styleClass.add("groovyfx-badge-label")
+        label.padding = LABEL_PADDING
+        label.textFill = Color.WHITE
+        label.font = Font.font("System", FontWeight.BOLD, 10)
+
+        // Keep background sized to label (including padding), with a little breathing room
+        background.widthProperty().bind(label.widthProperty().add(BG_EXTRA))
+        background.heightProperty().bind(label.heightProperty().add(BG_EXTRA))
+
+        children.addAll(background, label)
     }
 
-    void setText(String text) {
-        label.setText(text)
-    }
+    // --- Backwards-compatible text API ---
+    void setText(String text) { label.text = text }
+    String getText() { label.text }
 
-    String getText() {
-        label.getText()
-    }
+    // --- Better binding API ---
+    StringProperty textProperty() { label.textProperty() }
 
-    void setBackgroundFill(Color color) {
-        background.setFill(color)
-    }
+    // --- Fill API ---
+    void setBackgroundFill(Paint paint) { background.fill = paint }
+    Paint getBackgroundFill() { background.fill }
 }

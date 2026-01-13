@@ -38,3 +38,18 @@
     -fx-hgap: 5;  /* doesn't work */
     -fx-vgap: 10; /* doesn't work */
 }
+
+.carousel-indicator {
+    -fx-min-width: 8px;
+    -fx-min-height: 8px;
+    -fx-max-width: 8px;
+    -fx-max-height: 8px;
+    -fx-background-radius: 8px;
+    -fx-background-color: #bbb;
+}
+.carousel-indicator.selected {
+    -fx-background-color: #555;
+}
+.carousel-arrows .button {
+    -fx-opacity: 0.85;
+}
