@@ -35,7 +35,14 @@ class Blueprint {
                                     "but ctx.handlers did not contain a Closure at that path."
                     )
                 }
-                n."$propName" = h
+
+                // A1: standardize hook invocation context: (event, ctx, node)
+                // Wrap so JavaFX always calls us with the event, then we adapt to handler arity.
+                Closure wrapper = { Object event ->
+                    BlueprintModule.invokeHook(h, event, safeCtx, n)
+                }
+
+                n."$propName" = wrapper
             }
         }
 

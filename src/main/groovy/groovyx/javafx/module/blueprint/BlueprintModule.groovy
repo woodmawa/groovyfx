@@ -22,4 +22,14 @@ final class BlueprintModule implements UIModule {
     Node build(Map ctx) {
         blueprint.instantiate(ctx ?: [:])
     }
+
+    static Object invokeHook(Closure handler, Object event, Map ctx, Node node) {
+        if (handler == null) return null
+
+        int n = handler.maximumNumberOfParameters
+        if (n <= 0) return handler.call()
+        if (n == 1) return handler.call(event)
+        if (n == 2) return handler.call(event, ctx)
+        return handler.call(event, ctx, node)
+    }
 }
