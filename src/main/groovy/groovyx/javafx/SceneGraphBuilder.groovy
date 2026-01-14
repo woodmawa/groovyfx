@@ -797,6 +797,7 @@ class SceneGraphBuilder extends FactoryBuilderSupport {
         registerFactory "responsivePane", new ResponsivePaneFactory()
         registerFactory "carousel", new CarouselFactory()
         registerFactory "slide", new CarouselSlideFactory()
+        registerFactory "node", new ExistingNodeFactory()
 
         //registerFactory "notification", new NotificationFactory()   // if you have one
     }

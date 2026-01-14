@@ -120,6 +120,8 @@ contributor(CLOSURE_CTX) {
         method(name:'scene', type:'javafx.scene.Scene', params:[c:{}])
         method(name:'scene', type:'javafx.scene.Scene', params:[args:'java.util.Map', c:{}])
 
+        method(name: 'node', type: 'javafx.scene.Node', params: [n: 'javafx.scene.Node'])
+
         method(name:'carousel', type:'groovyx.javafx.components.Carousel', params:[c:{}])
         method(name:'carousel', type:'groovyx.javafx.components.Carousel', params:[args:'java.util.Map', c:{}])
 
@@ -273,6 +275,20 @@ contributor(CLOSURE_CTX) {
         nodeMethod('onShown', 'java.lang.Object')
         nodeMethod('onHidden', 'java.lang.Object')
         nodeMethod('onCloseRequest', 'java.lang.Object')
+
+        // -------------------------
+        // Modules / UIModule helpers
+        // -------------------------
+        method(name: 'compile', type: 'groovyx.javafx.module.UIModule', params: CLOSURE_ONLY)
+        method(name: 'compile', type: 'groovyx.javafx.module.UIModule', params: MAP_CLOSURE)
+
+        // module("name") { ... } sugar (compile + auto-register)
+        method(name: 'module', type: 'groovyx.javafx.module.UIModule',
+                params: [name: 'java.lang.String', c: {}])
+
+        method(name: 'module', type: 'groovyx.javafx.module.UIModule',
+                params: [name: 'java.lang.String', args: 'java.util.Map', body: {}])
+
     }
 
 }
