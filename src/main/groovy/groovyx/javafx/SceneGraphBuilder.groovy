@@ -1018,7 +1018,7 @@ class SceneGraphBuilder extends FactoryBuilderSupport {
      *
      */
 
-    UIModule compile(@DelegatesTo(SceneGraphBuilder) Closure<?> dsl) {
+    UIModule compile(@DelegatesTo(strategy = Closure.DELEGATE_FIRST, value = SceneGraphBuilder) Closure<?> dsl) {
         new CachedModule(dsl)
     }
 
