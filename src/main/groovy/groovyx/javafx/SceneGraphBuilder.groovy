@@ -31,6 +31,8 @@ import groovyx.javafx.factory.animation.KeyFrameWrapper
 import groovyx.javafx.factory.animation.KeyValueFactory
 import groovyx.javafx.factory.animation.KeyValueSubFactory
 import groovyx.javafx.factory.animation.TimelineFactory
+import groovyx.javafx.module.CachedModule
+import groovyx.javafx.module.UIModule
 import groovyx.javafx.spi.SceneGraphAddon
 import javafx.animation.*
 import javafx.application.Platform
@@ -1010,4 +1012,15 @@ class SceneGraphBuilder extends FactoryBuilderSupport {
         // Discover external component libraries (SPI)
         loadAddonsOnce()
     }
+
+    /**
+     * new modular javafx capability
+     *
+     */
+
+    UIModule compile(@DelegatesTo(SceneGraphBuilder) Closure<?> dsl) {
+        new CachedModule(dsl)
+    }
+
+
 }
