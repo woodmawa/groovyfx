@@ -63,6 +63,7 @@ import javafx.stage.Stage
 import javafx.stage.Window
 import javafx.util.Duration
 import org.codehaus.groovy.runtime.MethodClosure
+import groovyx.javafx.module.ModuleRegistry
 
 import java.util.function.Consumer
 
@@ -1022,5 +1023,13 @@ class SceneGraphBuilder extends FactoryBuilderSupport {
         new CachedModule(dsl)
     }
 
+    UIModule module(
+            String name,
+            @DelegatesTo(strategy = Closure.DELEGATE_FIRST, value = SceneGraphBuilder) Closure<?> dsl
+    ) {
+        def m = compile(dsl)
+        ModuleRegistry.register(name, m)
+        return m
+    }
 
 }

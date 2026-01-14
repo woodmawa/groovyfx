@@ -7,6 +7,7 @@ import groovyx.javafx.components.NotificationService
 import javafx.geometry.Insets
 import javafx.geometry.Pos
 import javafx.util.Duration
+import groovyx.javafx.module.ModuleRegistry
 
 NotificationService.registerView(new SceneGraphBuilder().compile {
     stackPane(padding: new Insets(20)) {
@@ -16,6 +17,11 @@ NotificationService.registerView(new SceneGraphBuilder().compile {
     }
 })
 
+def b = new SceneGraphBuilder()
+b.module("notification.view.alt") { Map ctx ->
+    stackPane { label(text: "ALT: " + ctx.message) }
+}
+NotificationService.registerView(ModuleRegistry.get("notification.view.alt"))
 
 new GroovyFX().start {
     stage(id: "ownerStage", title: "Notification Demo", width: 600, height: 280, visible: true) {
