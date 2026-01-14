@@ -1,17 +1,15 @@
 package groovyx.javafx.components
 
+import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
-import groovyx.javafx.module.CachedModule
+import groovyx.javafx.SceneGraphBuilder
 import groovyx.javafx.module.ModuleRegistry
 import groovyx.javafx.module.UIModule
 import javafx.animation.FadeTransition
 import javafx.animation.PauseTransition
 import javafx.animation.SequentialTransition
-import javafx.geometry.Insets
-import javafx.geometry.Pos
 import javafx.scene.Node
-import javafx.scene.control.Label
-import javafx.scene.layout.StackPane
+import javafx.scene.Parent
 import javafx.stage.Popup
 import javafx.stage.Stage
 import javafx.util.Duration
@@ -37,12 +35,16 @@ final class NotificationService {
                 duration: duration
         ])
 
+        root.applyCss()
+        if (root instanceof Parent) {
+            ((Parent) root).layout()
+        }
+
         Popup popup = new Popup()
         popup.getContent().add(root)
         popup.show(owner)
 
-        // Positioning (same spirit as your original implementation)
-        // Note: width/height may be 0 until CSS/layout pass; this matches the prior simple approach.
+        // Positioning (same spirit as original)
         popup.setX(owner.getX() + owner.getWidth() / 2 - root.getBoundsInLocal().getWidth() / 2)
         popup.setY(owner.getY() + owner.getHeight() - 100)
 
@@ -61,25 +63,36 @@ final class NotificationService {
         new SequentialTransition(fadeIn, pause, fadeOut).play()
     }
 
+    static void registerView(UIModule module) {
+        ModuleRegistry.register(DEFAULT_VIEW_MODULE_NAME, module)
+    }
+
     /**
      * Install a default notification view module if the app hasn't supplied one.
      * This keeps it self-contained and backward compatible.
      */
+    @CompileDynamic
     static void ensureDefaultViewModule() {
         if (ModuleRegistry.has(DEFAULT_VIEW_MODULE_NAME)) return
 
-        // Use CachedModule so teams can override by registering a different module at runtime.
-        ModuleRegistry.register(DEFAULT_VIEW_MODULE_NAME, new CachedModule({ Map ctx ->
-            String msg = (String) ctx.message
+        ModuleRegistry.register(DEFAULT_VIEW_MODULE_NAME, dslModule { Map ctx ->
+            def msg = (ctx.message ?: "").toString()
 
-            Label label = new Label(msg)
-            label.setStyle("-fx-background-color: #333333; -fx-text-fill: white; -fx-padding: 10px; -fx-background-radius: 5px;")
+            stackPane(padding: new javafx.geometry.Insets(20)) {
+                label(text: msg) {
+                    setStyle("-fx-background-color: #333333; " +
+                            "-fx-text-fill: white; " +
+                            "-fx-padding: 10px; " +
+                            "-fx-background-radius: 5px;")
+                }
+            }
+        })
+    }
 
-            StackPane root = new StackPane(label)
-            root.setPadding(new Insets(20))
-            StackPane.setAlignment(label, Pos.CENTER)
-
-            return root
-        }))
+    // helper methods
+    private static UIModule dslModule(
+            @DelegatesTo(strategy = Closure.DELEGATE_FIRST, value = SceneGraphBuilder) Closure<?> dsl
+    ) {
+        new SceneGraphBuilder().compile(dsl)
     }
 }
