@@ -28,15 +28,14 @@ class Blueprint {
             }
 
             hooks.each { String propName, String handlerName ->
-                def h = handlers[handlerName]
-                if (!(h instanceof Closure)) {
+                Closure h = resolveHandler(handlers, handlerName)
+                if (h == null) {
                     throw new IllegalStateException(
                             "Blueprint hook '${propName}' refers to handler '${handlerName}', " +
-                                    "but ctx.handlers['${handlerName}'] was not a Closure (was: ${h?.getClass()?.name ?: 'null'})"
+                                    "but ctx.handlers did not contain a Closure at that path."
                     )
                 }
-                // JavaFX expects EventHandler, Groovy closure coerces fine
-                n."$propName" = (Closure) h
+                n."$propName" = h
             }
         }
 
@@ -49,5 +48,17 @@ class Blueprint {
         }
 
         return n
+    }
+
+    private static Closure resolveHandler(Object handlers, String path) {
+        if (!(handlers instanceof Map)) return null
+        if (!path) return null
+
+        Object cur = handlers
+        for (String part : path.split('\\.')) {
+            if (!(cur instanceof Map)) return null
+            cur = ((Map) cur).get(part)
+        }
+        return (cur instanceof Closure) ? (Closure) cur : null
     }
 }

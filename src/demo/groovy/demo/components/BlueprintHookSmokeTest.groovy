@@ -10,26 +10,28 @@ import javafx.scene.control.Button
 import javafx.scene.control.Label
 import javafx.scene.layout.VBox
 
-
 FxToolkit.ensureStarted()
 
 def bp = new Blueprint(
         type: VBox,
         props: [ spacing: 12d, padding: new Insets(16), alignment: Pos.CENTER ],
         children: [
-                new Blueprint(type: Label, props: [ text: "Blueprint hooks demo" ]),
+                new Blueprint(type: Label, props: [ text: "Blueprint hooks demo (namespaced)" ]),
                 new Blueprint(
                         type: Button,
                         props: [ text: "Click me" ],
-                        hooks: [ onAction: "clicked" ]   // named hook
+                        hooks: [ onAction: "demo.clicked" ]   // ✅ dotted hook name
                 )
         ]
 )
 
 def module = new BlueprintModule(blueprint: bp)
 
+// ✅ nested handlers map for dotted lookup
 def handlers = [
-        clicked: { e -> println "Clicked! event=${e.class.name}" }
+        demo: [
+                clicked: { e -> println "Clicked! event=${e.class.name}" }
+        ]
 ]
 
 new GroovyFX().start {
