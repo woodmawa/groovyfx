@@ -47,4 +47,13 @@ class ModuleContext implements Map<String, Object> {
     Map<String, Object> asMap() {
         data
     }
+
+    //convenience access
+    Object getAttr(String name) {
+        data.get(name)
+    }
+
+    void setAttr(String name, Object value) {
+        data.put(name, value)
+    }
 }
