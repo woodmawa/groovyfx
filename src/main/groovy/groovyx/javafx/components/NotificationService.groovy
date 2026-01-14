@@ -27,40 +27,14 @@ final class NotificationService {
 
     static void show(Stage owner, String message, Duration duration = Duration.seconds(3)) {
         ensureDefaultViewModule()
-
-        UIModule view = ModuleRegistry.get(DEFAULT_VIEW_MODULE_NAME)
-        Node root = view.build([
-                owner   : owner,
-                message : message,
-                duration: duration
-        ])
-
-        root.applyCss()
-        if (root instanceof Parent) {
-            ((Parent) root).layout()
-        }
-
-        Popup popup = new Popup()
-        popup.getContent().add(root)
-        popup.show(owner)
-
-        // Positioning (same spirit as original)
-        popup.setX(owner.getX() + owner.getWidth() / 2 - root.getBoundsInLocal().getWidth() / 2)
-        popup.setY(owner.getY() + owner.getHeight() - 100)
-
-        // Animation
-        FadeTransition fadeIn = new FadeTransition(Duration.millis(300), root)
-        fadeIn.fromValue = 0
-        fadeIn.toValue = 1
-
-        PauseTransition pause = new PauseTransition(duration)
-
-        FadeTransition fadeOut = new FadeTransition(Duration.millis(300), root)
-        fadeOut.fromValue = 1
-        fadeOut.toValue = 0
-        fadeOut.setOnFinished { popup.hide() }
-
-        new SequentialTransition(fadeIn, pause, fadeOut).play()
+        PopupModuleService.showModule(
+                owner,
+                DEFAULT_VIEW_MODULE_NAME,
+                [owner: owner, message: message, duration: duration],
+                duration,
+                PopupModuleService.Position.BOTTOM_CENTER,
+                100
+        )
     }
 
     static void registerView(UIModule module) {
