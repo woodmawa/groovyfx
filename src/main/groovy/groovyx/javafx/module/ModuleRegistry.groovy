@@ -12,7 +12,7 @@ import java.util.concurrent.ConcurrentMap
 final class ModuleRegistry {
     private static final ConcurrentMap<String, UIModule> modules = new ConcurrentHashMap<>()
 
-    private ModuleRegistry() {}
+    ModuleRegistry() {}
 
     static void register(String name, UIModule module) {
         assert name?.trim()
