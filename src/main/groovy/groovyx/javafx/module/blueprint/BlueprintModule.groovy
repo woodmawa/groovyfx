@@ -1,0 +1,25 @@
+package groovyx.javafx.module.blueprint
+
+import groovy.transform.CompileStatic
+import groovyx.javafx.module.UIModule
+import javafx.scene.Node
+
+/**
+ * UIModule backed by a Blueprint (no DSL execution at runtime).
+ */
+@CompileStatic
+final class BlueprintModule implements UIModule {
+
+    Blueprint blueprint
+
+    BlueprintModule() {} // no-arg ctor enables map-style construction
+
+    BlueprintModule(Blueprint blueprint) {
+        this.blueprint = blueprint
+    }
+
+    @Override
+    Node build(Map ctx) {
+        blueprint.instantiate(ctx ?: [:])
+    }
+}
