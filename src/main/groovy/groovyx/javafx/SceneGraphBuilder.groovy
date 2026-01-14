@@ -33,6 +33,8 @@ import groovyx.javafx.factory.animation.KeyValueSubFactory
 import groovyx.javafx.factory.animation.TimelineFactory
 import groovyx.javafx.module.CachedModule
 import groovyx.javafx.module.UIModule
+import groovyx.javafx.module.blueprint.BlueprintModule
+import groovyx.javafx.module.blueprint.BlueprintRecordingBuilder
 import groovyx.javafx.spi.SceneGraphAddon
 import javafx.animation.*
 import javafx.application.Platform
@@ -1031,6 +1033,52 @@ class SceneGraphBuilder extends FactoryBuilderSupport {
         def m = compile(dsl)
         ModuleRegistry.register(name, m)
         return m
+    }
+
+    static BlueprintModule blueprint(@DelegatesTo(value = BlueprintRecordingBuilder, strategy = Closure.DELEGATE_FIRST) Closure cl) {
+        // v1: keep it small + explicit, expand as needed
+        Map<String, Class<? extends Node>> typeIndex = defaultBlueprintTypeIndex()
+        def b = new BlueprintRecordingBuilder(typeIndex)
+        def bp = b.build(cl)
+        return new BlueprintModule(blueprint: bp)
+    }
+
+    private static Map<String, Class<? extends Node>> defaultBlueprintTypeIndex() {
+        [
+                // Layout
+                pane        : Pane,
+                region      : Region,
+                group       : Group,
+
+                vbox        : VBox,
+                hbox        : HBox,
+                stackPane  : StackPane,
+                borderPane : BorderPane,
+                gridPane   : GridPane,
+                flowPane   : FlowPane,
+                tilePane   : TilePane,
+
+                // Controls
+                label       : Label,
+                button      : Button,
+                textField  : TextField,
+                textArea   : TextArea,
+                checkBox   : CheckBox,
+                comboBox   : ComboBox,
+
+                listView   : ListView,
+                tableView  : TableView,
+                treeView   : TreeView,
+
+                scrollPane : ScrollPane,
+                splitPane  : SplitPane,
+                tabPane    : TabPane,
+                toolBar    : ToolBar,
+
+                // Misc / common
+                separator  : Separator,
+                progressBar: ProgressBar
+        ] as Map<String, Class<? extends Node>>
     }
 
 }

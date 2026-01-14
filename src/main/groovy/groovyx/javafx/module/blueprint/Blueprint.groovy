@@ -21,7 +21,7 @@ class Blueprint {
 
         // Apply properties (plain values or Closure(ctx)->value)
         props.each { k, v ->
-            n."$k" = (v instanceof Closure ? v.call(safeCtx) : v)
+            applyProp(n, String.valueOf(k), v, safeCtx)
         }
 
         // Apply named hooks (e.g. onAction: "saveDiagram")
@@ -32,6 +32,11 @@ class Blueprint {
             }
 
             hooks.each { String propName, String handlerName ->
+                if (!hasWritableProperty(n, propName)) {
+                    log.warn "instantiate(): Unknown hook property '${propName}' for ${n.getClass().name}; hook '${handlerName}' ignored"
+                    return null
+                }
+
                 Closure h = resolveHandler(handlers, handlerName)
                 if (h == null) {
                     throw new IllegalStateException(
@@ -40,13 +45,12 @@ class Blueprint {
                     )
                 }
 
-                // A1: standardize hook invocation context: (event, ctx, node)
-                // Wrap so JavaFX always calls us with the event, then we adapt to handler arity.
                 Closure wrapper = { Object event ->
                     BlueprintModule.invokeHook(h, event, safeCtx, n)
                 }
-
                 n."$propName" = wrapper
+
+                return null
             }
         }
 
@@ -126,5 +130,29 @@ class Blueprint {
         if (child instanceof Blueprint) return ((Blueprint) child).instantiate(safeCtx)
         if (child instanceof Node) return (Node) child
         throw new IllegalArgumentException("Blueprint child must be a Blueprint or Node, got: ${child.getClass().name}")
+    }
+
+    private boolean hasWritableProperty(Node n, String name) {
+        def mp = n.metaClass.getMetaProperty(name)
+        if (mp != null) return true
+
+        // Fallback: look for setter method: setX(...)
+        String setter = "set${name.capitalize()}"
+        return !n.metaClass.respondsTo(n, setter).isEmpty()
+    }
+
+    private void applyProp(Node n, String k, Object v, Map safeCtx) {
+        Object value = (v instanceof Closure) ? ((Closure) v).call(safeCtx) : v
+
+        if (!hasWritableProperty(n, k)) {
+            log.warn "instantiate(): Unknown prop '${k}' for ${n.getClass().name} (value=${value}); ignored"
+            return
+        }
+
+        try {
+            n."$k" = value
+        } catch (Throwable t) {
+            log.warn "instantiate(): Failed to set prop '${k}' on ${n.getClass().name} (value=${value}): ${t.class.simpleName}: ${t.message}"
+        }
     }
 }
