@@ -279,16 +279,20 @@ contributor(CLOSURE_CTX) {
         // -------------------------
         // Modules / UIModule helpers
         // -------------------------
-        method(name: 'compile', type: 'groovyx.javafx.module.UIModule', params: CLOSURE_ONLY)
-        method(name: 'compile', type: 'groovyx.javafx.module.UIModule', params: MAP_CLOSURE)
+        // compile { ... }
+        method(name: 'compile', type: 'groovyx.javafx.module.UIModule', params: [c: {}])
 
-        // module("name") { ... } sugar (compile + auto-register)
-        method(name: 'module', type: 'groovyx.javafx.module.UIModule',
-                params: [name: 'java.lang.String', c: {}])
+        // compile { Map ctx -> ... }
+        method(name: 'compile', type: 'groovyx.javafx.module.UIModule', params: [ctx: 'java.util.Map', c: {}])
 
-        method(name: 'module', type: 'groovyx.javafx.module.UIModule',
-                params: [name: 'java.lang.String', args: 'java.util.Map', body: {}])
+        // module("name") { ... }
+        method(name: 'module', type: 'groovyx.javafx.module.UIModule', params: [name: 'java.lang.String', c: {}])
 
+        // module("name") { Map ctx -> ... }
+        method(name: 'module', type: 'groovyx.javafx.module.UIModule', params: [name: 'java.lang.String', ctx: 'java.util.Map', c: {}])
+
+        // NotificationService ergonomics
+        method(name: 'registerView', type: 'void', params: [module: 'groovyx.javafx.module.UIModule'])
     }
 
 }
