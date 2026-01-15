@@ -14,12 +14,20 @@ import javafx.scene.layout.*
 
 class RibbonSkin extends SkinBase<Ribbon> {
 
+    // ----- Header: left (backstage + quick access) + center (tabs) -----
+    private final HBox leftBox = new HBox(6)
+
     private final HBox tabHeader = new HBox(6)
     private final ToggleGroup tabToggleGroup = new ToggleGroup()
+
+    // Reused header-center container + separator (avoid recreating nodes each rebuild)
+    private final HBox centerBox = new HBox(0)
+    private final Separator headerSep = new Separator(Orientation.VERTICAL)
 
     private final BorderPane headerRow = new BorderPane()
     private final VBox headerBox = new VBox()
 
+    // ----- Strip: groups row + display options -----
     private final StackPane contentPane = new StackPane()
     private final BorderPane stripRow = new BorderPane()
     private final HBox groupsRow = new HBox(10)
@@ -31,18 +39,52 @@ class RibbonSkin extends SkinBase<Ribbon> {
         super(ribbon)
 
         // --- Style hooks ---
-        ribbon.styleClass.add("ribbon")
+        if (!ribbon.styleClass.contains("ribbon")) {
+            ribbon.styleClass.add("ribbon")
+        }
 
         headerBox.padding = new Insets(6, 8, 6, 8)
         tabHeader.padding = new Insets(2, 0, 4, 0)
 
-        headerRow.styleClass.add("ribbon-header-row")
+        if (!headerRow.styleClass.contains("ribbon-header-row")) {
+            headerRow.styleClass.add("ribbon-header-row")
+        }
 
         // Strip (groups area) background handled by CSS
-        contentPane.styleClass.add("ribbon-strip")
+        if (!contentPane.styleClass.contains("ribbon-strip")) {
+            contentPane.styleClass.add("ribbon-strip")
+        }
 
         displayOptionsButton.focusTraversable = false
-        displayOptionsButton.styleClass.add("ribbon-display-options")
+        if (!displayOptionsButton.styleClass.contains("ribbon-display-options")) {
+            displayOptionsButton.styleClass.add("ribbon-display-options")
+        }
+
+        // --- Configure reusable header center bits (once) ---
+        centerBox.alignment = Pos.BOTTOM_LEFT
+        if (!centerBox.styleClass.contains("ribbon-header-center")) {
+            centerBox.styleClass.add("ribbon-header-center")
+        }
+
+        if (!headerSep.styleClass.contains("ribbon-group-separator")) {
+            headerSep.styleClass.add("ribbon-group-separator")
+        }
+        headerSep.padding = Insets.EMPTY
+        HBox.setMargin(headerSep, new Insets(0, 2, 0, 2)) // tight, Office-ish gap
+
+        if (!tabHeader.styleClass.contains("ribbon-tab-header")) {
+            tabHeader.styleClass.add("ribbon-tab-header")
+        }
+        tabHeader.maxWidth = Double.MAX_VALUE
+        HBox.setHgrow(tabHeader, Priority.ALWAYS)
+
+        centerBox.children.setAll(headerSep, tabHeader)
+
+        // --- Configure left box (once) ---
+        leftBox.alignment = Pos.CENTER_LEFT
+        if (!leftBox.styleClass.contains("ribbon-header-left")) {
+            leftBox.styleClass.add("ribbon-header-left")
+        }
 
         // --- Header: Backstage + QuickAccess + Tabs ---
         rebuildHeader(ribbon)
@@ -56,11 +98,13 @@ class RibbonSkin extends SkinBase<Ribbon> {
         stripRow.setMaxWidth(Double.MAX_VALUE)
 
         def rhs = new HBox(6)
-        rhs.setAlignment(Pos.BOTTOM_RIGHT)
-        rhs.setTranslateY(1) // tiny optical drop, matches Office-ish feel
+        rhs.alignment = Pos.BOTTOM_RIGHT
+        rhs.translateY = 1 // tiny optical drop
 
         def finalSep = new Separator(Orientation.VERTICAL)
-        finalSep.styleClass.add("ribbon-group-separator")
+        if (!finalSep.styleClass.contains("ribbon-group-separator")) {
+            finalSep.styleClass.add("ribbon-group-separator")
+        }
 
         rhs.children.setAll(finalSep, displayOptionsButton)
 
@@ -71,8 +115,8 @@ class RibbonSkin extends SkinBase<Ribbon> {
         contentPane.children.setAll(stripRow)
 
         // Ensure wide fill
-        contentPane.setMaxWidth(Double.MAX_VALUE)
-        groupsRow.setMaxWidth(Double.MAX_VALUE)
+        contentPane.maxWidth = Double.MAX_VALUE
+        groupsRow.maxWidth = Double.MAX_VALUE
 
         // --- Collapsed behavior ---
         ribbon.collapsedProperty().addListener { _, _, v ->
@@ -99,19 +143,35 @@ class RibbonSkin extends SkinBase<Ribbon> {
 
         // Root
         def root = new VBox(headerBox, contentPane)
-        root.styleClass.add("ribbon-root")
+        if (!root.styleClass.contains("ribbon-root")) {
+            root.styleClass.add("ribbon-root")
+        }
         getChildren().add(root)
     }
 
     private void rebuildHeader(Ribbon ribbon) {
-        def leftBox = new HBox(8)
-        leftBox.setAlignment(Pos.CENTER_LEFT)
+        // Left zone: Backstage + QuickAccess (if provided)
+        leftBox.children.clear()
 
-        if (ribbon.backstage != null) leftBox.children.add(ribbon.backstage)
-        if (ribbon.quickAccess != null) leftBox.children.add(ribbon.quickAccess)
+        def backstage = ribbon.backstage
+        if (backstage != null) {
+            leftBox.children.add(backstage)
+        }
 
-        leftBox.children.add(tabHeader)
+        def quick = ribbon.quickAccess
+        if (quick != null) {
+            leftBox.children.add(quick)
+        }
+
+        // Apply to header row zones
         headerRow.left = leftBox
+        BorderPane.setAlignment(leftBox, Pos.CENTER_LEFT)
+
+        headerRow.center = centerBox
+        BorderPane.setAlignment(centerBox, Pos.BOTTOM_LEFT)
+
+        // Optional: header-right controls
+        headerRow.right = null
     }
 
     private void rebuildTabs(Ribbon ribbon) {
@@ -121,7 +181,10 @@ class RibbonSkin extends SkinBase<Ribbon> {
             ToggleButton tb = new ToggleButton(tab.text ?: "Tab")
             tb.toggleGroup = tabToggleGroup
             tb.onAction = { ribbon.setSelectedTab(tab) }
-            tb.styleClass.add("ribbon-tab-button")
+
+            if (!tb.styleClass.contains("ribbon-tab-button")) {
+                tb.styleClass.add("ribbon-tab-button")
+            }
 
             tabHeader.children.add(tb)
 
@@ -149,7 +212,9 @@ class RibbonSkin extends SkinBase<Ribbon> {
         for (RibbonGroup group : tab.groups) {
             if (!first) {
                 Separator sep = new Separator(Orientation.VERTICAL)
-                sep.styleClass.add("ribbon-group-separator")
+                if (!sep.styleClass.contains("ribbon-group-separator")) {
+                    sep.styleClass.add("ribbon-group-separator")
+                }
                 groupsRow.children.add(sep)
             }
             first = false
@@ -160,7 +225,7 @@ class RibbonSkin extends SkinBase<Ribbon> {
     private void buildDisplayOptionsMenu(Ribbon ribbon) {
         def miAutoHide = new RadioMenuItem("Auto-hide Ribbon")
         def miTabsOnly = new RadioMenuItem("Show tabs only")
-        def miAlways   = new RadioMenuItem("Always show Ribbon")
+        def miAlways = new RadioMenuItem("Always show Ribbon")
 
         def g = new ToggleGroup()
         miAutoHide.toggleGroup = g

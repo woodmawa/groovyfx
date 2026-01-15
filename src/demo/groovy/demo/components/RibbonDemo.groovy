@@ -11,6 +11,9 @@ import javafx.scene.control.Dialog
 import javafx.scene.control.Label
 import javafx.scene.control.Spinner
 import javafx.scene.layout.GridPane
+import groovyx.javafx.components.RibbonBackstageButton
+import groovyx.javafx.components.RibbonQuickAccessBar
+
 
 import static groovyx.javafx.GroovyFX.start
 
@@ -37,22 +40,12 @@ start {
                 top {
                     // v1: Ribbon is just a node/container with tabs & groups.
                     // Later: you'll likely render tab headers + backstage button.
-                    ribbon(id: 'mainRibbon', collapsible: true, collapsed: false) {
+                    ribbon(id: 'mainRibbon',
+                            collapsible: true,
+                            collapsed: false,
+                            backstage: new RibbonBackstageButton(),
+                            quickAccess: new RibbonQuickAccessBar()) {
 
-                        // optional: quick access (top-right-ish in Word)
-                        quickAccess {
-                            button(text: "Save", onAction: { println "QuickAccess: Save" })
-                            button(text: "Undo", onAction: { println "QuickAccess: Undo" })
-                            button(text: "Redo", onAction: { println "QuickAccess: Redo" })
-                        }
-
-                        // optional: backstage (File) - stubbed as ContextMenu for now
-                        backstage {
-                            menuItem("Open", onAction: { println "Backstage: Open" })
-                            menuItem("Save", onAction: { println "Backstage: Save" })
-                            separatorMenuItem()
-                            menuItem("Exit", onAction: { primaryStage.close() })
-                        }
 
                         ribbonTab("Home") {
                             ribbonGroup("Clipboard",

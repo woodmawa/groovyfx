@@ -156,3 +156,56 @@
     -fx-focus-color: transparent;
     -fx-faint-focus-color: transparent;
 }
+
+/* Quick Access toolbar: remove toolbar chrome */
+.ribbon-quickaccess {
+    -fx-background-color: transparent;
+    -fx-padding: 0;
+    -fx-spacing: 2;            /* tight spacing between items */
+}
+
+.ribbon-quickaccess .separator {
+    -fx-padding: 0 2 0 2;
+    -fx-opacity: 0.35;
+}
+
+/* Small square buttons (Quick Access + small chrome buttons) */
+.ribbon-mini-square {
+    -fx-background-color: transparent;
+
+    -fx-border-color: #c9ccd3;
+    -fx-border-width: 1;
+    -fx-background-radius: 3;
+    -fx-border-radius: 3;
+
+    -fx-padding: 0;
+    -fx-font-size: 9px;
+
+    -fx-min-width: 18px;
+    -fx-min-height: 18px;
+    -fx-pref-width: 18px;
+    -fx-pref-height: 18px;
+    -fx-max-width: 18px;
+    -fx-max-height: 18px;
+
+    -fx-alignment: center;
+    -fx-opacity: 0.95;
+}
+
+.ribbon-mini-square:hover {
+    -fx-background-color: #f1f2f4;
+    -fx-border-color: #aeb3bb;
+}
+
+.ribbon-backstage {
+    -fx-background-color: transparent;
+    -fx-border-color: #c9ccd3;
+    -fx-border-width: 1;
+    -fx-background-radius: 4;
+    -fx-border-radius: 4;
+    -fx-padding: 4 10 4 10;
+}
+
+.ribbon-backstage:hover {
+    -fx-background-color: rgba(255,255,255,0.65);
+}

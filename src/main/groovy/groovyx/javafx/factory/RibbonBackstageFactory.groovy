@@ -1,10 +1,10 @@
 package groovyx.javafx.factory
 
-import groovyx.javafx.components.RibbonBackstage
+import groovyx.javafx.components.RibbonBackstageButton
 import javafx.scene.control.MenuItem
 
 class RibbonBackstageFactory extends AbstractFXBeanFactory {
-    RibbonBackstageFactory() { super(RibbonBackstage) }
+    RibbonBackstageFactory() { super(RibbonBackstageButton) }
 
     @Override
     void setChild(Object parent, Object child) {
