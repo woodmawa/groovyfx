@@ -78,6 +78,9 @@ contributor(SCRIPT_CTX) {
     method(name:'stage', type:'javafx.stage.Stage', params:[args:'java.util.Map', c:{}])
     method(name:'scene', type:'javafx.scene.Scene', params:[args:'java.util.Map', c:{}])
 
+    // Common JavaFX application hooks used in demos
+    method(name: 'runLater', type: 'void', params: [c: {}])
+
 
     // Common script conveniences that appear in demos
     property(name: 'GROOVYBLUE', type: 'javafx.scene.paint.Color')
@@ -90,7 +93,7 @@ contributor(SCRIPT_CTX) {
 // ============================================================================
 contributor(CLOSURE_CTX) {
 
-    if (enclosingCall('start')) {
+    if (enclosingCall('start') || enclosingCall('app') || enclosingCall('groovyfx'))  {
 
         // -------------------------
         // Builder helpers (not nodes)
@@ -108,44 +111,30 @@ contributor(CLOSURE_CTX) {
         )
 
         method(
-                name: 'defer',
-                type: 'groovyx.javafx.SceneGraphBuilder',
+                name: 'scene',
+                type: 'javafx.scene.Scene',
                 params: [c: {}]
         )
 
+        method(
+                name: 'scene',
+                type: 'javafx.scene.Scene',
+                params: [args: 'java.util.Map', c: {}]
+        )
 
-        method(name:'stage', type:'javafx.stage.Stage', params:[c:{}])
-        method(name:'stage', type:'javafx.stage.Stage', params:[args:'java.util.Map', c:{}])
-
-        method(name:'scene', type:'javafx.scene.Scene', params:[c:{}])
-        method(name:'scene', type:'javafx.scene.Scene', params:[args:'java.util.Map', c:{}])
-
-        method(name: 'node', type: 'javafx.scene.Node', params: [n: 'javafx.scene.Node'])
-
-        method(name:'carousel', type:'groovyx.javafx.components.Carousel', params:[c:{}])
-        method(name:'carousel', type:'groovyx.javafx.components.Carousel', params:[args:'java.util.Map', c:{}])
-
-        method(name:'slide', type:'groovyx.javafx.components.CarouselSlide', params:[c:{}])
-        method(name:'slide', type:'groovyx.javafx.components.CarouselSlide', params:[args:'java.util.Map', c:{}])
-
-        method(name: 'notify', type: 'void', params: [message: 'java.lang.String'])
-        method(name: 'notify', type: 'void', params: [message: 'java.lang.String', duration: 'javafx.util.Duration'])
-        method(name: 'notify', type: 'void', params: [args: 'java.util.Map', message: 'java.lang.String'])
-
-        method(name: 'subscribe', type: 'java.lang.Object', params: [observable: 'javafx.beans.value.ObservableValue', subscriber: 'groovy.lang.Closure'])
-        method(name: 'submit', type: 'groovyx.javafx.SceneGraphBuilder', params: [webView: 'java.lang.Object', body: {}])
-
-        method(name: 'registerComponentNode', type: 'void', params: [args: 'java.util.Map', c: {}])
-        method(name: 'registerComponent', type: 'void', params: [args: 'java.util.Map', c: {}])
-
-        // SPI helpers (visible in IDE)
-        method(name: 'addon', type: 'void', params: [addon: 'groovyx.javafx.spi.SceneGraphAddon'])
-        method(name: 'addon', type: 'void', params: [addonClass: 'java.lang.Class'])
-        method(name: 'registerIfAbsent', type: 'void', params: [name: 'java.lang.String', factory: 'groovy.util.Factory'])
-        method(name: 'register', type: 'void', params: [name: 'java.lang.String', factory: 'groovy.util.Factory'])
+        method(
+                name: 'bind',
+                type: 'java.lang.Object',
+                params: [c: {}]
+        )
 
         // -------------------------
-        // Common constants / vars
+        // Thread helpers
+        // -------------------------
+        method(name: 'runLater', type: 'void', params: [c: {}])
+
+        // -------------------------
+        // Common script conveniences that appear in demos
         // -------------------------
         property(name: 'GROOVYBLUE', type: 'javafx.scene.paint.Color')
         property(name: 'groovyblue', type: 'javafx.scene.paint.Color')
@@ -157,88 +146,69 @@ contributor(CLOSURE_CTX) {
         nodeMethod('scene', 'javafx.scene.Scene')
 
         // -------------------------
-        // Layout panes (high value)
+        // Layout panes
         // -------------------------
         nodeMethod('borderPane', 'javafx.scene.layout.BorderPane')
-        nodeMethod('vbox', 'javafx.scene.layout.VBox')
         nodeMethod('hbox', 'javafx.scene.layout.HBox')
+        nodeMethod('vbox', 'javafx.scene.layout.VBox')
         nodeMethod('stackPane', 'javafx.scene.layout.StackPane')
         nodeMethod('gridPane', 'javafx.scene.layout.GridPane')
         nodeMethod('flowPane', 'javafx.scene.layout.FlowPane')
         nodeMethod('anchorPane', 'javafx.scene.layout.AnchorPane')
         nodeMethod('tilePane', 'javafx.scene.layout.TilePane')
-        nodeMethod('pane', 'javafx.scene.layout.Pane')
-        nodeMethod('region', 'javafx.scene.layout.Region')
-        nodeMethod('group', 'javafx.scene.Group')
-        nodeMethod('textFlow', 'javafx.scene.text.TextFlow')
-
-        // BorderPane regions
-        nodeMethodNoArgs('top', 'javafx.scene.Node')
-        nodeMethodNoArgs('bottom', 'javafx.scene.Node')
-        nodeMethodNoArgs('left', 'javafx.scene.Node')
-        nodeMethodNoArgs('right', 'javafx.scene.Node')
-        nodeMethodNoArgs('center', 'javafx.scene.Node')
 
         // -------------------------
-        // Common controls (high value)
+        // Controls
         // -------------------------
         nodeMethod('label', 'javafx.scene.control.Label')
         nodeMethod('button', 'javafx.scene.control.Button')
+        nodeMethod('toggleButton', 'javafx.scene.control.ToggleButton')
         nodeMethod('checkBox', 'javafx.scene.control.CheckBox')
+        nodeMethod('radioButton', 'javafx.scene.control.RadioButton')
         nodeMethod('textField', 'javafx.scene.control.TextField')
         nodeMethod('textArea', 'javafx.scene.control.TextArea')
         nodeMethod('passwordField', 'javafx.scene.control.PasswordField')
-        nodeMethod('hyperlink', 'javafx.scene.control.Hyperlink')
-
         nodeMethod('comboBox', 'javafx.scene.control.ComboBox')
         nodeMethod('choiceBox', 'javafx.scene.control.ChoiceBox')
-
-        nodeMethod('radioButton', 'javafx.scene.control.RadioButton')
-        nodeMethod('toggleButton', 'javafx.scene.control.ToggleButton')
-
-        nodeMethod('slider', 'javafx.scene.control.Slider')
+        nodeMethod('listView', 'javafx.scene.control.ListView')
+        nodeMethod('tableView', 'javafx.scene.control.TableView')
+        nodeMethod('treeView', 'javafx.scene.control.TreeView')
         nodeMethod('progressBar', 'javafx.scene.control.ProgressBar')
         nodeMethod('progressIndicator', 'javafx.scene.control.ProgressIndicator')
-
-        nodeMethod('scrollPane', 'javafx.scene.control.ScrollPane')
-        nodeMethod('splitPane', 'javafx.scene.control.SplitPane')
-        nodeMethod('tabPane', 'javafx.scene.control.TabPane')
-        nodeMethod('tab', 'javafx.scene.control.Tab')
-        nodeMethod('accordion', 'javafx.scene.control.Accordion')
-        nodeMethod('titledPane', 'javafx.scene.control.TitledPane')
+        nodeMethod('slider', 'javafx.scene.control.Slider')
+        nodeMethod('separator', 'javafx.scene.control.Separator')
         nodeMethod('toolBar', 'javafx.scene.control.ToolBar')
-
-        nodeMethod('listView', 'javafx.scene.control.ListView')
-        nodeMethod('treeView', 'javafx.scene.control.TreeView')
-        nodeMethod('treeItem', 'javafx.scene.control.TreeItem')
-
-        nodeMethod('tableView', 'javafx.scene.control.TableView')
-        nodeMethod('tableColumn', 'javafx.scene.control.TableColumn')
-
-        nodeMethod('buttonBar', 'javafx.scene.control.ButtonBar')
-
-        // -------------------------
-        // Menus / Actions (high value demos)
-        // -------------------------
-        nodeMethod('actions', 'java.lang.Object')
-        nodeMethod('fxaction', 'java.lang.Object')
-        nodeMethod('bean', 'java.lang.Object') // used for binding actions etc.
-
         nodeMethod('menuBar', 'javafx.scene.control.MenuBar')
         nodeMethod('menu', 'javafx.scene.control.Menu')
         nodeMethod('menuItem', 'javafx.scene.control.MenuItem')
-        nodeMethod('checkMenuItem', 'javafx.scene.control.CheckMenuItem')
-        nodeMethod('radioMenuItem', 'javafx.scene.control.RadioMenuItem')
-        nodeMethodNoArgs('separatorMenuItem', 'javafx.scene.control.SeparatorMenuItem')
         nodeMethod('contextMenu', 'javafx.scene.control.ContextMenu')
-        nodeMethodNoArgs('separator', 'javafx.scene.control.Separator')
+        nodeMethod('tabPane', 'javafx.scene.control.TabPane')
+        nodeMethod('tab', 'javafx.scene.control.Tab')
+        nodeMethod('splitPane', 'javafx.scene.control.SplitPane')
+        nodeMethod('scrollPane', 'javafx.scene.control.ScrollPane')
+        nodeMethod('pagination', 'javafx.scene.control.Pagination')
+        nodeMethod('accordion', 'javafx.scene.control.Accordion')
+        nodeMethod('titledPane', 'javafx.scene.control.TitledPane')
+
+        // -------------------------
+        // Text / font
+        // -------------------------
+        nodeMethod('text', 'javafx.scene.text.Text')
+
+        // -------------------------
+        // Images / media
+        // -------------------------
+        nodeMethod('imageView', 'javafx.scene.image.ImageView')
 
         // -------------------------
         // Ribbon (GroovyFX custom)
         // -------------------------
         nodeMethod('ribbon',      'groovyx.javafx.components.Ribbon')
-        nodeMethod('ribbonTab',   'groovyx.javafx.components.RibbonTab')
-        nodeMethod('ribbonGroup', 'groovyx.javafx.components.RibbonGroup')
+        method(name: 'ribbonTab', type: 'groovyx.javafx.components.RibbonTab',
+                params: [args: 'java.util.Map', value: 'java.lang.String', c: {}])
+
+        method(name: 'ribbonGroup', type: 'groovyx.javafx.components.RibbonGroup',
+                params: [args: 'java.util.Map', value: 'java.lang.String', c: {}])
 
         // Optional: nice sugar for ribbonTab('Home') { ... } / ribbonGroup('Clipboard') { ... }
         method(name: 'ribbonTab', type: 'groovyx.javafx.components.RibbonTab', params: [value: 'java.lang.String', c: {}])
@@ -246,6 +216,25 @@ contributor(CLOSURE_CTX) {
 
         method(name: 'ribbonGroup', type: 'groovyx.javafx.components.RibbonGroup', params: [value: 'java.lang.String', c: {}])
         method(name: 'ribbonGroup', type: 'groovyx.javafx.components.RibbonGroup', params: [args: 'java.util.Map', value: 'java.lang.String', c: {}])
+
+        // -------------------------
+        // Ribbon state / behavior (IDE ergonomics)
+        // -------------------------
+        // selectedTab can be set by index or by RibbonTab instance (keep Object types flexible)
+        method(name: 'selectedTab', type: 'void', params: [index: 'int'])
+        method(name: 'selectedTab', type: 'void', params: [tab: 'groovyx.javafx.components.RibbonTab'])
+
+        method(name: 'collapsed',    type: 'void', params: [value: 'boolean'])
+        method(name: 'collapsible',  type: 'void', params: [value: 'boolean'])
+        // displayMode is typically an enum; keep it loose to avoid churn while API settles
+        method(name: 'displayMode',  type: 'void', params: [value: 'java.lang.Object'])
+
+        // -------------------------
+        // RibbonGroup: dialog launcher support
+        // -------------------------
+        method(name: 'dialogLauncherVisible', type: 'void', params: [value: 'boolean'])
+        method(name: 'onDialogLauncher',      type: 'void', params: [handler: 'groovy.lang.Closure'])
+        method(name: 'onDialogLauncher',      type: 'void', params: [c: {}])
 
         method(
                 name: 'quickAccess',
@@ -286,41 +275,25 @@ contributor(CLOSURE_CTX) {
         nodeMethod('polygon', 'javafx.scene.shape.Polygon')
         nodeMethod('polyline', 'javafx.scene.shape.Polyline')
         nodeMethod('path', 'javafx.scene.shape.Path')
-        nodeMethod('imageView', 'javafx.scene.image.ImageView')
 
         // -------------------------
-        // Charts (high value)
+        // Effects / transforms (selected)
         // -------------------------
-        nodeMethod('lineChart', 'javafx.scene.chart.LineChart')
-        nodeMethod('areaChart', 'javafx.scene.chart.AreaChart')
-        nodeMethod('barChart', 'javafx.scene.chart.BarChart')
-        nodeMethod('scatterChart', 'javafx.scene.chart.ScatterChart')
-        nodeMethod('pieChart', 'javafx.scene.chart.PieChart')
-        nodeMethod('categoryAxis', 'javafx.scene.chart.CategoryAxis')
-        nodeMethod('numberAxis', 'javafx.scene.chart.NumberAxis')
+        nodeMethod('dropShadow', 'javafx.scene.effect.DropShadow')
+        nodeMethod('gaussianBlur', 'javafx.scene.effect.GaussianBlur')
 
         // -------------------------
-        // Event handler nodes that frequently appear in scripts
-        // (These help stop "unknown DSL node" red underlines)
+        // Animation (selected)
         // -------------------------
-        nodeMethod('onAction', 'java.lang.Object')
-        nodeMethod('onMouseClicked', 'java.lang.Object')
-        nodeMethod('onMousePressed', 'java.lang.Object')
-        nodeMethod('onMouseReleased', 'java.lang.Object')
-        nodeMethod('onKeyPressed', 'java.lang.Object')
-        nodeMethod('onKeyReleased', 'java.lang.Object')
-        nodeMethod('onShown', 'java.lang.Object')
-        nodeMethod('onHidden', 'java.lang.Object')
-        nodeMethod('onCloseRequest', 'java.lang.Object')
+        nodeMethod('timeline', 'javafx.animation.Timeline')
+        nodeMethod('keyFrame', 'javafx.animation.KeyFrame')
 
         // -------------------------
-        // Modules / UIModule helpers
+        // Services / modules (GroovyBlue)
         // -------------------------
-        // compile { ... }
-        method(name: 'compile', type: 'groovyx.javafx.module.UIModule', params: [c: {}])
-
-        // compile { Map ctx -> ... }
-        method(name: 'compile', type: 'groovyx.javafx.module.UIModule', params: [ctx: 'java.util.Map', c: {}])
+        method(name: 'service', type: 'groovyx.javafx.module.Service', params: [name: 'java.lang.String'])
+        method(name: 'service', type: 'groovyx.javafx.module.Service', params: [name: 'java.lang.String', args: 'java.util.Map'])
+        method(name: 'service', type: 'groovyx.javafx.module.Service', params: [name: 'java.lang.String', c: {}])
 
         // module("name") { ... }
         method(name: 'module', type: 'groovyx.javafx.module.UIModule', params: [name: 'java.lang.String', c: {}])
@@ -330,6 +303,7 @@ contributor(CLOSURE_CTX) {
 
         // NotificationService ergonomics
         method(name: 'registerView', type: 'void', params: [module: 'groovyx.javafx.module.UIModule'])
+
     }
 
 }
