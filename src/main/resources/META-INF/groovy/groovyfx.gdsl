@@ -247,6 +247,29 @@ contributor(CLOSURE_CTX) {
         method(name: 'ribbonGroup', type: 'groovyx.javafx.components.RibbonGroup', params: [value: 'java.lang.String', c: {}])
         method(name: 'ribbonGroup', type: 'groovyx.javafx.components.RibbonGroup', params: [args: 'java.util.Map', value: 'java.lang.String', c: {}])
 
+        method(
+                name: 'quickAccess',
+                type: 'void',
+                params: [node: 'javafx.scene.Node']
+        )
+
+        method(
+                name: 'backstage',
+                type: 'void',
+                params: [node: 'javafx.scene.Node']
+        )
+
+        method(
+                name: 'quickAccess',
+                type: 'void',
+                params: [c: {}]
+        )
+
+        method(
+                name: 'backstage',
+                type: 'void',
+                params: [c: {}]
+        )
         // -------------------------
         // Binding / listeners (high value)
         // -------------------------
