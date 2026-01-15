@@ -1,25 +1,16 @@
 /**
  * SPDX-License-Identifier: Apache-2.0
  *
- * Copyright 2011-2021 the original author or authors.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * NOTE:
+ * Demos that want the legacy blue gradient must add:
+ *   styleClass = "gradient-demo-root"
+ * Controls (Ribbon, etc.) must NOT rely on global .root styling.
  */
-.root {
+.gradient-demo-root {
     -fx-background-color: radial-gradient(radius 100%, #93D4EF, #496977);
 }
 
-.label {
+.gradient-demo-root .label {
     -fx-text-fill: white;
 }
 
@@ -52,4 +43,116 @@
 }
 .carousel-arrows .button {
     -fx-opacity: 0.85;
+}
+
+/* -------------------------
+   Ribbon styling (demo v1)
+   ------------------------- */
+
+/* overall chrome (tabs row background) */
+.ribbon-root {
+    -fx-background-color: #f3f3f3;
+    -fx-border-color: #c9ccd3;
+    -fx-border-width: 0 0 1 0;
+}
+
+/* the actual ribbon strip (where groups sit) */
+.ribbon-strip {
+    -fx-background-color: white;
+    -fx-background-insets: 10 10 8 10;
+    -fx-background-radius: 10;
+    -fx-border-color: #e1e3e7;
+    -fx-border-width: 1;
+    -fx-border-radius: 10;
+    -fx-padding: 10;               /* inner padding around groups */
+}
+
+/* tab buttons */
+.ribbon-tab-button {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-padding: 4 10 4 10;
+}
+
+.ribbon-tab-button:hover {
+    -fx-background-color: rgba(255,255,255,0.65);
+    -fx-background-radius: 6 6 0 0;
+}
+
+/* selected tab underline, Word-like */
+.ribbon-tab-button:selected {
+    -fx-background-color: transparent; /* keep it flat */
+    -fx-border-color: transparent transparent #2b78d6 transparent;
+    -fx-border-width: 0 0 3 0;       /* blue underbar */
+}
+
+/* hook: ribbon control itself */
+.ribbon {
+    -fx-background-color: transparent;
+}
+
+/* Group separator inserted by skin */
+.ribbon-group-separator {
+    -fx-opacity: 0.35;
+}
+
+/* RibbonGroup chrome (skin adds .ribbon-group-root, .ribbon-group-title, etc.) */
+.ribbon-group-root {
+    -fx-background-color: transparent;     /* group blends into strip */
+    -fx-border-color: transparent;
+    -fx-padding: 8;
+}
+
+/* Title in group footer */
+.ribbon-group-footer {
+    -fx-border-color: transparent;
+    -fx-background-color: transparent;
+}
+
+.ribbon-group-title {
+    -fx-border-color: transparent;
+    -fx-background-color: transparent;
+}
+
+/* Small square buttons (dialog launcher + RHS display options) */
+.ribbon-group-launcher,
+.ribbon-display-options {
+    -fx-background-color: transparent;
+
+    -fx-border-color: #c9ccd3;
+    -fx-border-width: 1;
+    -fx-background-radius: 3;
+    -fx-border-radius: 3;
+
+    -fx-padding: 0;
+    -fx-font-size: 9px;
+
+    -fx-min-width: 14px;
+    -fx-min-height: 14px;
+    -fx-pref-width: 14px;
+    -fx-pref-height: 14px;
+    -fx-max-width: 14px;
+    -fx-max-height: 14px;
+
+    -fx-alignment: center;
+    -fx-opacity: 0.95;
+}
+
+.ribbon-group-launcher:hover,
+.ribbon-display-options:hover {
+    -fx-background-color: #f1f2f4;
+    -fx-border-color: #aeb3bb;
+}
+
+/* flash only for dialog launcher */
+.ribbon-group-launcher.flash {
+    -fx-background-color: rgba(43, 120, 214, 0.22);
+    -fx-border-color: rgba(43, 120, 214, 0.55);
+}
+
+/* Optional hooks for header-left content (backstage / quick access) */
+.ribbon-header-row .button,
+.ribbon-header-row .toggle-button {
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
 }

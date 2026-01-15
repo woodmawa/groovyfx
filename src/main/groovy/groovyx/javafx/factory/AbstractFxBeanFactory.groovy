@@ -17,6 +17,8 @@
  */
 package groovyx.javafx.factory
 
+import groovy.util.FactoryBuilderSupport
+
 /**
  *
  * @author jimclarke
@@ -77,8 +79,23 @@ class AbstractFXBeanFactory extends AbstractFactory {
     public boolean hasChildFactories() {
         return childFactories != null;
     }
-    
-    
+
+    /**
+     * Builder hook used by FactoryBuilderSupport.
+     * Default delegates to the 2-arg version so subclasses can implement either style.
+     */
+    @Override
+    void setChild(FactoryBuilderSupport builder, Object parent, Object child) {
+        setChild(parent, child)
+    }
+
+    /**
+    * Convenience hook for subclasses (optional to override).
+    */
+
+    void setChild(Object parent, Object child) {
+        // default no-op
+    }
     
     public void registerFactory(String name, Factory factory) {
         if (childFactories == null) childFactories = [:] as LinkedHashMap

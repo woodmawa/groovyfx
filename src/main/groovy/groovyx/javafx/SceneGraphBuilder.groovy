@@ -649,6 +649,17 @@ class SceneGraphBuilder extends FactoryBuilderSupport {
         registerFactory "radioMenuItem", new MenuItemFactory(RadioMenuItem)
     }
 
+    //new ribbon menu
+    void registerRibbon() {
+        registerFactory "ribbon", new RibbonFactory()
+        registerFactory "ribbonTab", new RibbonTabFactory()
+        registerFactory "ribbonGroup", new RibbonGroupFactory()
+
+        // optional niceties / aliases
+        registerFactory "quickAccess", new RibbonQuickAccessFactory()
+        registerFactory "backstage", new RibbonBackstageFactory()   // if you do "File" panel later
+    }
+
     void registerCharts() {
         registerFactory "pieChart", new PieChartFactory(PieChart)
         registerFactory "lineChart", new XYChartFactory(LineChart)
@@ -973,7 +984,8 @@ class SceneGraphBuilder extends FactoryBuilderSupport {
                 this.&registerStages,
                 this.&registerNodes,
                 this.&registerContainers,
-                this.&registerComponentWidgets,  //register new widgets and components added during rebuild
+                this.&registerComponentWidgets,     //register new widgets and components added during rebuild
+                this.&registerRibbon,               // add new ribbon menus
                 this.&registerShapes,
                 this.&registerTransforms,
                 this.&registerEffects,

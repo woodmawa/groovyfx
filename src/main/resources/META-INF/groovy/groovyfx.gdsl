@@ -234,6 +234,20 @@ contributor(CLOSURE_CTX) {
         nodeMethodNoArgs('separator', 'javafx.scene.control.Separator')
 
         // -------------------------
+        // Ribbon (GroovyFX custom)
+        // -------------------------
+        nodeMethod('ribbon',      'groovyx.javafx.components.Ribbon')
+        nodeMethod('ribbonTab',   'groovyx.javafx.components.RibbonTab')
+        nodeMethod('ribbonGroup', 'groovyx.javafx.components.RibbonGroup')
+
+        // Optional: nice sugar for ribbonTab('Home') { ... } / ribbonGroup('Clipboard') { ... }
+        method(name: 'ribbonTab', type: 'groovyx.javafx.components.RibbonTab', params: [value: 'java.lang.String', c: {}])
+        method(name: 'ribbonTab', type: 'groovyx.javafx.components.RibbonTab', params: [args: 'java.util.Map', value: 'java.lang.String', c: {}])
+
+        method(name: 'ribbonGroup', type: 'groovyx.javafx.components.RibbonGroup', params: [value: 'java.lang.String', c: {}])
+        method(name: 'ribbonGroup', type: 'groovyx.javafx.components.RibbonGroup', params: [args: 'java.util.Map', value: 'java.lang.String', c: {}])
+
+        // -------------------------
         // Binding / listeners (high value)
         // -------------------------
         nodeMethod('bind', 'java.lang.Object')
