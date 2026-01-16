@@ -10,32 +10,53 @@ import javafx.scene.image.ImageView
 
 class RibbonQuickAccessBar extends ToolBar {
 
+    static String iconBasePath = "/demo/icons"  //default for demos
+
+    static void setIconBasePath(String basePath) {
+        iconBasePath = basePath
+    }
+
+    private static String iconPath(String name) {
+        "${iconBasePath}/${name}.png"
+    }
+
+    static RibbonQuickAccessBar demoBar() {
+        def bar = new RibbonQuickAccessBar()
+        bar.items.setAll(
+                iconButton("Copy",  iconPath("copy")) { println "QuickAccess: Copy (stub)" },
+                iconButton("Cut",   iconPath("cut"))  { println "QuickAccess: Cut (stub)"},
+                iconButton("Paste", iconPath("paste")) {println "QuickAccess: Paste (stub)"}
+        )
+        return bar
+    }
+
     RibbonQuickAccessBar() {
         super()
 
         styleClass.add("ribbon-quickaccess")
-
-        def copyButton  = iconButton("Copy",  "/demo/icons/copy.png")  { println "QuickAccess: Copy (stub)" }
-        def cutButton   = iconButton("Cut",   "/demo/icons/cut.png")   { println "QuickAccess: Cut (stub)" }
-        def pasteButton = iconButton("Paste", "/demo/icons/paste.png") { println "QuickAccess: Paste (stub)" }
-
-        items.setAll(copyButton, cutButton, pasteButton)
-        // If you want a separator before tabs, do it in RibbonSkin (leftBox), not here.
-        // items.add(new Separator(Orientation.VERTICAL))
+        //for demo call RibbonQuickAccessBar.demoBar()
     }
 
     private static Button iconButton(String tooltipText, String resourcePath, Closure onAction) {
-        Image img = new Image(RibbonQuickAccessBar.class.getResourceAsStream(resourcePath))
-        ImageView iv = new ImageView(img)
 
-        // Keep icons crisp and consistent
-        iv.setFitWidth(14)
-        iv.setFitHeight(14)
-        iv.setPreserveRatio(true)
-        iv.setSmooth(true)
+        // Resolve resource safely (never pass null into Image ctor)
+        def is = RibbonQuickAccessBar.class.getResourceAsStream(resourcePath)
+
+        ImageView iv = null
+        //defensive checking for null url
+        if (is != null) {
+            Image img = new Image(is)
+            iv = new ImageView(img)
+
+            // Keep icons crisp and consistent
+            iv.setFitWidth(14)
+            iv.setFitHeight(14)
+            iv.setPreserveRatio(true)
+            iv.setSmooth(true)
+        }
 
         Button b = new Button()
-        b.graphic = iv
+        if (iv != null) b.graphic = iv
         b.text = null
         b.tooltip = new Tooltip(tooltipText)
         b.focusTraversable = false

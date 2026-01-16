@@ -32,7 +32,7 @@ class RibbonSkin extends SkinBase<Ribbon> {
     private final BorderPane stripRow = new BorderPane()
     private final HBox groupsRow = new HBox(10)
 
-    private final Button displayOptionsButton = new Button("▾")
+    private final MenuButton displayOptionsButton = new MenuButton("▾")
     private final ContextMenu displayMenu = new ContextMenu()
 
     RibbonSkin(Ribbon ribbon) {
@@ -59,6 +59,9 @@ class RibbonSkin extends SkinBase<Ribbon> {
         if (!displayOptionsButton.styleClass.contains("ribbon-display-options")) {
             displayOptionsButton.styleClass.add("ribbon-display-options")
         }
+        //todo revisit this and what we need to do - managed in css at mo i think
+        //displayOptionsButton.visible = false
+        //displayOptionsButton.managed = false
 
         // --- Configure reusable header center bits (once) ---
         centerBox.alignment = Pos.BOTTOM_LEFT

@@ -13,6 +13,7 @@ class RibbonBackstageButton extends MenuButton {
     RibbonBackstageButton() {
         super("File")
 
+
         getStyleClass().addAll("ribbon-backstage", "ribbon-header-holder", "ribbon-mini-square")
 
         // Placeholder items (no real actions yet)

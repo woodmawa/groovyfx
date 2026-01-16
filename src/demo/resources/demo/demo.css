@@ -209,3 +209,14 @@
 .ribbon-backstage:hover {
     -fx-background-color: rgba(255,255,255,0.65);
 }
+
+
+.ribbon-backstage .label {
+    -fx-opacity: 1;
+    -fx-text-fill: -fx-text-base-color;
+}
+
+/* If mini-square is forcing graphic-only or hiding text, override it here */
+.ribbon-backstage {
+    -fx-content-display: left;   /* or CENTER if desired */
+}

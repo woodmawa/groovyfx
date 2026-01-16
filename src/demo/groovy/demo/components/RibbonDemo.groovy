@@ -40,11 +40,12 @@ start {
                 top {
                     // v1: Ribbon is just a node/container with tabs & groups.
                     // Later: you'll likely render tab headers + backstage button.
+                    def demoQuickAccess = RibbonQuickAccessBar.demoBar()
                     ribbon(id: 'mainRibbon',
                             collapsible: true,
                             collapsed: false,
-                            backstage: new RibbonBackstageButton(),
-                            quickAccess: new RibbonQuickAccessBar()) {
+                            backstage: null /*new RibbonBackstageButton()*/,  //todo need to know what we want this look like
+                            quickAccess: demoQuickAccess) {
 
 
                         ribbonTab("Home") {
