@@ -1,17 +1,30 @@
 package groovyx.javafx.factory
 
-import groovyx.javafx.components.PaletteView
-import groovyx.javafx.factory.AbstractNodeFactory
 import groovy.util.FactoryBuilderSupport
+import groovy.util.AbstractFactory
+import groovyx.javafx.components.palette.PaletteView
 
-class PaletteViewFactory extends AbstractNodeFactory {
+class PaletteViewFactory extends AbstractFactory {
 
-    PaletteViewFactory() {
-        super(PaletteView)
+    @Override
+    Object newInstance(FactoryBuilderSupport builder, Object name, Object value, Map attributes) {
+        def view = new PaletteView()
+
+        // allow: paletteView(model: x, onItemActivated: {...})
+        if (attributes?.containsKey("model")) {
+            view.model = attributes.remove("model")
+        }
+        if (attributes?.containsKey("onItemActivated")) {
+            view.onItemActivated = attributes.remove("onItemActivated")
+        }
+        return view
     }
 
     @Override
-    Object newInstance(FactoryBuilderSupport builder, Object name, Object value, Map attrs) {
-        return super.newInstance(builder, name, value, attrs)
+    boolean isLeaf() { true }
+
+    @Override
+    void onNodeCompleted(FactoryBuilderSupport builder, Object parent, Object node) {
+        // nothing
     }
 }

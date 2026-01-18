@@ -24,6 +24,7 @@ import groovyx.javafx.animation.TargetHolder
 import groovyx.javafx.canvas.*
 import groovyx.javafx.components.IconButton
 import groovyx.javafx.components.Notification
+import groovyx.javafx.components.PaletteView
 import groovyx.javafx.event.GroovyCallback
 import groovyx.javafx.event.GroovyEventHandler
 import groovyx.javafx.factory.*
