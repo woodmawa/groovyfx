@@ -22,6 +22,7 @@ import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import groovyx.javafx.animation.TargetHolder
 import groovyx.javafx.canvas.*
+import groovyx.javafx.components.IconButton
 import groovyx.javafx.components.Notification
 import groovyx.javafx.event.GroovyCallback
 import groovyx.javafx.event.GroovyEventHandler
@@ -786,6 +787,7 @@ class SceneGraphBuilder extends FactoryBuilderSupport {
     /** Register a node name that maps to a class with a static build(builder, attrs, body) method OR a no-arg ctor. */
     void registerComponentNode(String name, Class componentClass) {
         registerFactory(name, new ComponentClassFactory(componentClass))
+
     }
 
     /** @deprecated use registerComponentNode */
@@ -794,8 +796,9 @@ class SceneGraphBuilder extends FactoryBuilderSupport {
         registerComponentNode(name, componentClass)
     }
 
+    // Modern Components / Widgets, registered in this block
     void registerComponentWidgets() {
-        // Modern Components / Widgets
+
         CardFactory cardFactory = new CardFactory()
         registerFactory "card", cardFactory
         cardFactory.registerFactory "cardHeader", new CardSectionFactory("cardHeader")
@@ -811,6 +814,9 @@ class SceneGraphBuilder extends FactoryBuilderSupport {
         registerFactory "carousel", new CarouselFactory()
         registerFactory "slide", new CarouselSlideFactory()
         registerFactory "node", new ExistingNodeFactory()
+        registerFactory("paletteView", new PaletteViewFactory())
+        registerFactory("iconButton", new IconButtonFactory())
+        registerFactory("iconToggleButton", new IconToggleButtonFactory())
 
         //registerFactory "notification", new NotificationFactory()   // if you have one
     }
